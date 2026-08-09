@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SearchBar from "../ui/SearchBar";
 import NotificationBell from "../ui/NotificationBell";
+import { useAppData } from "../../context/AppDataContext";
 
 const searchTargets = [
   { label: "AI Scanner", to: "/scanner", keywords: ["scan", "scanner", "url", "email", "sms"] },
@@ -18,8 +19,14 @@ export default function DesktopTopBar() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
+  const { user } = useAppData();
+
+  const availableTargets = user?.isAdmin 
+    ? searchTargets 
+    : searchTargets.filter(t => t.to !== "/admin");
+
   const results = query
-    ? searchTargets.filter(
+    ? availableTargets.filter(
         (t) => t.label.toLowerCase().includes(query.toLowerCase()) || t.keywords.some((k) => k.includes(query.toLowerCase()))
       )
     : [];

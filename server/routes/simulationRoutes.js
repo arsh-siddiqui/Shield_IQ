@@ -20,11 +20,11 @@ const { idParamValidator } = require("../validators/articleValidators");
 const router = express.Router();
 
 router.get("/", requireDb, getSimulations);
-router.get("/:id", requireDb, idParamValidator, validate, getSimulationById);
+router.get("/:id", requireDb, validate, getSimulationById);
 
 router.post("/", requireDb, protect, authorize("admin"), createSimulationValidator, validate, createSimulation);
 router.put("/:id", requireDb, protect, authorize("admin"), updateSimulationValidator, validate, updateSimulation);
-router.delete("/:id", requireDb, protect, authorize("admin"), idParamValidator, validate, deleteSimulation);
+router.delete("/:id", requireDb, protect, authorize("admin"), validate, deleteSimulation);
 
 router.post("/:id/submit", requireDb, protect, submitSimulationValidator, validate, submitSimulation);
 

@@ -60,39 +60,36 @@ const deleteQuiz = asyncHandler(async (req, res) => {
   return sendSuccess(res, { message: "Quiz deleted." });
 });
 
-// @route  POST /api/quizzes/:id/submit
+// @route  POST /api/quizzes/results
 // @access Private
 const submitQuiz = asyncHandler(async (req, res) => {
-  const { optionId } = req.body;
-  const quiz = await Quiz.findById(req.params.id);
-  if (!quiz) {
-    res.status(404);
-    throw new Error("Quiz not found.");
+  const { lessonId, correct } = req.body;
+  const xpAwarded = correct ? 20 : 0; // standard 20 XP for now, based on AppDataContext
+  
+  let lessonMongoId = null;
+  if (lessonId) {
+     const Lesson = require("../models/Lesson");
+     const lesson = await Lesson.findOne({ slug: lessonId });
+     if (lesson) lessonMongoId = lesson._id;
   }
-
-  const option = quiz.options.id(optionId);
-  if (!option) {
-    res.status(400);
-    throw new Error("That option doesn't belong to this quiz.");
-  }
-
-  const xpAwarded = option.correct ? quiz.xpReward : 0;
 
   const result = await QuizResult.findOneAndUpdate(
-    { user: req.user._id, quiz: quiz._id },
-    { selectedOptionId: optionId, correct: option.correct, xpAwarded },
+    { userId: req.user._id, lessonId: lessonMongoId },
+    { correctAnswers: correct ? 1 : 0, score: correct ? 100 : 0, xpEarned: xpAwarded, completedAt: new Date() },
     { new: true, upsert: true }
   );
 
-  if (xpAwarded > 0) {
+  if (xpAwarded > 0 && result.isNew) {
     req.user.xp += xpAwarded;
     await req.user.save();
   }
 
-  return sendSuccess(res, {
-    message: option.correct ? "Correct!" : "Not quite.",
-    data: { result, correct: option.correct, xpAwarded, xpTotal: req.user.xp },
-  });
+  return sendSuccess(res, { data: { result, correct, xpAwarded, xpTotal: req.user.xp } });
 });
 
-module.exports = { getQuizzes, getQuizById, createQuiz, updateQuiz, deleteQuiz, submitQuiz };
+const getQuizResults = asyncHandler(async (req, res) => {
+  const results = await QuizResult.find({ userId: req.user._id });
+  return sendSuccess(res, { data: { results } });
+});
+
+module.exports = { getQuizzes, getQuizById, createQuiz, updateQuiz, deleteQuiz, submitQuiz, getQuizResults };

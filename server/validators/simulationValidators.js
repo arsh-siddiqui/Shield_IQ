@@ -18,14 +18,14 @@ const createSimulationValidator = [
 ];
 
 const updateSimulationValidator = [
-  param("id").isMongoId().withMessage("Invalid simulation id."),
+  param("id").trim().notEmpty().withMessage("Invalid simulation id."),
   body("label").optional().trim().notEmpty(),
   body("body").optional().trim().notEmpty(),
   body("difficulty").optional().isIn(["Easy", "Medium", "Hard"]),
 ];
 
 const submitSimulationValidator = [
-  param("id").isMongoId().withMessage("Invalid simulation id."),
+  param("id").trim().notEmpty().withMessage("Invalid simulation id."),
   body("choice").isIn(["open", "ignore", "report"]).withMessage("Choice must be open, ignore, or report."),
 ];
 

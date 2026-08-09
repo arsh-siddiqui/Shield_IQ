@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import * as Icons from "lucide-react";
-import { BarChart, Bar, ResponsiveContainer, XAxis, Tooltip as RTooltip, CartesianGrid } from "recharts";
 import AppLayout from "../components/layout/AppLayout";
 import Card from "../components/ui/Card";
 import Badge from "../components/ui/Badge";
@@ -9,8 +8,7 @@ import Button from "../components/ui/Button";
 import ProgressRing from "../components/ui/ProgressRing";
 import {
   quickActions,
-  weeklyActivity,
-  learningProgress,
+  learningPaths,
   threatAlerts,
   dailyTip,
 } from "../data/dummyData";
@@ -22,7 +20,15 @@ import { useToast } from "../context/ToastContext";
 export default function Dashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, xp, scanHistory } = useAppData();
+  const { user, xp, scanHistory, learningProgress } = useAppData();
+
+  const realLearningProgress = learningPaths
+    .map((path) => {
+      const completed = path.lessons.filter((id) => learningProgress.has(id)).length;
+      const progressPercent = path.lessons.length > 0 ? Math.round((completed / path.lessons.length) * 100) : 0;
+      return { category: path.title, progress: progressPercent };
+    })
+    .filter((p) => p.progress > 0);
 
   const level = Math.max(1, Math.floor(xp / 300) + 1);
   const xpIntoLevel = xp % 300;
@@ -75,103 +81,108 @@ export default function Dashboard() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6 mb-6">
-        {/* Weekly Activity Chart */}
-        <Card className="lg:col-span-2 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-ink">Weekly Activity</h3>
-            <Badge tone="primary">This week</Badge>
-          </div>
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weeklyActivity}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                <XAxis dataKey="day" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: "#94A3B8" }} />
-                <RTooltip
-                  cursor={{ fill: "#F8FAFC" }}
-                  contentStyle={{ borderRadius: 12, border: "1px solid #F1F5F9", fontSize: 12 }}
-                />
-                <Bar dataKey="scans" name="Scans" fill="#2563EB" radius={[8, 8, 0, 0]} />
-                <Bar dataKey="lessons" name="Lessons" fill="#14B8A6" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
-        {/* Learning Progress */}
-        <Card className="p-6">
-          <h3 className="font-bold text-ink mb-4">Learning Progress</h3>
-          <div className="space-y-4">
-            {learningProgress.map((lp) => (
-              <div key={lp.category}>
-                <div className="flex justify-between text-xs font-semibold text-ink-light mb-1.5">
-                  <span>{lp.category}</span>
-                  <span>{lp.progress}%</span>
-                </div>
-                <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${lp.progress}%` }}
-                    transition={{ duration: 1, ease: "easeOut" }}
-                    className="h-full rounded-full bg-primary"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      </div>
-
-      <div className="grid lg:grid-cols-3 gap-6 mb-6">
         {/* Recent Scans */}
-        <Card className="lg:col-span-2 p-6">
+        <Card className="lg:col-span-2 p-6 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-ink">Recent Scans</h3>
-            <button onClick={() => navigate("/scanner")} className="text-xs font-semibold text-primary">
+            <button onClick={() => navigate("/scanner")} className="text-xs font-semibold text-primary hover:underline">
               Scan new →
             </button>
           </div>
-          <div className="divide-y divide-slate-100">
-            {scanHistory.slice(0, 5).map((scan) => (
-              <button
-                key={scan.id}
-                onClick={() => navigate("/scan-result", { state: { result: scan.result, target: scan.target } })}
-                className="w-full flex items-center gap-4 py-3 text-left hover:bg-slate-50 -mx-2 px-2 rounded-xl transition-colors"
-              >
-                <div className={`w-9 h-9 rounded-xl ${colorBg50[riskTone[scan.risk]]} flex items-center justify-center flex-shrink-0`}>
-                  <Icons.FileSearch className={`w-4 h-4 ${colorText[riskTone[scan.risk]]}`} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium text-ink truncate">{scan.target}</div>
-                  <div className="text-xs text-ink-faint">{scan.type} · {scan.time}</div>
-                </div>
-                <Badge tone={riskTone[scan.risk]}>{scan.risk}</Badge>
-              </button>
-            ))}
-          </div>
+          {scanHistory.length > 0 ? (
+            <div className="divide-y divide-slate-100 flex-1">
+              {scanHistory.slice(0, 5).map((scan) => (
+                <button
+                  key={scan.id}
+                  onClick={() => navigate("/scan-result", { state: { result: scan.result, target: scan.target } })}
+                  className="w-full flex items-center gap-4 py-3 text-left hover:bg-slate-50 -mx-2 px-2 rounded-xl transition-colors"
+                >
+                  <div className={`w-9 h-9 rounded-xl ${colorBg50[riskTone[scan.risk]] || "bg-slate-50"} flex items-center justify-center flex-shrink-0`}>
+                    <Icons.FileSearch className={`w-4 h-4 ${colorText[riskTone[scan.risk]] || "text-slate-400"}`} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium text-ink truncate">{scan.target}</div>
+                    <div className="text-xs text-ink-faint">{scan.type} · {scan.time}</div>
+                  </div>
+                  <Badge tone={riskTone[scan.risk] || "neutral"}>{scan.risk}</Badge>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
+              <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                <Icons.Search className="w-6 h-6 text-slate-300" />
+              </div>
+              <h4 className="font-semibold text-ink mb-1">No scans yet</h4>
+              <p className="text-sm text-ink-light max-w-[250px]">Scan a suspicious message or link to see your results here.</p>
+            </div>
+          )}
         </Card>
 
-        {/* Threat Alerts */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Icons.ShieldAlert className="w-4 h-4 text-danger" />
-            <h3 className="font-bold text-ink">Threat Alerts</h3>
-          </div>
-          <div className="space-y-1">
-            {threatAlerts.map((alert) => (
-              <button
-                key={alert.id}
-                onClick={() => toast(`Marked "${alert.title}" as reviewed.`, "success")}
-                className="w-full flex items-start gap-3 text-left py-2 -mx-2 px-2 rounded-xl hover:bg-slate-50 transition-colors"
-              >
-                <span className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${alert.severity === "High" ? "bg-danger" : "bg-accent"}`} />
-                <div>
-                  <div className="text-sm text-ink leading-snug">{alert.title}</div>
-                  <div className="text-xs text-ink-faint mt-1">{alert.time}</div>
+        <div className="space-y-6 flex flex-col">
+          {/* Learning Progress */}
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-ink">Learning Progress</h3>
+              {realLearningProgress.length === 0 && (
+                <button onClick={() => navigate("/learn")} className="text-xs font-semibold text-primary hover:underline">
+                  Start →
+                </button>
+              )}
+            </div>
+            {realLearningProgress.length > 0 ? (
+              <div className="space-y-4">
+                {realLearningProgress.slice(0, 4).map((lp) => (
+                  <div key={lp.category}>
+                    <div className="flex justify-between text-xs font-semibold text-ink-light mb-1.5">
+                      <span>{lp.category}</span>
+                      <span>{lp.progress}%</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${lp.progress}%` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                        className="h-full rounded-full bg-primary"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center text-center py-6">
+                <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center mb-2">
+                  <Icons.BookOpen className="w-5 h-5 text-slate-300" />
                 </div>
-              </button>
-            ))}
-          </div>
-        </Card>
+                <h4 className="text-sm font-semibold text-ink mb-1">Start learning</h4>
+                <p className="text-xs text-ink-light max-w-[200px] mx-auto">Complete your first lesson to track your progress.</p>
+              </div>
+            )}
+          </Card>
+
+          {/* Threat Alerts */}
+          <Card className="p-6 flex-1">
+            <div className="flex items-center gap-2 mb-4">
+              <Icons.ShieldAlert className="w-4 h-4 text-danger" />
+              <h3 className="font-bold text-ink">Threat Alerts</h3>
+            </div>
+            <div className="space-y-1">
+              {threatAlerts.map((alert) => (
+                <button
+                  key={alert.id}
+                  onClick={() => toast(`Marked "${alert.title}" as reviewed.`, "success")}
+                  className="w-full flex items-start gap-3 text-left py-2 -mx-2 px-2 rounded-xl hover:bg-slate-50 transition-colors"
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${alert.severity === "High" ? "bg-danger" : "bg-accent"}`} />
+                  <div>
+                    <div className="text-sm text-ink leading-snug">{alert.title}</div>
+                    <div className="text-xs text-ink-faint mt-1">{alert.time}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </Card>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">

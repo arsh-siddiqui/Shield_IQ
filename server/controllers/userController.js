@@ -86,9 +86,11 @@ const getScanHistory = asyncHandler(async (req, res) => {
 // @route  GET /api/users/progress
 // @access Private
 const getProgress = asyncHandler(async (req, res) => {
-  const [simResults, quizResults] = await Promise.all([
+  const LessonProgress = require("../models/LessonProgress");
+  const [simResults, quizResults, lessonProgress] = await Promise.all([
     SimulationResult.find({ user: req.user._id }).populate("simulation", "slug label"),
-    QuizResult.find({ user: req.user._id }).populate("quiz", "category"),
+    QuizResult.find({ userId: req.user._id }).populate("quiz", "category"),
+    LessonProgress.find({ userId: req.user._id }).populate("lessonId", "slug"),
   ]);
 
   return sendSuccess(res, {
@@ -101,6 +103,7 @@ const getProgress = asyncHandler(async (req, res) => {
       bookmarkedArticles: req.user.bookmarkedArticles,
       likedArticles: req.user.likedArticles,
       readArticles: req.user.readArticles,
+      lessonProgress: lessonProgress,
     },
   });
 });

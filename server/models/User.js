@@ -37,9 +37,6 @@ const userSchema = new mongoose.Schema(
     avatarInitials: { type: String, maxlength: 3 },
     xp: { type: Number, default: 0, min: 0 },
     streakDays: { type: Number, default: 0, min: 0 },
-    bookmarkedArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Article" }],
-    likedArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Article" }],
-    readArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Article" }],
     status: {
       type: String,
       enum: ["Active", "Suspended"],
@@ -48,7 +45,6 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
 
 userSchema.pre("save", async function hashPassword(next) {
   if (!this.isModified("password")) return next();

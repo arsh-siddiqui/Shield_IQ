@@ -11,7 +11,6 @@ const navItems = [
   { label: "Scam Simulator", to: "/simulator", icon: Gamepad2 },
   { label: "Learn", to: "/learn", icon: BookOpen },
   { label: "Profile", to: "/profile", icon: User },
-  { label: "Admin", to: "/admin", icon: Settings2 },
 ];
 
 export default function MobileTopBar() {
@@ -60,6 +59,20 @@ export default function MobileTopBar() {
                   {item.label}
                 </NavLink>
               ))}
+              {user?.isAdmin && (
+                <NavLink
+                  to="/admin"
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold ${
+                      isActive ? "text-primary bg-primary-50" : "text-ink-light"
+                    }`
+                  }
+                >
+                  <Settings2 className="w-4.5 h-4.5" />
+                  Admin
+                </NavLink>
+              )}
             </div>
           </motion.nav>
         )}

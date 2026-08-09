@@ -14,7 +14,9 @@ const getSimulations = asyncHandler(async (req, res) => {
 // @route  GET /api/simulations/:id
 // @access Public
 const getSimulationById = asyncHandler(async (req, res) => {
-  const simulation = await Simulation.findById(req.params.id);
+  const simulation = await Simulation.findOne({ 
+    $or: [ { _id: req.params.id.match(/^[0-9a-fA-F]{24}$/) ? req.params.id : null }, { slug: req.params.id } ]
+  });
   if (!simulation) {
     res.status(404);
     throw new Error("Simulation not found.");
@@ -33,7 +35,8 @@ const createSimulation = asyncHandler(async (req, res) => {
 // @route  PUT /api/simulations/:id
 // @access Private/Admin
 const updateSimulation = asyncHandler(async (req, res) => {
-  const simulation = await Simulation.findByIdAndUpdate(req.params.id, req.body, {
+  const query = { $or: [ { _id: req.params.id.match(/^[0-9a-fA-F]{24}$/) ? req.params.id : null }, { slug: req.params.id } ] };
+  const simulation = await Simulation.findOneAndUpdate(query, req.body, {
     new: true,
     runValidators: true,
   });
@@ -48,7 +51,8 @@ const updateSimulation = asyncHandler(async (req, res) => {
 // @route  DELETE /api/simulations/:id
 // @access Private/Admin
 const deleteSimulation = asyncHandler(async (req, res) => {
-  const simulation = await Simulation.findByIdAndDelete(req.params.id);
+  const query = { $or: [ { _id: req.params.id.match(/^[0-9a-fA-F]{24}$/) ? req.params.id : null }, { slug: req.params.id } ] };
+  const simulation = await Simulation.findOneAndDelete(query);
   if (!simulation) {
     res.status(404);
     throw new Error("Simulation not found.");
@@ -64,7 +68,9 @@ const deleteSimulation = asyncHandler(async (req, res) => {
 // unique (user, simulation) index.
 const submitSimulation = asyncHandler(async (req, res) => {
   const { choice } = req.body;
-  const simulation = await Simulation.findById(req.params.id);
+  const simulation = await Simulation.findOne({ 
+    $or: [ { _id: req.params.id.match(/^[0-9a-fA-F]{24}$/) ? req.params.id : null }, { slug: req.params.id } ]
+  });
   if (!simulation) {
     res.status(404);
     throw new Error("Simulation not found.");

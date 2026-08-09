@@ -13,6 +13,8 @@ import { analyzeContent as analyzeContentLocal } from "../utils/scanEngine";
 import { isBackendUnreachable } from "../services/apiClient";
 import { loginUser, registerUser, logoutUser, getCurrentUser } from "../services/authService";
 import { analyzeContentRemote } from "../services/scanService";
+import { completeLessonRemote } from "../services/learnService";
+import { submitSimulationRemote } from "../services/simulationService";
 
 const AppDataContext = createContext(null);
 
@@ -27,6 +29,7 @@ function mergeRemoteUser(local, remote) {
     name: remote.name,
     email: remote.email,
     role: remote.role,
+    isAdmin: remote.isAdmin,
     avatar: remote.avatar,
     xp: remote.xp,
     streakDays: remote.streakDays,
@@ -40,28 +43,89 @@ export function AppDataProvider({ children }) {
   // ---- Profile -----------------------------------------------------------
   const [user, setUser] = useState(currentUser);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const updateUser = useCallback((patch) => setUser((u) => ({ ...u, ...patch })), []);
 
-  // On mount, silently check for an existing backend session (httpOnly
-  // cookie from a previous real login). If the API isn't running or there's
-  // no session, this fails quietly and the app stays in local demo mode —
-  // exactly the "don't break the app" behavior the backend integration
-  // needs to preserve.
+  const [scanHistory, setScanHistory] = useState(initialScans);
+  const [learningProgress, setLearningProgress] = useState(() => new Set());
+  const [simulationResults, setSimulationResults] = useState({});
+  const [quizResults, setQuizResults] = useState({});
+  const [xp, setXp] = useState(currentUser.xp);
+
+  const loadUserData = useCallback(async (remoteUser) => {
+    setUser((u) => mergeRemoteUser(u, remoteUser));
+    setIsAuthenticated(true);
+    
+    // Clear demo data immediately for authenticated users
+    setScanHistory([]);
+    setLearningProgress(new Set());
+    setSimulationResults({});
+    setQuizResults({});
+    setXp(remoteUser.xp || 0);
+
+    try {
+      const apiClient = (await import("../services/apiClient")).default;
+      const { data } = await apiClient.get("/users/progress");
+      const progressData = data.data;
+      
+      if (progressData.simulations) {
+        const simMap = {};
+        progressData.simulations.forEach(s => {
+          simMap[s.simulation.slug] = { choiceId: s.choice, correct: s.correct, xp: s.xpAwarded };
+        });
+        setSimulationResults(simMap);
+      }
+      if (progressData.lessonProgress) {
+        const lpSet = new Set();
+        progressData.lessonProgress.forEach(lp => {
+          if (lp.status === "completed" && lp.lessonId && lp.lessonId.slug) {
+            lpSet.add(lp.lessonId.slug);
+          }
+        });
+        setLearningProgress(lpSet);
+      }
+      
+      if (progressData.quizzes) {
+        const qMap = {};
+        progressData.quizzes.forEach(q => {
+           if (q.lessonId || q.quizId) {
+              qMap[q.lessonId || q.quizId] = { correct: q.correctAnswers > 0 || q.score > 0 };
+           }
+        });
+        setQuizResults(qMap);
+      }
+      
+      const { data: scanData } = await apiClient.get("/users/scans");
+      if (scanData?.data?.scans) {
+        setScanHistory(scanData.data.scans.map(s => ({
+          id: s._id,
+          type: s.scanType || s.type,
+          target: s.target,
+          risk: s.riskLevel,
+          riskScore: s.riskScore,
+          time: new Date(s.createdAt).toLocaleDateString()
+        })));
+      }
+    } catch (err) {
+      console.error("Failed to load user progress from backend", err);
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     getCurrentUser()
-      .then((remoteUser) => {
+      .then(async (remoteUser) => {
         if (cancelled) return;
-        setUser((u) => mergeRemoteUser(u, remoteUser));
-        setIsAuthenticated(true);
+        await loadUserData(remoteUser);
+        setIsInitializing(false);
       })
       .catch(() => {
-        /* no session / backend unreachable — stay in demo mode */
+        setIsInitializing(false);
       });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadUserData]);
 
   /**
    * Tries the real backend first. Returns a small, consistent result object
@@ -74,26 +138,24 @@ export function AppDataProvider({ children }) {
   const login = useCallback(async (email, password) => {
     try {
       const remoteUser = await loginUser({ email, password });
-      setUser((u) => mergeRemoteUser(u, remoteUser));
-      setIsAuthenticated(true);
+      await loadUserData(remoteUser);
       return { ok: true };
     } catch (err) {
       if (isBackendUnreachable(err)) return { ok: false, offline: true };
       return { ok: false, message: err.response?.data?.message || "Login failed." };
     }
-  }, []);
+  }, [loadUserData]);
 
   const register = useCallback(async ({ name, email, password, accountRole }) => {
     try {
       const remoteUser = await registerUser({ name, email, password, accountRole });
-      setUser((u) => mergeRemoteUser(u, remoteUser));
-      setIsAuthenticated(true);
+      await loadUserData(remoteUser);
       return { ok: true };
     } catch (err) {
       if (isBackendUnreachable(err)) return { ok: false, offline: true };
       return { ok: false, message: err.response?.data?.message || "Registration failed." };
     }
-  }, []);
+  }, [loadUserData]);
 
   const logout = useCallback(async () => {
     try {
@@ -102,6 +164,12 @@ export function AppDataProvider({ children }) {
       /* backend unreachable — clearing local state below is enough */
     }
     setIsAuthenticated(false);
+    setUser(currentUser);
+    setScanHistory(initialScans);
+    setLearningProgress(new Set());
+    setSimulationResults({});
+    setQuizResults({});
+    setXp(currentUser.xp);
   }, []);
 
   // ---- Notification bell ---------------------------------------------------
@@ -115,7 +183,6 @@ export function AppDataProvider({ children }) {
   }, []);
 
   // ---- Scan history --------------------------------------------------------
-  const [scanHistory, setScanHistory] = useState(initialScans);
   const addScan = useCallback((scan) => {
     scanIdSeq += 1;
     setScanHistory((prev) => [{ id: scanIdSeq, time: "Just now", ...scan }, ...prev].slice(0, 20));
@@ -159,18 +226,27 @@ export function AppDataProvider({ children }) {
     setReadArticles((prev) => new Set(prev).add(articleId));
   }, []);
 
-  const [quizResults, setQuizResults] = useState({}); // { [articleId]: { correct: bool } }
-  const completeQuiz = useCallback((articleId, correct) => {
+  const completeQuiz = useCallback(async (articleId, correct) => {
+    try {
+      const apiClient = (await import("../services/apiClient")).default;
+      await apiClient.post("/quizzes/results", { lessonId: articleId, correct });
+    } catch (e) {
+      // Backend unavailable or error, fall back to local
+    }
     setQuizResults((prev) => ({ ...prev, [articleId]: { correct } }));
     if (correct) setXp((prev) => prev + 20); // +20 XP for quiz
   }, []);
 
   // ---- ShieldIQ Learn: lessons, challenges, skills -------------------------
-  const [learningProgress, setLearningProgress] = useState(() => new Set());
   const [skillLevels, setSkillLevels] = useState(initialSkillProgress);
   const [challengeCompletions, setChallengeCompletions] = useState(() => new Set());
 
-  const completeLesson = useCallback((lessonId, xpEarned = 30) => {
+  const completeLesson = useCallback(async (lessonId, xpEarned = 30) => {
+    try {
+      await completeLessonRemote(lessonId);
+    } catch (e) {
+      // Backend unavailable or error, fall back to local
+    }
     setLearningProgress((prev) => new Set(prev).add(lessonId));
     setXp((prev) => prev + xpEarned);
   }, []);
@@ -188,13 +264,18 @@ export function AppDataProvider({ children }) {
   }, []);
 
   // ---- Scam Simulator progress + XP ----------------------------------------
-  const [simulationResults, setSimulationResults] = useState({}); // { [scenarioId]: { choiceId, correct, xp } }
-  const [xp, setXp] = useState(currentUser.xp);
 
-  const completeSimulation = useCallback((scenarioId, choiceId) => {
+  const completeSimulation = useCallback(async (scenarioId, choiceId) => {
     const scenario = simulationScenarios.find((s) => s.id === scenarioId);
     if (!scenario) return null;
     const outcome = scenario.feedback[choiceId];
+    
+    try {
+      await submitSimulationRemote(scenarioId, choiceId);
+    } catch (e) {
+      // Backend unavailable or error, fall back to local
+    }
+
     setSimulationResults((prev) => ({ ...prev, [scenarioId]: { choiceId, ...outcome } }));
     setXp((prev) => prev + outcome.xp);
     return outcome;
@@ -240,6 +321,7 @@ export function AppDataProvider({ children }) {
   }, []);
 
   const value = {
+    isInitializing,
     user,
     updateUser,
     isAuthenticated,

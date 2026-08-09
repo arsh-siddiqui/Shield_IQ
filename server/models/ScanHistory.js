@@ -29,6 +29,7 @@ const scanHistorySchema = new mongoose.Schema(
     summary: String,
     reasons: [reasonSchema],
     recommendations: [String],
+    detectedSignals: [String],
   },
   { timestamps: true }
 );

@@ -16,12 +16,13 @@ const { idParamValidator } = require("../validators/articleValidators");
 const router = express.Router();
 
 router.get("/", requireDb, getQuizzes);
-router.get("/:id", requireDb, idParamValidator, validate, getQuizById);
+router.get("/results", requireDb, protect, require("../controllers/quizController").getQuizResults);
+router.post("/results", requireDb, protect, submitQuiz);
 
+router.get("/:id", requireDb, idParamValidator, validate, getQuizById);
 router.post("/", requireDb, protect, authorize("admin"), createQuizValidator, validate, createQuiz);
 router.put("/:id", requireDb, protect, authorize("admin"), updateQuizValidator, validate, updateQuiz);
 router.delete("/:id", requireDb, protect, authorize("admin"), idParamValidator, validate, deleteQuiz);
-
-router.post("/:id/submit", requireDb, protect, submitQuizValidator, validate, submitQuiz);
+router.post("/:id/submit", requireDb, protect, submitQuiz);
 
 module.exports = router;

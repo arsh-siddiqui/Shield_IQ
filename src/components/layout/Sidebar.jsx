@@ -52,17 +52,19 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      <NavLink
-        to="/admin"
-        className={({ isActive }) =>
-          `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold mb-2 transition-colors ${
-            isActive ? "text-primary bg-primary-50" : "text-ink-light hover:bg-slate-50 hover:text-ink"
-          }`
-        }
-      >
-        <Settings2 className="w-4.5 h-4.5" />
-        Admin
-      </NavLink>
+      {user?.isAdmin && (
+        <NavLink
+          to="/admin"
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold mb-2 transition-colors ${
+              isActive ? "text-primary bg-primary-50" : "text-ink-light hover:bg-slate-50 hover:text-ink"
+            }`
+          }
+        >
+          <Settings2 className="w-4.5 h-4.5" />
+          Admin
+        </NavLink>
+      )}
 
       <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-slate-50">
         <div className="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold flex-shrink-0">

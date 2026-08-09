@@ -1,0 +1,170 @@
+const url = require('url');
+
+// Simple brand list for heuristic detection
+const BRANDS = ['google', 'microsoft', 'amazon', 'apple', 'paypal', 'whatsapp', 'instagram', 'facebook', 'netflix'];
+
+// Common URL shorteners
+const SHORTENERS = ['bit.ly', 'tinyurl.com', 't.co', 'ow.ly', 'is.gd', 'buff.ly', 'adf.ly', 'bit.do', 'cutt.ly', 'shorturl.at'];
+
+// Credential-related path keywords — kept narrow to reduce false positives.
+// Common words like 'account', 'billing', 'update' are intentionally excluded
+// because they appear frequently on legitimate banking and e-commerce domains.
+const CREDENTIAL_PATHS = ['login', 'signin', 'sign-in', 'verify', 'auth', 'confirm', 'kyc', 'otp', 'password-reset', 'reset-password'];
+
+/**
+ * Analyzes a URL string for heuristic signals.
+ * @param {string} urlString - The URL to analyze.
+ * @returns {Array} - An array of signal objects.
+ */
+function analyzeUrl(urlString) {
+  const signals = [];
+  let parsedUrl;
+
+  let urlToParse = urlString;
+  if (!/^https?:\/\//i.test(urlString)) {
+    urlToParse = 'http://' + urlString;
+  }
+
+  try {
+    parsedUrl = new URL(urlToParse);
+  } catch (err) {
+    signals.push({
+      type: 'malformed_url',
+      severity: 'medium',
+      title: 'Malformed URL',
+      explanation: 'The URL provided does not follow standard formatting.',
+      evidence: urlString.slice(0, 50),
+    });
+    return signals;
+  }
+
+  const hostname = parsedUrl.hostname.toLowerCase();
+  const pathname = parsedUrl.pathname.toLowerCase();
+  const search = parsedUrl.search.toLowerCase();
+
+  if (/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(hostname)) {
+    signals.push({
+      type: 'ip_hostname',
+      severity: 'high',
+      title: 'IP Address Hostname',
+      explanation: 'Legitimate services use domain names, not raw IP addresses, in their links.',
+      evidence: hostname,
+    });
+  }
+
+  if (SHORTENERS.includes(hostname)) {
+    signals.push({
+      type: 'url_shortener',
+      severity: 'medium',
+      title: 'URL Shortener',
+      explanation: 'URL shorteners hide the real destination of the link, commonly used to conceal malicious sites.',
+      evidence: hostname,
+    });
+  }
+
+  const parts = hostname.split('.');
+  if (parts.length > 4 && !hostname.endsWith('co.uk') && !hostname.endsWith('co.in')) {
+    signals.push({
+      type: 'excessive_subdomains',
+      severity: 'medium',
+      title: 'Excessive Subdomains',
+      explanation: 'Scammers often use multiple subdomains to make a URL look like it belongs to a legitimate organization.',
+      evidence: hostname,
+    });
+  }
+
+  if (hostname.endsWith('.xyz') || hostname.endsWith('.win') || hostname.endsWith('.info') || hostname.endsWith('.top') || hostname.endsWith('.club')) {
+    signals.push({
+      type: 'suspicious_tld',
+      severity: 'low',
+      title: 'Suspicious Domain Extension',
+      explanation: 'This link uses a domain extension that is frequently associated with spam or disposable sites.',
+      evidence: hostname,
+    });
+  }
+
+  const hasCredentialPath = CREDENTIAL_PATHS.some(kw => pathname.includes(kw) || search.includes(kw));
+  if (hasCredentialPath) {
+    signals.push({
+      type: 'credential_path',
+      severity: 'medium',
+      title: 'Credential Request Path',
+      explanation: 'The link points to a login, verification, or security page, which is a common phishing tactic.',
+      evidence: urlString.slice(0, 50),
+    });
+  }
+
+  // Brand impersonation: brand word appears in hostname but the root domain is NOT the official one.
+  // e.g., "paypal-verify.com" → FLAGGED; "pay.paypal.com" → NOT flagged.
+  const hostParts = hostname.split('.');
+  const rootDomain = hostParts.slice(-2).join('.'); // e.g. "paypal.com" or "fake-paypal.com"
+  for (const brand of BRANDS) {
+    const officialDomain = `${brand}.com`;
+    // Skip if the root domain IS the official domain (handles subdomains like pay.google.com)
+    if (rootDomain === officialDomain) continue;
+    // Flag if the hostname contains the brand name but isn't on the official domain
+    if (hostname.includes(brand)) {
+      signals.push({
+        type: 'brand_impersonation',
+        severity: 'high',
+        title: 'Brand Impersonation',
+        explanation: `The domain attempts to look like ${brand}, but it is not their official website.`,
+        evidence: hostname,
+      });
+      break;
+    }
+  }
+
+  // Typosquatting: normalize 0→o, 1→l, then check if normalized hostname contains a brand
+  // but the original hostname does NOT (meaning substituted chars were used to deceive).
+  const normalizedHostname = hostname.replace(/0/g, 'o').replace(/1/g, 'l').replace(/3/g, 'e');
+  const rootNormalized = normalizedHostname.split('.').slice(-2).join('.');
+  for (const brand of BRANDS) {
+    const officialDomain = `${brand}.com`;
+    if (rootNormalized === officialDomain) continue; // skip exact official
+    if (normalizedHostname.includes(brand) && !hostname.includes(brand)) {
+      signals.push({
+        type: 'typosquatting',
+        severity: 'high',
+        title: 'Deceptive Domain Spelling',
+        explanation: 'The domain uses look-alike characters (e.g., "0" for "o") to impersonate a legitimate brand.',
+        evidence: hostname,
+      });
+      break;
+    }
+  }
+
+  if (hostname.startsWith('xn--')) {
+    signals.push({
+      type: 'punycode_domain',
+      severity: 'medium',
+      title: 'Punycode Domain',
+      explanation: 'The link uses international characters to visually mimic a legitimate domain.',
+      evidence: hostname,
+    });
+  }
+
+  if (parsedUrl.port && parsedUrl.port !== '80' && parsedUrl.port !== '443') {
+    signals.push({
+      type: 'suspicious_port',
+      severity: 'low',
+      title: 'Non-Standard Port',
+      explanation: 'The link directs to a non-standard port, which is unusual for standard public websites.',
+      evidence: `Port: ${parsedUrl.port}`,
+    });
+  }
+
+  if (urlString.length > 200) {
+    signals.push({
+      type: 'excessive_length',
+      severity: 'low',
+      title: 'Unusually Long URL',
+      explanation: 'The link is exceptionally long, which is sometimes used to hide the true destination or pass extensive tracking data.',
+      evidence: '(Long URL omitted)',
+    });
+  }
+
+  return signals;
+}
+
+module.exports = { analyzeUrl };
