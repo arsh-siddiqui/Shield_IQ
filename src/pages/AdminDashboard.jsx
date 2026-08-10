@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import * as Icons from "lucide-react";
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip as RTooltip, CartesianGrid, PieChart, Pie, Cell, Legend } from "recharts";
@@ -10,10 +10,10 @@ import SearchBar from "../components/ui/SearchBar";
 import Modal from "../components/ui/Modal";
 import Input from "../components/ui/Input";
 import Pagination from "../components/ui/Pagination";
-import { adminStats, monthlyGrowth, riskDistribution } from "../data/dummyData";
-import { useAppData } from "../context/AppDataContext";
 import { useToast } from "../context/ToastContext";
 import useDebounce from "../hooks/useDebounce";
+import { fetchAdminStats, fetchAdminAnalytics, fetchAdminUsers, updateAdminUserRemote, deleteAdminUserRemote } from "../services/adminService";
+import { fetchArticles, createArticleRemote, updateArticleRemote, deleteArticleRemote } from "../services/articleService";
 
 const tabs = [
   { id: "users", label: "Users" },
@@ -22,8 +22,15 @@ const tabs = [
 
 const PAGE_SIZE = 4;
 
-const emptyUser = { name: "", email: "", role: "Student", status: "Active" };
+const emptyUser = { name: "", email: "", accountRole: "Student", status: "Active" };
 const emptyArticle = { title: "", category: "Bank Fraud", status: "Draft", views: "0" };
+
+// Colors for the pie chart
+const riskColors = {
+  High: "#EF4444",
+  Medium: "#F59E0B",
+  Low: "#10B981"
+};
 
 export default function AdminDashboard() {
   const [tab, setTab] = useState("users");
@@ -36,20 +43,41 @@ export default function AdminDashboard() {
   const [formValues, setFormValues] = useState(emptyUser);
   const [deleteTarget, setDeleteTarget] = useState(null); // { kind, id, label }
 
-  const {
-    adminUsersState,
-    addAdminUser,
-    updateAdminUser,
-    deleteAdminUser,
-    adminArticlesState,
-    addAdminArticle,
-    updateAdminArticle,
-    deleteAdminArticle,
-  } = useAppData();
   const { toast } = useToast();
 
-  const filteredUsers = adminUsersState.filter((u) => u.name.toLowerCase().includes(search.toLowerCase()));
-  const filteredArticles = adminArticlesState.filter((a) => a.title.toLowerCase().includes(search.toLowerCase()));
+  // Data states
+  const [stats, setStats] = useState(null);
+  const [analytics, setAnalytics] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [s, a, u, art] = await Promise.all([
+        fetchAdminStats(),
+        fetchAdminAnalytics(),
+        fetchAdminUsers({ limit: 1000 }), // simplified for admin view
+        fetchArticles({ limit: 1000 })
+      ]);
+      setStats(s);
+      setAnalytics(a);
+      setUsers(u);
+      setArticles(art);
+    } catch (err) {
+      toast("Failed to load admin data.", "danger");
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const filteredUsers = users.filter((u) => u.name.toLowerCase().includes(search.toLowerCase()));
+  const filteredArticles = articles.filter((a) => a.title.toLowerCase().includes(search.toLowerCase()));
 
   const activeList = tab === "users" ? filteredUsers : filteredArticles;
   const totalPages = Math.max(1, Math.ceil(activeList.length / PAGE_SIZE));
@@ -71,46 +99,95 @@ export default function AdminDashboard() {
   };
 
   const openEdit = (item) => {
-    setEditingId(item.id);
+    setEditingId(item._id || item.id);
     setFormValues(item);
     setFormOpen(true);
   };
 
-  const submitForm = () => {
-    if (tab === "users") {
-      if (!formValues.name || !formValues.email) {
-        toast("Name and email are required.", "warning");
-        return;
-      }
-      if (editingId) {
-        updateAdminUser(editingId, formValues);
-        toast("User updated.", "success");
+  const submitForm = async () => {
+    try {
+      if (tab === "users") {
+        if (!formValues.name) {
+          toast("Name is required.", "warning");
+          return;
+        }
+        if (editingId) {
+          await updateAdminUserRemote(editingId, formValues);
+          toast("User updated.", "success");
+        } else {
+          toast("Please use the registration page to add users.", "warning");
+          return;
+        }
       } else {
-        addAdminUser(formValues);
-        toast("User added.", "success");
+        if (!formValues.title) {
+          toast("Title is required.", "warning");
+          return;
+        }
+        if (editingId) {
+          await updateArticleRemote(editingId, formValues);
+          toast("Article updated.", "success");
+        } else {
+          await createArticleRemote(formValues);
+          toast("Article added.", "success");
+        }
       }
-    } else {
-      if (!formValues.title) {
-        toast("Title is required.", "warning");
-        return;
-      }
-      if (editingId) {
-        updateAdminArticle(editingId, formValues);
-        toast("Article updated.", "success");
-      } else {
-        addAdminArticle(formValues);
-        toast("Article added.", "success");
-      }
+      setFormOpen(false);
+      loadData();
+    } catch (err) {
+      toast("Failed to save changes.", "danger");
     }
-    setFormOpen(false);
   };
 
-  const confirmDelete = () => {
-    if (deleteTarget.kind === "users") deleteAdminUser(deleteTarget.id);
-    else deleteAdminArticle(deleteTarget.id);
-    toast(`${deleteTarget.kind === "users" ? "User" : "Article"} deleted.`, "success");
-    setDeleteTarget(null);
+  const confirmDelete = async () => {
+    try {
+      if (deleteTarget.kind === "users") {
+        await deleteAdminUserRemote(deleteTarget.id);
+      } else {
+        await deleteArticleRemote(deleteTarget.id);
+      }
+      toast(`${deleteTarget.kind === "users" ? "User" : "Article"} deleted.`, "success");
+      setDeleteTarget(null);
+      loadData();
+    } catch (err) {
+      toast(err.response?.data?.message || "Failed to delete.", "danger");
+    }
   };
+
+  // Derived Stats
+  const displayStats = [
+    { label: "Total Users", value: stats?.totalUsers || 0, change: "--", icon: "Users" },
+    { label: "Published Articles", value: stats?.publishedArticles || 0, change: "--", icon: "FileText" },
+    { label: "Simulations", value: stats?.totalSimulations || 0, change: "--", icon: "Gamepad2" },
+    { label: "Scans Today", value: stats?.scansToday || 0, change: "--", icon: "Activity" }
+  ];
+
+  // Derived Analytics
+  let monthlyData = [];
+  if (analytics?.userGrowth && analytics?.scanGrowth) {
+    const months = new Set([
+      ...analytics.userGrowth.map(u => u._id),
+      ...analytics.scanGrowth.map(s => s._id)
+    ]);
+    monthlyData = Array.from(months).sort().map(month => {
+      const ug = analytics.userGrowth.find(u => u._id === month);
+      const sg = analytics.scanGrowth.find(s => s._id === month);
+      return { month, users: ug?.count || 0, scans: sg?.count || 0 };
+    });
+  }
+
+  const riskPieData = (analytics?.riskDistribution || []).map(r => ({
+    name: r._id || "Unknown",
+    value: r.count,
+    color: riskColors[r._id] || "#94A3B8"
+  }));
+
+  if (loading && !stats) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-64 text-ink-faint">Loading admin dashboard...</div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -124,7 +201,7 @@ export default function AdminDashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {adminStats.map((s, i) => {
+        {displayStats.map((s, i) => {
           const Icon = Icons[s.icon] || Icons.BarChart3;
           return (
             <motion.div key={s.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
@@ -149,7 +226,7 @@ export default function AdminDashboard() {
           <h3 className="font-bold text-ink mb-4">Growth Overview</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={monthlyGrowth}>
+              <LineChart data={monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                 <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: "#94A3B8" }} />
                 <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: "#94A3B8" }} />
@@ -166,8 +243,8 @@ export default function AdminDashboard() {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={riskDistribution} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={3} animationDuration={1200}>
-                  {riskDistribution.map((entry, i) => (
+                <Pie data={riskPieData} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={3} animationDuration={1200}>
+                  {riskPieData.map((entry, i) => (
                     <Cell key={i} fill={entry.color} />
                   ))}
                 </Pie>
@@ -205,9 +282,11 @@ export default function AdminDashboard() {
               placeholder={`Search ${tab}...`}
               className="w-full sm:w-56"
             />
-            <Button size="sm" icon={Icons.Plus} onClick={openAdd}>
-              Add
-            </Button>
+            {tab !== "users" && (
+              <Button size="sm" icon={Icons.Plus} onClick={openAdd}>
+                Add
+              </Button>
+            )}
           </div>
         </div>
 
@@ -219,28 +298,26 @@ export default function AdminDashboard() {
                   <th className="pb-3 font-semibold">Name</th>
                   <th className="pb-3 font-semibold">Role</th>
                   <th className="pb-3 font-semibold">Status</th>
-                  <th className="pb-3 font-semibold">Joined</th>
                   <th className="pb-3 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {pagedList.map((u) => (
-                  <tr key={u.id}>
+                  <tr key={u._id}>
                     <td className="py-3">
                       <div className="font-medium text-ink">{u.name}</div>
                       <div className="text-xs text-ink-faint">{u.email}</div>
                     </td>
-                    <td className="py-3 text-ink-light">{u.role}</td>
+                    <td className="py-3 text-ink-light">{u.accountRole || u.role}</td>
                     <td className="py-3">
-                      <Badge tone={u.status === "Active" ? "success" : "danger"}>{u.status}</Badge>
+                      <Badge tone={u.status === "Active" ? "success" : "danger"}>{u.status || "Active"}</Badge>
                     </td>
-                    <td className="py-3 text-ink-light">{u.joined}</td>
                     <td className="py-3 text-right">
                       <button onClick={() => openEdit(u)} className="p-2 rounded-lg hover:bg-slate-100 text-ink-faint mr-1">
                         <Icons.Pencil className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setDeleteTarget({ kind: "users", id: u.id, label: u.name })}
+                        onClick={() => setDeleteTarget({ kind: "users", id: u._id, label: u.name })}
                         className="p-2 rounded-lg hover:bg-red-50 text-danger"
                       >
                         <Icons.Trash2 className="w-4 h-4" />
@@ -250,7 +327,7 @@ export default function AdminDashboard() {
                 ))}
                 {pagedList.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-ink-faint">No users match your search.</td>
+                    <td colSpan={4} className="py-8 text-center text-ink-faint">No users match your search.</td>
                   </tr>
                 )}
               </tbody>
@@ -264,25 +341,23 @@ export default function AdminDashboard() {
                   <th className="pb-3 font-semibold">Title</th>
                   <th className="pb-3 font-semibold">Category</th>
                   <th className="pb-3 font-semibold">Status</th>
-                  <th className="pb-3 font-semibold">Views</th>
                   <th className="pb-3 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {pagedList.map((a) => (
-                  <tr key={a.id}>
+                  <tr key={a._id}>
                     <td className="py-3 font-medium text-ink">{a.title}</td>
                     <td className="py-3 text-ink-light">{a.category}</td>
                     <td className="py-3">
                       <Badge tone={a.status === "Published" ? "success" : "neutral"}>{a.status}</Badge>
                     </td>
-                    <td className="py-3 text-ink-light">{a.views}</td>
                     <td className="py-3 text-right">
                       <button onClick={() => openEdit(a)} className="p-2 rounded-lg hover:bg-slate-100 text-ink-faint mr-1">
                         <Icons.Pencil className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setDeleteTarget({ kind: "articles", id: a.id, label: a.title })}
+                        onClick={() => setDeleteTarget({ kind: "articles", id: a._id, label: a.title })}
                         className="p-2 rounded-lg hover:bg-red-50 text-danger"
                       >
                         <Icons.Trash2 className="w-4 h-4" />
@@ -292,7 +367,7 @@ export default function AdminDashboard() {
                 ))}
                 {pagedList.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-ink-faint">No articles match your search.</td>
+                    <td colSpan={4} className="py-8 text-center text-ink-faint">No articles match your search.</td>
                   </tr>
                 )}
               </tbody>
@@ -308,16 +383,15 @@ export default function AdminDashboard() {
         {tab === "users" ? (
           <div className="space-y-4">
             <Input label="Name" value={formValues.name || ""} onChange={(e) => setFormValues((v) => ({ ...v, name: e.target.value }))} />
-            <Input label="Email" type="email" value={formValues.email || ""} onChange={(e) => setFormValues((v) => ({ ...v, email: e.target.value }))} />
             <div>
-              <span className="block text-sm font-medium text-ink mb-1.5">Role</span>
+              <span className="block text-sm font-medium text-ink mb-1.5">Account Role</span>
               <div className="grid grid-cols-3 gap-2">
                 {["Student", "Professional", "Business"].map((r) => (
                   <button
                     key={r}
-                    onClick={() => setFormValues((v) => ({ ...v, role: r }))}
+                    onClick={() => setFormValues((v) => ({ ...v, accountRole: r }))}
                     className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-colors ${
-                      formValues.role === r ? "border-primary bg-primary-50 text-primary" : "border-slate-200 text-ink-light"
+                      formValues.accountRole === r ? "border-primary bg-primary-50 text-primary" : "border-slate-200 text-ink-light"
                     }`}
                   >
                     {r}

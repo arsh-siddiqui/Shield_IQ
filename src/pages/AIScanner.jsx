@@ -199,7 +199,7 @@ export default function AIScanner() {
 
       <div className="max-w-3xl mt-4 flex items-start gap-2 text-xs text-ink-faint">
         <Icons.Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
-        This demo uses simulated analysis with realistic sample results to show you how ShieldIQ works.
+        ShieldIQ analyzes input content against multi-layer threat intelligence and machine learning models to detect risk.
       </div>
     </AppLayout>
   );

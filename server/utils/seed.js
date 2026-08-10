@@ -14,6 +14,10 @@ const User = require("../models/User");
 const Article = require("../models/Article");
 const Simulation = require("../models/Simulation");
 const Quiz = require("../models/Quiz");
+const Lesson = require("../models/Lesson");
+const QuickLearn = require("../models/QuickLearn");
+const SafetyTip = require("../models/SafetyTip");
+const ALL_LESSON_STEPS = require("./lessonStepsData");
 
 const ARTICLES = [
   { title: "Spotting Fake Bank Calls", category: "Bank Fraud", difficulty: "Beginner", readingTime: "4 min", description: "Learn the exact phrases real bank staff never use on a call.", status: "Published" },
@@ -207,6 +211,16 @@ async function seed() {
   // eslint-disable-next-line no-console
   console.log(`[seed] Connected to ${mongoose.connection.name}`);
 
+  // --- Dynamic Import of Frontend Dummy Data --------------------------------
+  let dummyData;
+  try {
+    const dummyPath = "file:///" + require("path").resolve(__dirname, "../../src/data/dummyData.js").replace(/\\/g, "/");
+    dummyData = await import(dummyPath);
+  } catch (err) {
+    console.error("[seed] Failed to import dummyData.js. Are you running this from the server directory?");
+    throw err;
+  }
+
   // --- Admin user -----------------------------------------------------------
   let admin = await User.findOne({ email: env.ADMIN_SEED_EMAIL });
   if (!admin) {
@@ -222,18 +236,10 @@ async function seed() {
     console.log(`[seed] Admin user already exists: ${admin.email}`);
   }
 
-  // --- Demo user --------------------------------------------------------------
-  let demoUser = await User.findOne({ email: "aarav.mehta@example.com" });
-  if (!demoUser) {
-    demoUser = await User.create({
-      name: "Aarav Mehta",
-      email: "aarav.mehta@example.com",
-      password: "DemoPass123!",
-      accountRole: "Professional",
-      xp: 2140,
-      streakDays: 12,
-    });
-    console.log(`[seed] Created demo user: ${demoUser.email}`);
+  // --- Cleanup legacy demo user if present ------------------------------------
+  const deletedDemo = await User.deleteOne({ email: "aarav.mehta@example.com" });
+  if (deletedDemo.deletedCount > 0) {
+    console.log("[seed] Cleaned up legacy demo user: aarav.mehta@example.com");
   }
 
   // --- Articles -----------------------------------------------------------
@@ -279,6 +285,87 @@ async function seed() {
     quizCount += 1;
   }
   console.log(`[seed] Upserted ${quizCount} quizzes`);
+
+  // --- Lessons --------------------------------------------------------------
+  let lessonCount = 0;
+  for (let i = 0; i < dummyData.learningPaths.length; i++) {
+    const path = dummyData.learningPaths[i];
+    for (let j = 0; j < path.lessons.length; j++) {
+      const lessonId = path.lessons[j];
+      const lessonMeta = dummyData.lessons[lessonId];
+      // Prefer ALL_LESSON_STEPS (full content) over dummyData.lessonSteps (mostly empty)
+      const lessonStepsData = ALL_LESSON_STEPS[lessonId] || dummyData.lessonSteps[lessonId] || {};
+      
+      if (!lessonMeta) continue;
+
+      await Lesson.findOneAndUpdate(
+        { slug: lessonId },
+        {
+          slug: lessonId,
+          topic: path.title,
+          title: lessonMeta.title,
+          description: lessonMeta.description,
+          difficulty: lessonMeta.difficulty || "Beginner",
+          estimatedTime: lessonMeta.time || "3 min",
+          order: j,
+          skill: "Phishing Detection",
+          xpReward: 30,
+          steps: lessonStepsData,
+          isPublished: true,
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+      lessonCount++;
+    }
+  }
+  console.log(`[seed] Upserted ${lessonCount} lessons`);
+
+  // --- Quick Learns ---------------------------------------------------------
+  let qlCount = 0;
+  if (dummyData.quickLearns) {
+    for (const ql of dummyData.quickLearns) {
+      await QuickLearn.findOneAndUpdate(
+        { title: ql.title },
+        {
+          title: ql.title,
+          explanation: ql.explanation,
+          category: ql.category || "General",
+          options: ql.options.map((opt) => ({
+            id: String(opt.id),
+            text: opt.text,
+            isSuspicious: opt.isSuspicious,
+            correct: opt.correct !== undefined ? opt.correct : (opt.isSuspicious === false),
+          })),
+          feedback: ql.feedback,
+          xpReward: 10,
+          isActive: true
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+      qlCount++;
+    }
+  }
+  console.log(`[seed] Upserted ${qlCount} quick learns`);
+
+  // --- Safety Tips ----------------------------------------------------------
+  let stCount = 0;
+  if (dummyData.safetyTips) {
+    for (let i = 0; i < dummyData.safetyTips.length; i++) {
+      const st = dummyData.safetyTips[i];
+      await SafetyTip.findOneAndUpdate(
+        { title: st.title },
+        {
+          title: st.title,
+          detail: st.detail,
+          order: i,
+          isActive: true
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+      stCount++;
+    }
+  }
+  console.log(`[seed] Upserted ${stCount} safety tips`);
 
   console.log("[seed] Done.");
   await mongoose.disconnect();

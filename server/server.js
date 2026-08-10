@@ -24,7 +24,13 @@ const app = express();
 app.use(helmet());
 app.use(
   cors({
-    origin: env.CLIENT_URL,
+    origin: function (origin, callback) {
+      if (!origin || origin === env.CLIENT_URL || /^http:\/\/localhost:517\d$/.test(origin)) {
+        callback(null, origin || true);
+      } else {
+        callback(null, env.CLIENT_URL);
+      }
+    },
     credentials: true, // required so the browser sends/receives the httpOnly auth cookie
   })
 );

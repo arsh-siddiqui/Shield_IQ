@@ -8,6 +8,7 @@ const {
   toggleBookmark,
   toggleLike,
   markArticleRead,
+  completeChallenge,
 } = require("../controllers/userController");
 const { protect } = require("../middleware/auth");
 const requireDb = require("../middleware/requireDb");
@@ -27,5 +28,8 @@ router.get("/progress", getProgress);
 router.post("/articles/:id/bookmark", idParamValidator, validate, toggleBookmark);
 router.post("/articles/:id/like", idParamValidator, validate, toggleLike);
 router.post("/articles/:id/read", idParamValidator, validate, markArticleRead);
+
+// Custom challenge endpoint, no complex ID validation needed for strings like "passwords"
+router.post("/challenges/:id", completeChallenge);
 
 module.exports = router;

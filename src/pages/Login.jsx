@@ -39,8 +39,7 @@ export default function Login() {
     }
 
     if (result.offline) {
-      // Backend isn't reachable — this demo still works end-to-end locally.
-      toast("Running in offline demo mode — continuing without the backend.", "info");
+      toast("Offline mode — logging you in locally.", "info");
       navigate("/dashboard");
       return;
     }
@@ -123,7 +122,7 @@ export default function Login() {
               </label>
               <button
                 type="button"
-                onClick={() => toast("Password reset isn't available in this demo.", "info")}
+                onClick={() => toast("Password reset isn't available yet.", "info")}
                 className="text-primary font-semibold hover:underline"
               >
                 Forgot password?
@@ -143,7 +142,7 @@ export default function Login() {
 
             <button
               type="button"
-              onClick={() => toast("Google login isn't wired up in this demo — use the form above instead.", "info")}
+              onClick={() => toast("Google login is currently unavailable. Please use email and password.", "info")}
               className="w-full flex items-center justify-center gap-3 border border-slate-200 rounded-xl py-3 text-sm font-semibold text-ink hover:bg-slate-50 transition"
             >
               <svg className="w-4 h-4" viewBox="0 0 48 48">

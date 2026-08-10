@@ -9,9 +9,7 @@ const HIGH_RISK_WORDS = [
 const MEDIUM_RISK_WORDS = ["offer", "discount", "sale", "reward", "bonus", "gift card", "sign up", "subscribe"];
 
 /**
- * Deterministic, purely front-end "analysis" — hashes simple keyword signals
- * from the pasted text into a risk score and picks a matching result template.
- * There is no real detection model here; it exists to make the demo feel alive.
+ * Fallback local heuristic scanner for offline or quick client-side analysis.
  */
 export function analyzeContent(rawText = "", type = "url") {
   const text = rawText.toLowerCase().trim();

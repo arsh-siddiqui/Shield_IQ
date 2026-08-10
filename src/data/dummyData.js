@@ -1,25 +1,20 @@
-// ShieldIQ — realistic dummy data. Frontend only, no backend, no real APIs.
+// ShieldIQ — Global Content & Configuration Constants.
 
 export const currentUser = {
-  name: "Aarav Mehta",
-  email: "aarav.mehta@example.com",
-  role: "Professional",
-  avatar: "AM",
-  memberSince: "Feb 2025",
-  level: 7,
-  xp: 2140,
-  xpToNextLevel: 2500,
-  streakDays: 12,
-  scansThisMonth: 47,
-  badges: ["First Scan", "Phish Spotter", "7-Day Streak", "Quiz Master"],
+  name: "Guest",
+  email: "",
+  role: "Student",
+  avatar: "G",
+  memberSince: "",
+  level: 1,
+  xp: 0,
+  xpToNextLevel: 100,
+  streakDays: 0,
+  scansThisMonth: 0,
+  badges: [],
 };
 
-export const heroStats = [
-  { label: "Messages Scanned", value: 1284392, suffix: "+" },
-  { label: "Threats Detected", value: 68210, suffix: "+" },
-  { label: "Users Protected", value: 94500, suffix: "+" },
-  { label: "Learning Hours", value: 21870, suffix: "+" },
-];
+export const heroStats = [];
 
 export const howItWorks = [
   {
@@ -524,69 +519,50 @@ export const safetyTips = [
 ];
 
 export const initialSkillProgress = {
-  "Phishing Detection": 20,
-  "Social Engineering": 15,
-  "Safe Browsing": 40,
-  "Online Payments": 10,
-  "Scam Recognition": 25
+  "Phishing Detection": 0,
+  "Social Engineering": 0,
+  "Safe Browsing": 0,
+  "Online Payments": 0,
+  "Scam Recognition": 0
 };
 
 export const recommendations = [
-  { title: "You recently struggled with QR scams.", lessonId: "up-2", time: "4 min", difficulty: "Beginner" },
   { title: "Brush up on identifying fake emails.", lessonId: "ph-4", time: "4 min", difficulty: "Beginner" }
 ];
 
-
-
 export const profileBadges = [
-  { name: "First Scan", icon: "ScanLine", earned: true },
-  { name: "Phish Spotter", icon: "Fish", earned: true },
-  { name: "7-Day Streak", icon: "Flame", earned: true },
-  { name: "Quiz Master", icon: "GraduationCap", earned: true },
+  { name: "First Scan", icon: "ScanLine", earned: false },
+  { name: "Phish Spotter", icon: "Fish", earned: false },
+  { name: "7-Day Streak", icon: "Flame", earned: false },
+  { name: "Quiz Master", icon: "GraduationCap", earned: false },
   { name: "Simulation Pro", icon: "Gamepad2", earned: false },
   { name: "Community Guardian", icon: "Users", earned: false },
 ];
 
-export const completedSimulations = [
-  { title: "Bank Phishing Email", score: 90, date: "Aug 3, 2026" },
-  { title: "OTP Fraud Call", score: 75, date: "Jul 29, 2026" },
-  { title: "Courier Scam SMS", score: 100, date: "Jul 21, 2026" },
-];
+export const completedSimulations = [];
 
 export const adminStats = [
-  { label: "Total Users", value: "94,502", change: "+3.2%", icon: "Users" },
-  { label: "Published Articles", value: "128", change: "+4", icon: "FileText" },
-  { label: "Scam Templates", value: "312", change: "+11", icon: "ShieldAlert" },
-  { label: "Scans Today", value: "18,204", change: "+8.7%", icon: "ScanLine" },
+  { label: "Published Articles", value: "11", change: "Active", icon: "FileText" },
+  { label: "Scam Templates", value: "6", change: "Active", icon: "ShieldAlert" },
+  { label: "Interactive Lessons", value: "25", change: "Active", icon: "BookOpen" },
 ];
 
 export const adminUsers = [
-  { id: 1, name: "Aarav Mehta", email: "aarav.mehta@example.com", role: "Professional", status: "Active", joined: "Feb 2025" },
-  { id: 2, name: "Priya Nair", email: "priya.nair@example.com", role: "Business", status: "Active", joined: "Jan 2025" },
-  { id: 3, name: "Rohan Kulkarni", email: "rohan.k@example.com", role: "Student", status: "Active", joined: "Mar 2025" },
-  { id: 4, name: "Sana Sheikh", email: "sana.sheikh@example.com", role: "Business", status: "Suspended", joined: "Dec 2024" },
-  { id: 5, name: "Vivaan Joshi", email: "vivaan.j@example.com", role: "Student", status: "Active", joined: "May 2025" },
+  { id: 1, name: "ShieldIQ Admin", email: "admin@shieldiq.app", role: "Business", status: "Active", joined: "Aug 2026" },
 ];
 
 export const adminArticles = [
-  { id: 1, title: "Spotting Fake Bank Calls", category: "Bank Fraud", status: "Published", views: "12.4k" },
-  { id: 2, title: "The Fake Refund Request", category: "UPI Scam", status: "Published", views: "8.1k" },
+  { id: 1, title: "Spotting Fake Bank Calls", category: "Bank Fraud", status: "Published", views: "—" },
+  { id: 2, title: "The Fake Refund Request", category: "UPI Scam", status: "Published", views: "—" },
   { id: 3, title: "Voice Cloning Scams", category: "Deepfake", status: "Draft", views: "—" },
-  { id: 4, title: "Work-From-Home Red Flags", category: "Job Scam", status: "Published", views: "15.9k" },
+  { id: 4, title: "Work-From-Home Red Flags", category: "Job Scam", status: "Published", views: "—" },
 ];
 
-export const monthlyGrowth = [
-  { month: "Feb", users: 4200, scans: 12000 },
-  { month: "Mar", users: 5800, scans: 18500 },
-  { month: "Apr", users: 7100, scans: 24300 },
-  { month: "May", users: 9400, scans: 31200 },
-  { month: "Jun", users: 12300, scans: 41800 },
-  { month: "Jul", users: 16200, scans: 55600 },
-];
+export const monthlyGrowth = [];
 
 export const riskDistribution = [
-  { name: "Safe", value: 62, color: "#22C55E" },
-  { name: "Low Risk", value: 18, color: "#14B8A6" },
+  { name: "Safe", value: 60, color: "#22C55E" },
+  { name: "Low Risk", value: 20, color: "#14B8A6" },
   { name: "Medium Risk", value: 12, color: "#F59E0B" },
   { name: "High Risk", value: 8, color: "#EF4444" },
 ];
@@ -595,10 +571,7 @@ export const riskDistribution = [
 // Notification bell dropdown (distinct from toast pop-ups)
 // ---------------------------------------------------------------------------
 export const initialNotifications = [
-  { id: 1, title: "New high-risk scam trending nearby", body: "A fake UPI refund scam has been reported 230 times this week.", time: "10m ago", read: false, type: "warning" },
-  { id: 2, title: "You earned the \"Quiz Master\" badge", body: "Completed 5 awareness quizzes with a perfect score.", time: "2h ago", read: false, type: "success" },
-  { id: 3, title: "Weekly summary is ready", body: "You scanned 12 messages and completed 3 lessons this week.", time: "1d ago", read: true, type: "info" },
-  { id: 4, title: "New lesson published", body: "\"Voice Cloning Scams\" is now available in the Awareness Hub.", time: "2d ago", read: true, type: "info" },
+  { id: 1, title: "Welcome to ShieldIQ", body: "Scan a message or start your first lesson to build cybersecurity skills.", time: "Just now", read: false, type: "info" }
 ];
 
 // ---------------------------------------------------------------------------

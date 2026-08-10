@@ -13,7 +13,7 @@ import { analyzeContent as analyzeContentLocal } from "../utils/scanEngine";
 import { isBackendUnreachable } from "../services/apiClient";
 import { loginUser, registerUser, logoutUser, getCurrentUser } from "../services/authService";
 import { analyzeContentRemote } from "../services/scanService";
-import { completeLessonRemote } from "../services/learnService";
+import { completeLessonRemote, updateLessonProgress } from "../services/learnService";
 import { submitSimulationRemote } from "../services/simulationService";
 
 const AppDataContext = createContext(null);
@@ -21,6 +21,20 @@ const AppDataContext = createContext(null);
 let scanIdSeq = 100;
 let adminUserIdSeq = 900;
 let adminArticleIdSeq = 900;
+
+const defaultGuestUser = {
+  name: "Guest",
+  email: "",
+  role: "Student",
+  avatar: "G",
+  memberSince: "",
+  level: 1,
+  xp: 0,
+  xpToNextLevel: 100,
+  streakDays: 0,
+  scansThisMonth: 0,
+  badges: [],
+};
 
 /** Reshapes the API's user object onto the fields the existing UI already reads. */
 function mergeRemoteUser(local, remote) {
@@ -30,9 +44,9 @@ function mergeRemoteUser(local, remote) {
     email: remote.email,
     role: remote.role,
     isAdmin: remote.isAdmin,
-    avatar: remote.avatar,
-    xp: remote.xp,
-    streakDays: remote.streakDays,
+    avatar: remote.avatar || (remote.name ? remote.name.substring(0, 2).toUpperCase() : "U"),
+    xp: remote.xp || 0,
+    streakDays: remote.streakDays || 0,
     memberSince: remote.memberSince
       ? new Date(remote.memberSince).toLocaleDateString("en-US", { month: "short", year: "numeric" })
       : local.memberSince,
@@ -41,26 +55,31 @@ function mergeRemoteUser(local, remote) {
 
 export function AppDataProvider({ children }) {
   // ---- Profile -----------------------------------------------------------
-  const [user, setUser] = useState(currentUser);
+  const [user, setUser] = useState(defaultGuestUser);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const updateUser = useCallback((patch) => setUser((u) => ({ ...u, ...patch })), []);
 
-  const [scanHistory, setScanHistory] = useState(initialScans);
+  const [scanHistory, setScanHistory] = useState([]);
   const [learningProgress, setLearningProgress] = useState(() => new Set());
+  const [inProgressLessons, setInProgressLessons] = useState(() => new Set());
   const [simulationResults, setSimulationResults] = useState({});
   const [quizResults, setQuizResults] = useState({});
-  const [xp, setXp] = useState(currentUser.xp);
+  const [xp, setXp] = useState(0);
 
   const loadUserData = useCallback(async (remoteUser) => {
     setUser((u) => mergeRemoteUser(u, remoteUser));
     setIsAuthenticated(true);
     
-    // Clear demo data immediately for authenticated users
     setScanHistory([]);
     setLearningProgress(new Set());
+    setInProgressLessons(new Set());
     setSimulationResults({});
     setQuizResults({});
+    setBookmarks(new Set());
+    setLikes(new Set());
+    setReadArticles(new Set());
+    setChallengeCompletions(new Set());
     setXp(remoteUser.xp || 0);
 
     try {
@@ -77,12 +96,18 @@ export function AppDataProvider({ children }) {
       }
       if (progressData.lessonProgress) {
         const lpSet = new Set();
+        const ipSet = new Set();
         progressData.lessonProgress.forEach(lp => {
-          if (lp.status === "completed" && lp.lessonId && lp.lessonId.slug) {
-            lpSet.add(lp.lessonId.slug);
+          if (lp.lessonId && lp.lessonId.slug) {
+            if (lp.status === "completed") {
+              lpSet.add(lp.lessonId.slug);
+            } else if (lp.status === "in_progress") {
+              ipSet.add(lp.lessonId.slug);
+            }
           }
         });
         setLearningProgress(lpSet);
+        setInProgressLessons(ipSet);
       }
       
       if (progressData.quizzes) {
@@ -94,6 +119,11 @@ export function AppDataProvider({ children }) {
         });
         setQuizResults(qMap);
       }
+      
+      if (progressData.bookmarkedArticles) setBookmarks(new Set(progressData.bookmarkedArticles));
+      if (progressData.likedArticles) setLikes(new Set(progressData.likedArticles));
+      if (progressData.readArticles) setReadArticles(new Set(progressData.readArticles));
+      if (progressData.completedChallenges) setChallengeCompletions(new Set(progressData.completedChallenges));
       
       const { data: scanData } = await apiClient.get("/users/scans");
       if (scanData?.data?.scans) {
@@ -164,12 +194,30 @@ export function AppDataProvider({ children }) {
       /* backend unreachable — clearing local state below is enough */
     }
     setIsAuthenticated(false);
-    setUser(currentUser);
-    setScanHistory(initialScans);
+    setUser(defaultGuestUser);
+    setScanHistory([]);
     setLearningProgress(new Set());
+    setInProgressLessons(new Set());
     setSimulationResults({});
     setQuizResults({});
-    setXp(currentUser.xp);
+    setBookmarks(new Set());
+    setLikes(new Set());
+    setReadArticles(new Set());
+    setChallengeCompletions(new Set());
+    setXp(0);
+  }, []);
+
+  const clearOfflineProgress = useCallback(() => {
+    setScanHistory([]);
+    setLearningProgress(new Set());
+    setInProgressLessons(new Set());
+    setSimulationResults({});
+    setQuizResults({});
+    setBookmarks(new Set());
+    setLikes(new Set());
+    setReadArticles(new Set());
+    setChallengeCompletions(new Set());
+    setXp(0);
   }, []);
 
   // ---- Notification bell ---------------------------------------------------
@@ -204,7 +252,13 @@ export function AppDataProvider({ children }) {
 
   // ---- Awareness Hub: bookmarks, likes, quiz + read progress ---------------
   const [bookmarks, setBookmarks] = useState(() => new Set());
-  const toggleBookmark = useCallback((articleId) => {
+  const toggleBookmark = useCallback(async (articleId) => {
+    try {
+      const apiClient = (await import("../services/apiClient")).default;
+      await apiClient.post(`/users/articles/${articleId}/bookmark`);
+    } catch (e) {
+      // Backend unavailable or error, fall back to local
+    }
     setBookmarks((prev) => {
       const next = new Set(prev);
       next.has(articleId) ? next.delete(articleId) : next.add(articleId);
@@ -213,7 +267,13 @@ export function AppDataProvider({ children }) {
   }, []);
 
   const [likes, setLikes] = useState(() => new Set());
-  const toggleLike = useCallback((articleId) => {
+  const toggleLike = useCallback(async (articleId) => {
+    try {
+      const apiClient = (await import("../services/apiClient")).default;
+      await apiClient.post(`/users/articles/${articleId}/like`);
+    } catch (e) {
+      // Backend unavailable or error, fall back to local
+    }
     setLikes((prev) => {
       const next = new Set(prev);
       next.has(articleId) ? next.delete(articleId) : next.add(articleId);
@@ -222,7 +282,13 @@ export function AppDataProvider({ children }) {
   }, []);
 
   const [readArticles, setReadArticles] = useState(() => new Set());
-  const markArticleRead = useCallback((articleId) => {
+  const markArticleRead = useCallback(async (articleId) => {
+    try {
+      const apiClient = (await import("../services/apiClient")).default;
+      await apiClient.post(`/users/articles/${articleId}/read`);
+    } catch (e) {
+      // Backend unavailable or error, fall back to local
+    }
     setReadArticles((prev) => new Set(prev).add(articleId));
   }, []);
 
@@ -247,8 +313,22 @@ export function AppDataProvider({ children }) {
     } catch (e) {
       // Backend unavailable or error, fall back to local
     }
+    setInProgressLessons((prev) => {
+      const next = new Set(prev);
+      next.delete(lessonId);
+      return next;
+    });
     setLearningProgress((prev) => new Set(prev).add(lessonId));
     setXp((prev) => prev + xpEarned);
+  }, []);
+
+  const startLessonProgress = useCallback(async (lessonId) => {
+    try {
+      await updateLessonProgress(lessonId, { status: "in_progress" });
+    } catch (e) {
+      // Fallback
+    }
+    setInProgressLessons((prev) => new Set(prev).add(lessonId));
   }, []);
 
   const updateSkill = useCallback((skillName, amount) => {
@@ -258,7 +338,13 @@ export function AppDataProvider({ children }) {
     }));
   }, []);
 
-  const completeChallenge = useCallback((challengeId, xpEarned = 10) => {
+  const completeChallenge = useCallback(async (challengeId, xpEarned = 10) => {
+    try {
+      const apiClient = (await import("../services/apiClient")).default;
+      await apiClient.post(`/users/challenges/${challengeId}`, { xpEarned });
+    } catch (e) {
+      // Backend unavailable or error, fall back to local
+    }
     setChallengeCompletions((prev) => new Set(prev).add(challengeId));
     setXp((prev) => prev + xpEarned);
   }, []);
@@ -328,6 +414,7 @@ export function AppDataProvider({ children }) {
     login,
     register,
     logout,
+    clearOfflineProgress,
     xp,
     runScan,
     notifications,
@@ -358,9 +445,11 @@ export function AppDataProvider({ children }) {
     updateAdminArticle,
     deleteAdminArticle,
     learningProgress,
+    inProgressLessons,
     skillLevels,
     challengeCompletions,
     completeLesson,
+    startLessonProgress,
     updateSkill,
     completeChallenge,
   };

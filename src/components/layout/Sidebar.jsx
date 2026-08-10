@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LayoutDashboard, ScanLine, Gamepad2, BookOpen, User, ShieldCheck, Settings2 } from "lucide-react";
+import { LayoutDashboard, ScanLine, Gamepad2, BookOpen, User, ShieldCheck, Settings2, LogOut } from "lucide-react";
 import { useAppData } from "../../context/AppDataContext";
 
 const navItems = [
@@ -12,8 +12,13 @@ const navItems = [
 ];
 
 export default function Sidebar() {
-  const { user, xp } = useAppData();
+  const { user, xp, logout } = useAppData();
   const level = Math.max(1, Math.floor(xp / 300) + 1);
+
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = "/";
+  };
 
   return (
     <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 h-screen sticky top-0 bg-white border-r border-slate-100 py-6 px-4">
@@ -66,14 +71,19 @@ export default function Sidebar() {
         </NavLink>
       )}
 
-      <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-slate-50">
-        <div className="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
-          {user.avatar}
+      <div className="flex items-center justify-between gap-3 px-3 py-3 rounded-xl bg-slate-50 mt-auto">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+            {user.avatar}
+          </div>
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-ink truncate">{user.name}</div>
+            <div className="text-xs text-ink-faint truncate">Level {level} · {user.role}</div>
+          </div>
         </div>
-        <div className="min-w-0">
-          <div className="text-sm font-semibold text-ink truncate">{user.name}</div>
-          <div className="text-xs text-ink-faint truncate">Level {level} · {user.role}</div>
-        </div>
+        <button onClick={handleLogout} className="p-2 text-ink-faint hover:text-danger hover:bg-danger-50 rounded-lg transition-colors flex-shrink-0" title="Log Out">
+          <LogOut className="w-4 h-4" />
+        </button>
       </div>
     </aside>
   );

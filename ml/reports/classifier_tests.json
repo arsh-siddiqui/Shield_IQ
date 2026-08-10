@@ -1,0 +1,50 @@
+[
+  {
+    "id": "TC1",
+    "description": "Legitimate business email",
+    "label": "safe",
+    "probability": 0.0262,
+    "expectedTendency": "safe",
+    "tendencyMatched": true
+  },
+  {
+    "id": "TC2",
+    "description": "Phishing email (credential theft)",
+    "label": "phishing",
+    "probability": 0.9832,
+    "expectedTendency": "phishing",
+    "tendencyMatched": true
+  },
+  {
+    "id": "TC3",
+    "description": "Urgent bank message",
+    "label": "phishing",
+    "probability": 0.9877,
+    "expectedTendency": "phishing",
+    "tendencyMatched": true
+  },
+  {
+    "id": "TC4",
+    "description": "OTP request scam",
+    "label": "phishing",
+    "probability": 0.8796,
+    "expectedTendency": "phishing",
+    "tendencyMatched": true
+  },
+  {
+    "id": "TC5",
+    "description": "Job scam",
+    "label": "phishing",
+    "probability": 0.787,
+    "expectedTendency": "phishing",
+    "tendencyMatched": true
+  },
+  {
+    "id": "TC6",
+    "description": "Normal conversation",
+    "label": "phishing",
+    "probability": 0.5013,
+    "expectedTendency": "safe",
+    "tendencyMatched": false
+  }
+]

@@ -2,9 +2,12 @@
  * Phase 5A QA — Full Scanner Test Suite
  *
  * Tests two layers:
- *   1. ENGINE tests  — call analyzeContent() directly, verifying correct heuristic output.
+ *   1. ENGINE tests  — call analyzeContentSync() directly, verifying correct heuristic output.
  *   2. VALIDATION tests — simulate the controller's validation guard logic for empty/missing/
  *      invalid inputs that should be rejected before the engine is ever called.
+ *
+ * NOTE: Phase 5B/5C adds the async analyzeContent() pipeline (ML + TI + Groq).
+ * These tests specifically test the deterministic heuristic engine via analyzeContentSync().
  *
  * Run with:  node server/tests/scanner.test.js
  */
@@ -12,7 +15,7 @@
 'use strict';
 
 const assert = require('assert');
-const { analyzeContent, VALID_TYPES } = require('../services/scanService');
+const { analyzeContentSync: analyzeContent, VALID_TYPES } = require('../services/scanService');
 
 // ---------------------------------------------------------------------------
 // Helpers

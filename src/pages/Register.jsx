@@ -17,7 +17,7 @@ const roles = [
 
 export default function Register() {
   const navigate = useNavigate();
-  const { updateUser, register } = useAppData();
+  const { updateUser, register, clearOfflineProgress } = useAppData();
   const { toast } = useToast();
   const [role, setRole] = useState("Student");
   const [success, setSuccess] = useState(false);
@@ -55,8 +55,9 @@ export default function Register() {
     if (result.offline) {
       // Backend isn't reachable — fall back to the local demo flow so the
       // app still works end-to-end without a server.
-      updateUser({ name: values.name, email: values.email, role });
-      toast("Running in offline demo mode — continuing without the backend.", "info");
+      clearOfflineProgress();
+      updateUser({ name: values.name, email: values.email, role, streakDays: 0 });
+      toast("Offline mode — setting up local session.", "info");
       setSuccess(true);
       setTimeout(() => navigate("/dashboard"), 1600);
       return;
@@ -85,7 +86,7 @@ export default function Register() {
             {!success ? (
               <motion.div key="form" exit={{ opacity: 0, y: -10 }}>
                 <h1 className="text-2xl font-extrabold text-ink mb-2">Create your free account</h1>
-                <p className="text-sm text-ink-light mb-8">Takes less than a minute. No credit card needed.</p>
+                <p className="text-sm text-ink-light mb-8">Takes less than a minute.</p>
 
                 <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                   <Input
@@ -196,9 +197,9 @@ export default function Register() {
               <User className="w-20 h-20 text-white" />
             </div>
           </motion.div>
-          <h3 className="text-white font-bold text-xl mt-8 text-center relative z-10">Join 94,500+ protected users</h3>
+          <h3 className="text-white font-bold text-xl mt-8 text-center relative z-10">Start your cybersecurity journey</h3>
           <p className="text-white/80 text-sm text-center mt-3 max-w-xs relative z-10">
-            Start learning to spot scams in minutes, not months.
+            Learn to spot scams and protect your digital life.
           </p>
           <motion.div
             className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"

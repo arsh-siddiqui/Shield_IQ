@@ -13,6 +13,159 @@ import { riskTone } from "../utils/colorMaps";
 
 const severityTone = { high: "danger", medium: "accent", low: "secondary" };
 
+// ---------------------------------------------------------------------------
+// Evidence Panel — "How ShieldIQ reached this result"
+// Shows only sources that were actually available / contributed evidence.
+// ---------------------------------------------------------------------------
+
+function EvidenceCard({ icon: Icon, title, subtitle, badge, badgeColor = "slate" }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100"
+    >
+      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+        <Icon className="w-4 h-4 text-primary" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-xs font-semibold text-ink">{title}</div>
+        <div className="text-xs text-ink-light mt-0.5 leading-relaxed">{subtitle}</div>
+      </div>
+      {badge && (
+        <span
+          className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md flex-shrink-0 ${
+            badgeColor === "danger"
+              ? "bg-danger-50 text-danger"
+              : badgeColor === "success"
+              ? "bg-green-50 text-green-700"
+              : badgeColor === "warning"
+              ? "bg-amber-50 text-amber-700"
+              : "bg-slate-100 text-slate-500"
+          }`}
+        >
+          {badge}
+        </span>
+      )}
+    </motion.div>
+  );
+}
+
+function EvidencePanel({ result }) {
+  const sources = result?.analysisSources || [];
+  const ml = result?.ml;
+  const intelligence = result?.intelligence;
+  const heuristics = result?.heuristics;
+
+  // Build list of displayed evidence cards
+  const cards = [];
+
+  // Always show heuristics (always runs)
+  const signalCount = heuristics?.signalCount ?? (result?.detectedSignals?.length ?? 0);
+  cards.push({
+    id: "heuristics",
+    icon: Icons.ScanSearch,
+    title: "Heuristic Analysis",
+    subtitle:
+      signalCount === 0
+        ? "No suspicious signals detected in content structure."
+        : `${signalCount} suspicious signal${signalCount !== 1 ? "s" : ""} detected (${heuristics?.riskLevel || result?.riskLevel} risk).`,
+    badge: "Always Active",
+    badgeColor: "slate",
+  });
+
+  // ML evidence — only if it ran and was available
+  if (ml?.status === "available" && sources.includes("machine_learning")) {
+    const isPhishing = ml.label === "phishing";
+    const pct = Math.round((ml.probability ?? 0) * 100);
+    cards.push({
+      id: "ml",
+      icon: Icons.BrainCircuit,
+      title: "Machine Learning",
+      subtitle: isPhishing
+        ? `ML model detected phishing-like language (${pct}% phishing probability).`
+        : `ML model found no phishing language patterns (${pct}% phishing probability).`,
+      badge: isPhishing ? "Phishing Detected" : "No ML Flags",
+      badgeColor: isPhishing ? "danger" : "success",
+    });
+  } else if (ml?.status === "unavailable") {
+    // Only show if ML was expected but unavailable (email/sms/whatsapp scan types)
+    const relevantTypes = new Set(["email", "sms", "whatsapp"]);
+    if (relevantTypes.has(result?.scanType)) {
+      cards.push({
+        id: "ml_unavailable",
+        icon: Icons.BrainCircuit,
+        title: "Machine Learning",
+        subtitle: "ML service was unavailable. Heuristic engine provided the assessment.",
+        badge: "Unavailable",
+        badgeColor: "slate",
+      });
+    }
+  }
+
+  // PhishDestroy — only if TI ran and produced a real result
+  if (intelligence?.phishdestroy) {
+    const pd = intelligence.phishdestroy;
+    if (pd.status === "found" && pd.malicious) {
+      cards.push({
+        id: "phishdestroy",
+        icon: Icons.ShieldAlert,
+        title: "PhishDestroy Threat Intelligence",
+        subtitle: `Known suspicious domain. Risk score: ${pd.riskScore}/100. Severity: ${pd.severity}.`,
+        badge: "Known Threat",
+        badgeColor: "danger",
+      });
+    } else if (pd.status === "not_found" && sources.includes("phishdestroy")) {
+      cards.push({
+        id: "phishdestroy",
+        icon: Icons.ShieldCheck,
+        title: "PhishDestroy Threat Intelligence",
+        subtitle: "✓ No known threat found in external databases. (Not found ≠ safe.)",
+        badge: "Not Listed",
+        badgeColor: "success",
+      });
+    }
+  }
+
+  // Groq — only if it ran
+  if (sources.includes("groq")) {
+    cards.push({
+      id: "groq",
+      icon: Icons.Zap,
+      title: "AI Context Analysis",
+      subtitle: "Groq analysed overall content context and contributed to the final explanation.",
+      badge: "AI Assisted",
+      badgeColor: "warning",
+    });
+  }
+
+  if (cards.length === 0) return null;
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <Icons.LayoutList className="w-4 h-4 text-ink-faint" />
+        <h3 className="font-bold text-ink text-sm">How ShieldIQ reached this result</h3>
+      </div>
+      <div className="space-y-2">
+        {cards.map((card, i) => (
+          <motion.div key={card.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
+            <EvidenceCard {...card} />
+          </motion.div>
+        ))}
+      </div>
+      <p className="text-[10px] text-ink-faint mt-3 leading-relaxed">
+        ShieldIQ uses risk assessment based on available evidence — not guaranteed detection.
+        Results indicate phishing likelihood, not confirmed criminal activity.
+      </p>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main ScanResult Page
+// ---------------------------------------------------------------------------
+
 export default function ScanResult() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -128,6 +281,9 @@ export default function ScanResult() {
               ))}
             </div>
           </Card>
+
+          {/* Evidence panel — only shown when multi-layer data is present */}
+          <EvidencePanel result={r} />
 
           <div className="flex flex-wrap gap-3">
             <Button icon={Icons.FileSearch} onClick={() => navigate("/decoder")}>

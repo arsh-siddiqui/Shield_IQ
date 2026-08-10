@@ -1,0 +1,34 @@
+{
+  "modelName": "ShieldIQ Phishing Text Classifier",
+  "version": "1.0.0",
+  "algorithm": "TF-IDF (word 1-2gram + char 3-5gram) + Logistic Regression",
+  "dataset": "zefang-liu/phishing-email-dataset",
+  "datasetLicense": "LGPL-3.0",
+  "trainedAt": "2026-08-10T02:57:58.718688+00:00",
+  "randomSeed": 42,
+  "trainSamples": 14029,
+  "testSamples": 3508,
+  "tfidfWordNgramRange": [
+    1,
+    2
+  ],
+  "tfidfCharNgramRange": [
+    3,
+    5
+  ],
+  "tfidfMaxFeaturesWord": 30000,
+  "tfidfMaxFeaturesChar": 20000,
+  "lrC": 1.0,
+  "lrMaxIter": 1000,
+  "lrClassWeight": "balanced",
+  "accuracy": 0.988,
+  "precision": 0.9782,
+  "recall": 0.9901,
+  "f1": 0.9841,
+  "rocAuc": 0.9992,
+  "artifacts": {
+    "model": "artifacts/phishing_model.joblib",
+    "wordVectorizer": "artifacts/tfidf_word_vectorizer.joblib",
+    "charVectorizer": "artifacts/tfidf_char_vectorizer.joblib"
+  }
+}

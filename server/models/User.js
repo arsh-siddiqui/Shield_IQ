@@ -42,6 +42,10 @@ const userSchema = new mongoose.Schema(
       enum: ["Active", "Suspended"],
       default: "Active",
     },
+    bookmarkedArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Article" }],
+    likedArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Article" }],
+    readArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Article" }],
+    completedChallenges: [{ type: String }],
   },
   { timestamps: true }
 );

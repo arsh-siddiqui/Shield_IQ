@@ -24,7 +24,7 @@ const fadeUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
-const demoMessages = [
+const sampleMessages = [
   {
     sender: "alerts@bank-secure-verify.net",
     subject: "Account Suspension Notice",
@@ -53,14 +53,14 @@ const demoMessages = [
 
 export default function Landing() {
   const navigate = useNavigate();
-  const [demoIndex, setDemoIndex] = useState(0);
+  const [sampleIndex, setSampleIndex] = useState(0);
   const [scanning, setScanning] = useState(false);
-  const demo = demoMessages[demoIndex];
+  const sampleItem = sampleMessages[sampleIndex];
 
   const scanNext = () => {
     setScanning(true);
     setTimeout(() => {
-      setDemoIndex((i) => (i + 1) % demoMessages.length);
+      setSampleIndex((i) => (i + 1) % sampleMessages.length);
       setScanning(false);
     }, 900);
   };
@@ -88,12 +88,12 @@ export default function Landing() {
                 Get Started
               </Button>
               <Button size="lg" variant="outline" icon={PlayCircle} onClick={() => navigate("/scanner")}>
-                Try Demo
+                Scan a Message
               </Button>
             </motion.div>
             <motion.div variants={fadeUp} className="flex items-center gap-2 mt-8 text-sm text-ink-light">
               <CheckCircle2 className="w-4 h-4 text-secondary" />
-              No credit card required · Free forever plan
+              Free to use · Interactive protection
             </motion.div>
           </motion.div>
 
@@ -108,28 +108,28 @@ export default function Landing() {
               <Card className="p-6 max-w-md mx-auto relative z-10">
                 <AnimatePresence mode="wait">
                   <motion.div
-                    key={scanning ? "scanning" : demoIndex}
+                    key={scanning ? "scanning" : sampleIndex}
                     initial={{ opacity: 0, x: 12 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -12 }}
                     transition={{ duration: 0.25 }}
                   >
                     <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${demo.safe ? "bg-success-50" : "bg-danger-50"}`}>
-                        <Mail className={`w-5 h-5 ${demo.safe ? "text-success" : "text-danger"}`} />
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${sampleItem.safe ? "bg-success-50" : "bg-danger-50"}`}>
+                        <Mail className={`w-5 h-5 ${sampleItem.safe ? "text-success" : "text-danger"}`} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-ink truncate">{demo.sender}</div>
-                        <div className="text-xs text-ink-faint truncate">Subject: {demo.subject}</div>
+                        <div className="text-sm font-semibold text-ink truncate">{sampleItem.sender}</div>
+                        <div className="text-xs text-ink-faint truncate">Subject: {sampleItem.subject}</div>
                       </div>
                     </div>
-                    <p className="text-sm text-ink-light mt-4 leading-relaxed line-clamp-2">{demo.preview}</p>
+                    <p className="text-sm text-ink-light mt-4 leading-relaxed line-clamp-2">{sampleItem.preview}</p>
                     <div className="mt-5 flex items-center justify-between">
                       {scanning ? (
                         <Badge tone="neutral">Analyzing...</Badge>
                       ) : (
-                        <Badge tone={demo.safe ? "success" : "danger"} icon={demo.safe ? ShieldCheck : ShieldAlert}>
-                          {demo.risk}% · {demo.verdict}
+                        <Badge tone={sampleItem.safe ? "success" : "danger"} icon={sampleItem.safe ? ShieldCheck : ShieldAlert}>
+                          {sampleItem.risk}% · {sampleItem.verdict}
                         </Badge>
                       )}
                       <motion.div
@@ -162,20 +162,6 @@ export default function Landing() {
             />
           </motion.div>
         </div>
-      </section>
-
-      {/* STATS */}
-      <section className="max-w-7xl mx-auto px-6 -mt-8 mb-24 relative z-10">
-        <Card className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-slate-100 p-2">
-          {heroStats.map((s) => (
-            <div key={s.label} className="p-6 text-center">
-              <div className="text-2xl sm:text-3xl font-extrabold text-primary">
-                <Counter value={s.value} suffix={s.suffix} />
-              </div>
-              <div className="text-xs sm:text-sm text-ink-light mt-1.5">{s.label}</div>
-            </div>
-          ))}
-        </Card>
       </section>
 
       {/* FEATURES */}

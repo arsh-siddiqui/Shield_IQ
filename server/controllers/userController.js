@@ -103,6 +103,7 @@ const getProgress = asyncHandler(async (req, res) => {
       bookmarkedArticles: req.user.bookmarkedArticles,
       likedArticles: req.user.likedArticles,
       readArticles: req.user.readArticles,
+      completedChallenges: req.user.completedChallenges,
       lessonProgress: lessonProgress,
     },
   });
@@ -155,6 +156,25 @@ const markArticleRead = asyncHandler(async (req, res) => {
   return sendSuccess(res, { data: { readArticles: user.readArticles } });
 });
 
+// @route  POST /api/users/challenges/:id
+// @access Private
+const completeChallenge = asyncHandler(async (req, res) => {
+  const challengeId = req.params.id;
+  const xpEarned = req.body.xpEarned || 10;
+  const already = req.user.completedChallenges.includes(challengeId);
+
+  if (!already) {
+    req.user.completedChallenges.push(challengeId);
+    req.user.xp += xpEarned;
+    await req.user.save();
+  }
+
+  return sendSuccess(res, {
+    message: already ? "Challenge already completed." : "Challenge completed.",
+    data: { completedChallenges: req.user.completedChallenges, xp: req.user.xp },
+  });
+});
+
 module.exports = {
   getProfile,
   updateProfile,
@@ -164,4 +184,5 @@ module.exports = {
   toggleBookmark,
   toggleLike,
   markArticleRead,
+  completeChallenge,
 };

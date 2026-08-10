@@ -16,10 +16,18 @@ import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/AdminDashboard";
 import { Loader2 } from "lucide-react";
 
+function RequireAuth({ children }) {
+  const { isAuthenticated } = useAppData();
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+}
+
 function RequireAdmin({ children }) {
-  const { user } = useAppData();
-  if (!user?.isAdmin) {
-    return <Navigate to="/dashboard" replace />;
+  const { user, isAuthenticated } = useAppData();
+  if (!isAuthenticated || !user?.isAdmin) {
+    return <Navigate to="/" replace />;
   }
   return children;
 }
@@ -40,21 +48,35 @@ function AppRoutes() {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route path="/dashboard" element={<Dashboard />} />
+      <Route
+        path="/dashboard"
+        element={
+          <RequireAuth>
+            <Dashboard />
+          </RequireAuth>
+        }
+      />
       <Route path="/scanner" element={<AIScanner />} />
       <Route path="/scan-result" element={<ScanResult />} />
       <Route path="/decoder" element={<ScamDecoder />} />
       <Route path="/simulator" element={<ScamSimulator />} />
       <Route path="/attack-replay" element={<AttackReplay />} />
       <Route path="/learn" element={<Learn />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route 
-        path="/admin" 
+      <Route
+        path="/profile"
+        element={
+          <RequireAuth>
+            <Profile />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/admin"
         element={
           <RequireAdmin>
             <AdminDashboard />
           </RequireAdmin>
-        } 
+        }
       />
       <Route path="*" element={<Landing />} />
     </Routes>

@@ -23,7 +23,7 @@ const tabs = [
 export default function Profile() {
   const [tab, setTab] = useState("overview");
   const [editOpen, setEditOpen] = useState(false);
-  const { user, updateUser, xp, scanHistory, simulationResults, simulationsCompletedCount, badges } = useAppData();
+  const { user, updateUser, xp, scanHistory, simulationResults, simulationsCompletedCount, badges, logout } = useAppData();
   const { toast } = useToast();
 
   const level = Math.max(1, Math.floor(xp / 300) + 1);
@@ -49,6 +49,11 @@ export default function Profile() {
   };
 
   const earnedBadgeCount = badges.filter((b) => b.earned).length;
+
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = "/";
+  };
 
   return (
     <AppLayout>
@@ -226,6 +231,11 @@ export default function Profile() {
               </button>
             </div>
             <Button className="mt-2" onClick={saveSettings}>Save Changes</Button>
+            <div className="pt-6 mt-6 border-t border-slate-100">
+              <Button variant="outline" className="w-full border-danger text-danger hover:bg-danger-50" onClick={handleLogout}>
+                Log Out
+              </Button>
+            </div>
           </div>
         </Card>
       )}
