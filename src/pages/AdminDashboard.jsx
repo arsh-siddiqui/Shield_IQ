@@ -12,12 +12,15 @@ import Input from "../components/ui/Input";
 import Pagination from "../components/ui/Pagination";
 import { useToast } from "../context/ToastContext";
 import useDebounce from "../hooks/useDebounce";
-import { fetchAdminStats, fetchAdminAnalytics, fetchAdminUsers, updateAdminUserRemote, deleteAdminUserRemote } from "../services/adminService";
+import { fetchAdminStats, fetchAdminAnalytics, fetchAdminUsers, updateAdminUserRemote, deleteAdminUserRemote, fetchAdminLessons, createAdminLesson, updateAdminLesson, deleteAdminLesson, toggleAdminLessonPublish } from "../services/adminService";
 import { fetchArticles, createArticleRemote, updateArticleRemote, deleteArticleRemote } from "../services/articleService";
+import LessonList from "../components/admin/LessonList";
+import LessonEditor from "../components/admin/LessonEditor";
 
 const tabs = [
   { id: "users", label: "Users" },
   { id: "articles", label: "Articles" },
+  { id: "lessons", label: "Learn Content" },
 ];
 
 const PAGE_SIZE = 4;
@@ -50,21 +53,24 @@ export default function AdminDashboard() {
   const [analytics, setAnalytics] = useState(null);
   const [users, setUsers] = useState([]);
   const [articles, setArticles] = useState([]);
+  const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const [s, a, u, art] = await Promise.all([
+      const [s, a, u, art, les] = await Promise.all([
         fetchAdminStats(),
         fetchAdminAnalytics(),
         fetchAdminUsers({ limit: 1000 }), // simplified for admin view
-        fetchArticles({ limit: 1000 })
+        fetchArticles({ limit: 1000 }),
+        fetchAdminLessons()
       ]);
       setStats(s);
       setAnalytics(a);
       setUsers(u);
       setArticles(art);
+      setLessons(les);
     } catch (err) {
       toast("Failed to load admin data.", "danger");
     } finally {
@@ -78,9 +84,10 @@ export default function AdminDashboard() {
 
   const filteredUsers = users.filter((u) => u.name.toLowerCase().includes(search.toLowerCase()));
   const filteredArticles = articles.filter((a) => a.title.toLowerCase().includes(search.toLowerCase()));
+  const filteredLessons = lessons; // filtering handled in LessonList component directly for this tab
 
-  const activeList = tab === "users" ? filteredUsers : filteredArticles;
-  const totalPages = Math.max(1, Math.ceil(activeList.length / PAGE_SIZE));
+  const activeList = tab === "users" ? filteredUsers : tab === "articles" ? filteredArticles : filteredLessons;
+  const totalPages = tab === "lessons" ? 1 : Math.max(1, Math.ceil(activeList.length / PAGE_SIZE));
   const pagedList = useMemo(
     () => activeList.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
     [activeList, page]
@@ -142,14 +149,43 @@ export default function AdminDashboard() {
     try {
       if (deleteTarget.kind === "users") {
         await deleteAdminUserRemote(deleteTarget.id);
-      } else {
+      } else if (deleteTarget.kind === "articles") {
         await deleteArticleRemote(deleteTarget.id);
+      } else if (deleteTarget.kind === "lessons") {
+        await deleteAdminLesson(deleteTarget.id);
       }
-      toast(`${deleteTarget.kind === "users" ? "User" : "Article"} deleted.`, "success");
+      toast(`${deleteTarget.kind === "users" ? "User" : deleteTarget.kind === "articles" ? "Article" : "Lesson"} deleted.`, "success");
       setDeleteTarget(null);
       loadData();
     } catch (err) {
-      toast(err.response?.data?.message || "Failed to delete.", "danger");
+      toast(err.response?.data?.message || err.message || "Failed to delete.", "danger");
+      setDeleteTarget(null);
+    }
+  };
+
+  const handleLessonSave = async (lessonData) => {
+    try {
+      if (lessonData._id) {
+        await updateAdminLesson(lessonData._id, lessonData);
+        toast("Lesson updated.", "success");
+      } else {
+        await createAdminLesson(lessonData);
+        toast("Lesson created.", "success");
+      }
+      setFormOpen(false);
+      loadData();
+    } catch (err) {
+      toast(err.response?.data?.message || "Failed to save lesson.", "danger");
+    }
+  };
+
+  const handleLessonTogglePublish = async (lesson) => {
+    try {
+      await toggleAdminLessonPublish(lesson._id, !lesson.isPublished);
+      toast(lesson.isPublished ? "Lesson unpublished." : "Lesson published.", "success");
+      loadData();
+    } catch (err) {
+      toast(err.response?.data?.message || "Failed to toggle status.", "danger");
     }
   };
 
@@ -284,7 +320,7 @@ export default function AdminDashboard() {
             />
             {tab !== "users" && (
               <Button size="sm" icon={Icons.Plus} onClick={openAdd}>
-                Add
+                Add {tab === "users" ? "User" : tab === "articles" ? "Article" : "Lesson"}
               </Button>
             )}
           </div>
@@ -333,7 +369,7 @@ export default function AdminDashboard() {
               </tbody>
             </table>
           </div>
-        ) : (
+        ) : tab === "articles" ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -373,9 +409,17 @@ export default function AdminDashboard() {
               </tbody>
             </table>
           </div>
+        ) : (
+          <LessonList 
+            lessons={lessons} 
+            search={search} 
+            onEdit={openEdit}
+            onDelete={(l) => setDeleteTarget({ kind: "lessons", id: l._id, label: l.title })}
+            onTogglePublish={handleLessonTogglePublish}
+          />
         )}
 
-        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        {tab !== "lessons" && <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />}
       </Card>
 
       {/* Add / Edit modal */}

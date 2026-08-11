@@ -8,7 +8,6 @@ import Button from "../components/ui/Button";
 import Badge from "../components/ui/Badge";
 import ActiveLesson from "../components/learn/ActiveLesson";
 import { useAppData } from "../context/AppDataContext";
-import { learningPaths } from "../data/dummyData";
 import { getLessons, getQuickLearns, getSafetyTips, getLessonById } from "../services/learnService";
 
 export default function Learn() {
@@ -50,8 +49,26 @@ export default function Learn() {
   }, []);
 
   const level = Math.max(1, Math.floor(xp / 300) + 1);
-  const totalLessons = Object.keys(lessonsMap).length || 25;
-  const progressPercent = Math.round((learningProgress.size / totalLessons) * 100) || 0;
+  const totalLessons = Object.keys(lessonsMap).length;
+  const progressPercent = totalLessons > 0 ? Math.round((learningProgress.size / totalLessons) * 100) : 0;
+
+  const learningPaths = useMemo(() => {
+    const pathsMap = {};
+    Object.values(lessonsMap).sort((a, b) => a.order - b.order).forEach((lesson) => {
+      const topic = lesson.topic || "General";
+      if (!pathsMap[topic]) {
+        pathsMap[topic] = {
+          id: topic,
+          title: topic,
+          description: `Learn the fundamentals of ${topic}.`,
+          icon: "BookOpen", // Default icon
+          lessons: []
+        };
+      }
+      pathsMap[topic].lessons.push(lesson.slug);
+    });
+    return Object.values(pathsMap);
+  }, [lessonsMap]);
 
   const startLesson = async (id) => {
     try {

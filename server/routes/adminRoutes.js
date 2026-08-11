@@ -15,4 +15,12 @@ router.get("/users", getUsers);
 router.put("/users/:id", idParamValidator, validate, updateUser);
 router.delete("/users/:id", idParamValidator, validate, deleteUser);
 
+// Lesson CMS routes
+const { getAdminLessons, createLesson, updateLesson, deleteLesson, togglePublishLesson } = require("../controllers/adminController");
+router.get("/lessons", getAdminLessons);
+router.post("/lessons", createLesson);
+router.put("/lessons/:id", idParamValidator, validate, updateLesson);
+router.delete("/lessons/:id", idParamValidator, validate, deleteLesson);
+router.patch("/lessons/:id/publish", idParamValidator, validate, togglePublishLesson);
+
 module.exports = router;
