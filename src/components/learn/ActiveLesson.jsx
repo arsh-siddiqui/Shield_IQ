@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import * as Icons from "lucide-react";
 import Button from "../ui/Button";
@@ -117,6 +118,7 @@ function HighlightableText({ text, redFlags, revealAll }) {
 
 // ─── Main Component ────────────────────────────────────────────────────────
 export default function ActiveLesson({ lesson, steps, onBack }) {
+  const navigate = useNavigate();
   const { completeLesson, updateSkill } = useAppData();
   const [currentStage, setCurrentStage] = useState(
     steps?.intro ? "intro" : "understand"
@@ -155,19 +157,28 @@ export default function ActiveLesson({ lesson, steps, onBack }) {
 
       {/* Lesson header */}
       {currentStage !== "completed" && (
-        <div className="mb-8">
-          <div className="flex flex-wrap items-center gap-2 mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-ink-faint">{lesson.topic || "Learn"}</span>
-            <span className="text-ink-faint">·</span>
-            <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${difficultyColor[lesson.difficulty] || difficultyColor.Beginner}`}>
-              {lesson.difficulty || "Beginner"}
-            </span>
-            <span className="flex items-center gap-1 text-xs text-ink-faint font-medium">
-              <Icons.Clock className="w-3 h-3" /> {lesson.estimatedTime || "3 min"}
-            </span>
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div>
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-ink-faint">{lesson.topic || "Learn"}</span>
+              <span className="text-ink-faint">·</span>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${difficultyColor[lesson.difficulty] || difficultyColor.Beginner}`}>
+                {lesson.difficulty || "Beginner"}
+              </span>
+              <span className="flex items-center gap-1 text-xs text-ink-faint font-medium">
+                <Icons.Clock className="w-3 h-3" /> {lesson.estimatedTime || "3 min"}
+              </span>
+            </div>
+            <h2 className="text-2xl font-extrabold text-ink mb-1">{lesson.title}</h2>
+            <p className="text-ink-light text-sm">{tagline}</p>
           </div>
-          <h2 className="text-2xl font-extrabold text-ink mb-1">{lesson.title}</h2>
-          <p className="text-ink-light text-sm">{tagline}</p>
+          <button
+            onClick={() => navigate("/assistant", { state: { initialPrompt: `Can you explain ${lesson.title} in detail and give me 3 safety tips?` } })}
+            className="px-3.5 py-2 rounded-xl bg-primary-50 hover:bg-primary-100 text-primary text-xs font-bold flex items-center gap-1.5 transition-colors border border-primary/20 self-start shrink-0"
+          >
+            <Icons.Bot className="w-4 h-4 text-primary" />
+            Ask ShieldIQ AI
+          </button>
         </div>
       )}
 

@@ -36,10 +36,13 @@ const updateProfile = asyncHandler(async (req, res) => {
 // returned as clearly-labeled sample data rather than left empty, per the
 // "return dummy values when fields aren't populated yet" instruction.
 const getDashboardData = asyncHandler(async (req, res) => {
-  const [recentScans, simulationsCompleted, quizzesCompleted] = await Promise.all([
+  const [recentScans, totalScans, safeScans, highRiskScans, simulationsCompleted, quizzesCompleted] = await Promise.all([
     ScanHistory.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(5),
+    ScanHistory.countDocuments({ user: req.user._id }),
+    ScanHistory.countDocuments({ user: req.user._id, riskLevel: { $regex: /safe/i } }),
+    ScanHistory.countDocuments({ user: req.user._id, riskLevel: { $regex: /high/i } }),
     SimulationResult.countDocuments({ user: req.user._id }),
-    QuizResult.countDocuments({ user: req.user._id, correct: true }),
+    QuizResult.countDocuments({ userId: req.user._id, correct: true }),
   ]);
 
   const level = req.user.getLevel();
@@ -51,14 +54,12 @@ const getDashboardData = asyncHandler(async (req, res) => {
       xpIntoLevel: req.user.xp % 300,
       recentScans,
       stats: {
-        scansThisMonth: await ScanHistory.countDocuments({ user: req.user._id }),
+        totalScans,
+        safeScans,
+        highRiskScans,
         simulationsCompleted,
         quizzesCompleted,
       },
-      // Weekly activity, tips, and threat alerts aren't derived from real
-      // per-user event logs yet — the frontend already has good sample
-      // content for these and continues to render it until this is built out.
-      isPartialData: true,
     },
   });
 });

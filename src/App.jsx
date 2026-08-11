@@ -14,6 +14,7 @@ import AttackReplay from "./pages/AttackReplay";
 import Learn from "./pages/Learn";
 import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/AdminDashboard";
+import Assistant from "./pages/Assistant";
 import { Loader2 } from "lucide-react";
 
 function RequireAuth({ children }) {
@@ -62,6 +63,14 @@ function AppRoutes() {
       <Route path="/simulator" element={<ScamSimulator />} />
       <Route path="/attack-replay" element={<AttackReplay />} />
       <Route path="/learn" element={<Learn />} />
+      <Route
+        path="/assistant"
+        element={
+          <RequireAuth>
+            <Assistant />
+          </RequireAuth>
+        }
+      />
       <Route
         path="/profile"
         element={

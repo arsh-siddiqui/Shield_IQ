@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, ScanLine, Gamepad2, BookOpen, User, ShieldCheck, Menu, X, Settings2 } from "lucide-react";
+import { LayoutDashboard, ScanLine, Gamepad2, BookOpen, User, ShieldCheck, Menu, X, Settings2, Bot } from "lucide-react";
 import { useAppData } from "../../context/AppDataContext";
-import NotificationBell from "../ui/NotificationBell";
 
 const navItems = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
   { label: "AI Scanner", to: "/scanner", icon: ScanLine },
+  { label: "AI Assistant", to: "/assistant", icon: Bot },
   { label: "Scam Simulator", to: "/simulator", icon: Gamepad2 },
   { label: "Learn", to: "/learn", icon: BookOpen },
   { label: "Profile", to: "/profile", icon: User },
@@ -26,7 +26,6 @@ export default function MobileTopBar() {
           ShieldIQ
         </div>
         <div className="flex items-center gap-2">
-          <NotificationBell />
           <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold">
             {user.avatar}
           </div>

@@ -37,6 +37,7 @@ const userSchema = new mongoose.Schema(
     avatarInitials: { type: String, maxlength: 3 },
     xp: { type: Number, default: 0, min: 0 },
     streakDays: { type: Number, default: 0, min: 0 },
+    lastActiveDate: { type: Date },
     status: {
       type: String,
       enum: ["Active", "Suspended"],

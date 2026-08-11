@@ -82,13 +82,19 @@ const submitSimulation = asyncHandler(async (req, res) => {
     throw new Error(`This scenario has no feedback configured for choice "${choice}".`);
   }
 
+  const existingResult = await SimulationResult.findOne({ user: req.user._id, simulation: simulation._id });
+
   const result = await SimulationResult.findOneAndUpdate(
     { user: req.user._id, simulation: simulation._id },
     { choice, correct: outcome.correct, xpAwarded: outcome.xp },
     { new: true, upsert: true }
   );
 
-  req.user.xp += outcome.xp;
+  if (!existingResult) {
+    req.user.xp += outcome.xp;
+  }
+  const { updateStreak } = require("../utils/streakHelper");
+  updateStreak(req.user);
   await req.user.save();
 
   return sendSuccess(res, {

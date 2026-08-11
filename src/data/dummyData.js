@@ -125,45 +125,9 @@ export const faqs = [
 export const quickActions = [
   { label: "Scan a Link", icon: "Link2", to: "/scanner", tab: "url" },
   { label: "Scan an Email", icon: "Mail", to: "/scanner", tab: "email" },
+  { label: "AI Assistant", icon: "Bot", to: "/assistant" },
   { label: "Try Simulation", icon: "Gamepad2", to: "/simulator" },
-  { label: "Today's Lesson", icon: "BookOpen", to: "/learn" },
 ];
-
-export const weeklyActivity = [
-  { day: "Mon", scans: 4, lessons: 1 },
-  { day: "Tue", scans: 7, lessons: 0 },
-  { day: "Wed", scans: 3, lessons: 2 },
-  { day: "Thu", scans: 9, lessons: 1 },
-  { day: "Fri", scans: 5, lessons: 0 },
-  { day: "Sat", scans: 12, lessons: 3 },
-  { day: "Sun", scans: 6, lessons: 1 },
-];
-
-export const learningProgress = [
-  { category: "Bank Fraud", progress: 80 },
-  { category: "UPI Scams", progress: 65 },
-  { category: "Phishing Emails", progress: 90 },
-  { category: "Deepfakes", progress: 30 },
-];
-
-export const recentScans = [
-  { id: 1, type: "Email", target: "support@banklogin-verify.com", risk: "High", riskScore: 92, time: "2 hours ago" },
-  { id: 2, type: "URL", target: "https://amaz0n-rewards.win/claim", risk: "High", riskScore: 88, time: "5 hours ago" },
-  { id: 3, type: "SMS", target: "+91 98XXX-XX210", risk: "Medium", riskScore: 54, time: "Yesterday" },
-  { id: 4, type: "WhatsApp", target: "Unknown Business Account", risk: "Low", riskScore: 18, time: "Yesterday" },
-  { id: 5, type: "URL", target: "https://github.com/vercel/next.js", risk: "Safe", riskScore: 4, time: "2 days ago" },
-];
-
-export const threatAlerts = [
-  { id: 1, title: "New UPI refund scam trending in your area", severity: "High", time: "1h ago" },
-  { id: 2, title: "Fake courier delivery SMS reported by 230 users", severity: "Medium", time: "6h ago" },
-  { id: 3, title: "Deepfake voice scam impersonating bank officials", severity: "High", time: "1d ago" },
-];
-
-export const dailyTip = {
-  title: "Banks never ask for your PIN or OTP",
-  body: "No legitimate bank, UPI app, or government office will ever call or message you asking for your PIN, OTP, or password. If someone asks, it's a scam — hang up and report it.",
-};
 
 export const dailyChallenge = {
   title: "Spot the Fake Job Offer",
@@ -399,6 +363,30 @@ export const learningPaths = [
     icon: "BrainCircuit",
     color: "accent",
     lessons: ["ms-1", "ms-2", "ms-3", "ms-4"]
+  },
+  {
+    id: "email-security",
+    title: "Email Security",
+    description: "Protect your inbox from scams and imposters.",
+    icon: "Mail",
+    color: "primary",
+    lessons: ["em-1", "em-2", "em-3"]
+  },
+  {
+    id: "mobile-safety",
+    title: "Mobile Safety",
+    description: "Stay secure on your phone — the scammer's favourite target.",
+    icon: "Smartphone",
+    color: "secondary",
+    lessons: ["mob-1", "mob-2", "mob-3"]
+  },
+  {
+    id: "privacy-data",
+    title: "Privacy & Personal Data",
+    description: "Protect your personal information online.",
+    icon: "Eye",
+    color: "accent",
+    lessons: ["prv-1", "prv-2", "prv-3"]
   }
 ];
 
@@ -432,7 +420,19 @@ export const lessons = {
   "ms-1": { id: "ms-1", title: "Investment Scams", description: "Guaranteed high returns are fake.", difficulty: "Advanced", time: "6 min" },
   "ms-2": { id: "ms-2", title: "Deepfake Awareness", description: "Seeing is no longer believing.", difficulty: "Advanced", time: "6 min" },
   "ms-3": { id: "ms-3", title: "AI-Generated Scams", description: "Perfect grammar phishing.", difficulty: "Intermediate", time: "5 min" },
-  "ms-4": { id: "ms-4", title: "Social Media Scams", description: "Fake giveaways and clones.", difficulty: "Beginner", time: "4 min" }
+  "ms-4": { id: "ms-4", title: "Social Media Scams", description: "Fake giveaways and clones.", difficulty: "Beginner", time: "4 min" },
+
+  "em-1": { id: "em-1", title: "Reading Email Headers", description: "Spot the real sender behind a fake display name.", difficulty: "Beginner", time: "4 min" },
+  "em-2": { id: "em-2", title: "Spoofed Email Addresses", description: "How scammers forge sender identities.", difficulty: "Intermediate", time: "4 min" },
+  "em-3": { id: "em-3", title: "Malicious Attachments", description: "Why opening attachments can cost you everything.", difficulty: "Intermediate", time: "4 min" },
+
+  "mob-1": { id: "mob-1", title: "Smishing: SMS Phishing", description: "Scam text messages explained.", difficulty: "Beginner", time: "4 min" },
+  "mob-2": { id: "mob-2", title: "Vishing: Phone Call Scams", description: "What to do when scammers call.", difficulty: "Beginner", time: "4 min" },
+  "mob-3": { id: "mob-3", title: "Unsafe Apps & Permissions", description: "Apps that steal your data in plain sight.", difficulty: "Intermediate", time: "5 min" },
+
+  "prv-1": { id: "prv-1", title: "Oversharing Online", description: "What scammers learn from your social media.", difficulty: "Beginner", time: "3 min" },
+  "prv-2": { id: "prv-2", title: "Data Breaches Explained", description: "What happens when a website leaks your data.", difficulty: "Intermediate", time: "4 min" },
+  "prv-3": { id: "prv-3", title: "Public Wi-Fi Risks", description: "Why free Wi-Fi is a security trap.", difficulty: "Intermediate", time: "4 min" }
 };
 
 export const lessonSteps = {
@@ -565,13 +565,6 @@ export const riskDistribution = [
   { name: "Low Risk", value: 20, color: "#14B8A6" },
   { name: "Medium Risk", value: 12, color: "#F59E0B" },
   { name: "High Risk", value: 8, color: "#EF4444" },
-];
-
-// ---------------------------------------------------------------------------
-// Notification bell dropdown (distinct from toast pop-ups)
-// ---------------------------------------------------------------------------
-export const initialNotifications = [
-  { id: 1, title: "Welcome to ShieldIQ", body: "Scan a message or start your first lesson to build cybersecurity skills.", time: "Just now", read: false, type: "info" }
 ];
 
 // ---------------------------------------------------------------------------
@@ -734,6 +727,5 @@ export const leaderboard = [
   { rank: 1, name: "Priya Nair", xp: 4820, avatar: "PN" },
   { rank: 2, name: "Vivaan Joshi", xp: 4110, avatar: "VJ" },
   { rank: 3, name: "Sana Sheikh", xp: 3675, avatar: "SS" },
-  { rank: 4, name: "Aarav Mehta", xp: 2140, avatar: "AM", isCurrentUser: true },
-  { rank: 5, name: "Rohan Kulkarni", xp: 1890, avatar: "RK" },
+  { rank: 4, name: "Rohan Kulkarni", xp: 1890, avatar: "RK" },
 ];

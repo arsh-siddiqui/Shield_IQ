@@ -2003,7 +2003,715 @@ const ALL_LESSON_STEPS = {
         { title: "Clone accounts look very real", text: "Same photo, mutual friends, professional bio — but they'll always ask for money." }
       ]
     }
+  },
+  // ── EMAIL SECURITY ─────────────────────────────────────────────────────────
+
+  "em-1": {
+    intro: {
+      tagline: "Learn how to identify the real sender of any email — not just the display name.",
+      objectives: [
+        "Understand the difference between display name and actual sender address",
+        "Read an email header to verify sender identity",
+        "Spot a fake sender in seconds",
+        "Know when to trust vs. question an email"
+      ]
+    },
+    understand: {
+      concept: "The display name you see in an email — like 'SBI Customer Care' — can be set to anything by anyone. The actual sender address tells the truth.",
+      points: [
+        {
+          title: "Display name is decoration",
+          text: "Scammers can name their email 'Apple Support' or 'Your Bank' even if their real email is random@scam123.com. Your mail client shows the friendly name by default."
+        },
+        {
+          title: "The 'From' address is the truth",
+          text: "Banks email from their official domain (e.g. alerts@sbi.co.in). If the actual address is from gmail.com, yahoo.com, or a random domain — it's a fake."
+        },
+        {
+          title: "How to check: hover or tap",
+          text: "On desktop, hover your mouse over the sender name to see the real address. On mobile, tap the sender name to expand it. This one habit catches 90% of fake emails."
+        },
+        {
+          title: "Look for domain mismatches",
+          text: "A fake bank email might use 'sbi-alerts@sbi-verify.com'. The domain 'sbi-verify.com' is not SBI. Real SBI emails come only from @sbi.co.in."
+        }
+      ]
+    },
+    seeIt: {
+      sender: "SBI Customer Care <alerts@sbi-secure-account.net>",
+      example: "From: SBI Customer Care <alerts@sbi-secure-account.net>\nSubject: Urgent: Verify Your Account Now\n\nDear Customer,\nYour SBI account will be blocked in 24 hours unless you verify your KYC details.\nClick here: http://sbi-secure-account.net/verify",
+      redFlags: [
+        { text: "sbi-secure-account.net", reason: "This is NOT sbi.co.in. The real SBI domain is sbi.co.in. 'sbi-secure-account.net' is a fake lookalike." },
+        { text: "blocked in 24 hours", reason: "Fear tactic designed to stop you from thinking logically." },
+        { text: "Click here", reason: "Banks never ask you to verify through email links. Always use the official app." }
+      ]
+    },
+    tryItYourself: {
+      sender: "HDFC Bank <support@hdfcbank-alert.org>",
+      example: "From: HDFC Bank <support@hdfcbank-alert.org>\nSubject: Action Required: Update Your Information\n\nDear Customer, your transaction limit will be reduced unless you confirm your details at hdfcbank-alert.org/secure",
+      redFlags: [
+        { text: "hdfcbank-alert.org", reason: "HDFC Bank's real domain is hdfcbank.com. This .org domain is fake." },
+        { text: "will be reduced unless", reason: "Urgency + conditional threat to force fast action without thinking." }
+      ]
+    },
+    realWorld: {
+      scenario: "You receive an email from 'Google Security' with the address security@google-accounts-verify.com saying someone logged into your account from a new device. What do you do?",
+      options: [
+        { id: "a", text: "Click the 'Secure My Account' button in the email", correct: false, feedback: "Never click security links from emails — even ones that look real. This email is from 'google-accounts-verify.com', not google.com." },
+        { id: "b", text: "Go directly to myaccount.google.com and check security activity yourself", correct: true, feedback: "Correct. Type the real URL yourself. Google's security activity page will show you all recent sign-ins without needing to follow an email link." },
+        { id: "c", text: "Reply to ask if the email is real", correct: false, feedback: "Replying confirms your address is active and may invite more targeted attacks. Check via the official website instead." }
+      ]
+    },
+    quiz: [
+      {
+        question: "You get an email from 'PayPal Support <billing@paypal-help.net>'. What's the red flag?",
+        explanation: "PayPal's real domain is paypal.com. Any email using 'paypal-help.net' or other variations is a scam regardless of the display name shown.",
+        options: [
+          { id: "1", text: "The subject line is not urgent enough", correct: false },
+          { id: "2", text: "The actual sending domain 'paypal-help.net' is not paypal.com", correct: true },
+          { id: "3", text: "The display name says 'PayPal Support'", correct: false }
+        ]
+      }
+    ],
+    takeaway: {
+      title: "Display Name ≠ Real Sender",
+      summary: "Always check the actual email address, not just the friendly name shown.",
+      points: [
+        { title: "Hover or tap the sender name", text: "This reveals the actual email address. Do this every time you receive a security or banking email." },
+        { title: "Match the domain", text: "SBI should come from @sbi.co.in. HDFC from @hdfcbank.com. Any variation is a fake." },
+        { title: "Go directly, don't click", text: "If an email asks you to verify something, go to the company's official app or website yourself — never follow the email link." }
+      ]
+    }
+  },
+
+  "em-2": {
+    intro: {
+      tagline: "Understand how scammers forge email addresses to look exactly like your bank or government.",
+      objectives: [
+        "Know what email spoofing is",
+        "Understand how scammers forge sender domains",
+        "Recognise the signs of a spoofed email",
+        "Know how to safely verify any email"
+      ]
+    },
+    understand: {
+      concept: "Email spoofing is when a scammer sends an email that appears to come from a trusted source — like your bank or the government — by forging the sender address.",
+      points: [
+        {
+          title: "Why spoofing is easy to do",
+          text: "Email was designed decades ago without security in mind. Anyone can configure a mail server to send an email appearing to be from any address. No password needed."
+        },
+        {
+          title: "Spoofed emails look completely real",
+          text: "A spoofed email from 'alerts@sbi.co.in' can look identical to a real SBI email — same logo, same fonts, same language. Only the links inside will be different."
+        },
+        {
+          title: "The goal is always the same",
+          text: "Whether spoofed or not, fake emails want you to click a link, enter credentials, share an OTP, or transfer money. The channel is different; the goal is identical."
+        },
+        {
+          title: "Technical protections exist but aren't foolproof",
+          text: "DMARC, SPF, and DKIM are technical email standards that block many spoofed emails. But scammers use lookalike domains that bypass these protections."
+        }
+      ]
+    },
+    seeIt: {
+      sender: "IT Department <it-support@company-helpdesk.in>",
+      example: "From: IT Department <it-support@company-helpdesk.in>\nSubject: Mandatory Security Update — Action Required\n\nDear Employee,\nOur security team has detected a potential threat on your account.\nPlease enter your credentials at the link below to confirm your identity within 2 hours or your account will be locked.",
+      redFlags: [
+        { text: "company-helpdesk.in", reason: "Your company's IT team uses the company domain (e.g. yourcompany.com). This is a third-party domain used to spoof IT." },
+        { text: "within 2 hours or your account will be locked", reason: "Real IT teams send requests through internal ticketing systems, not threatening emails with tight deadlines." },
+        { text: "enter your credentials", reason: "No legitimate IT department needs you to enter credentials via email. They access systems directly." }
+      ]
+    },
+    tryItYourself: {
+      sender: "Income Tax Department <refund@incometax-india-gov.com>",
+      example: "Dear Taxpayer,\nYou are eligible for a tax refund of ₹12,500 for FY 2024-25.\nTo process your refund, verify your bank account at: http://incometax-india-gov.com/refund",
+      redFlags: [
+        { text: "incometax-india-gov.com", reason: "The real Income Tax portal is incometax.gov.in. This fake domain 'incometax-india-gov.com' is designed to look official." },
+        { text: "verify your bank account", reason: "The tax department processes refunds through your ITR filing — they never ask you to verify bank details via email." }
+      ]
+    },
+    realWorld: {
+      scenario: "You receive what looks like an official email from your company's HR saying salaries will be delayed unless you confirm your bank details in the attached form. What do you do?",
+      options: [
+        { id: "a", text: "Fill out the form — it looks official and my salary matters", correct: false, feedback: "Scammers specifically target employees with salary-related emails. Verify directly with HR through your company's internal communication channel." },
+        { id: "b", text: "Call or message HR directly using your company directory to verify", correct: true, feedback: "Correct. Use a verified internal contact — not the contact info from the suspicious email — to confirm before sharing any bank details." },
+        { id: "c", text: "Forward to a colleague to see if they got the same email", correct: false, feedback: "This doesn't verify the email and spreads potential malware. Go directly to HR instead." }
+      ]
+    },
+    quiz: [
+      {
+        question: "What is email spoofing?",
+        explanation: "Email spoofing means forging the sender address so a fake email appears to come from a trusted source like your bank or employer. It's done without any access to the real sender's account.",
+        options: [
+          { id: "1", text: "Hacking into someone's email account and reading their messages", correct: false },
+          { id: "2", text: "Forging the sender address to make an email appear to come from a trusted source", correct: true },
+          { id: "3", text: "Sending emails to the wrong recipient accidentally", correct: false }
+        ]
+      }
+    ],
+    takeaway: {
+      title: "Sender Address Can Be Faked",
+      summary: "Even if the 'From' address looks real, always verify through an official channel before acting.",
+      points: [
+        { title: "Verify urgency separately", text: "If an email creates urgency around salary, taxes, or security — verify through your official app, internal contact, or helpline. Never use the email's own links or attachments." },
+        { title: "Lookalike domains are the #1 trick", text: "'incometax-india-gov.com' vs 'incometax.gov.in' — one character or word changes everything. Check the domain carefully." },
+        { title: "IT never asks for credentials by email", text: "No legitimate IT team, bank, or government department will ever ask you to enter a username and password via email." }
+      ]
+    }
+  },
+
+  "em-3": {
+    intro: {
+      tagline: "Understand why email attachments are one of the most dangerous ways scammers deliver malware.",
+      objectives: [
+        "Know which attachment types are dangerous",
+        "Understand what malware does once opened",
+        "Identify suspicious attachments before opening",
+        "Know what to do when you receive a suspicious file"
+      ]
+    },
+    understand: {
+      concept: "A malicious email attachment can install malware, steal your files, lock your computer, or record your keystrokes — all by clicking 'Open'.",
+      points: [
+        {
+          title: "The most dangerous file types",
+          text: "Executable files (.exe, .bat, .cmd), Office files with macros (.docm, .xlsm), compressed archives (.zip, .rar), and PDFs with embedded scripts. Even .jpg files can be disguised executables."
+        },
+        {
+          title: "Ransomware arrives by email",
+          text: "Ransomware — malware that locks all your files and demands payment — most commonly arrives as an email attachment. Opening it can cost you every file on your device."
+        },
+        {
+          title: "Office documents ask for 'Enable Macros'",
+          text: "Scammers send Word or Excel files that look blurry and ask you to 'Enable Content' or 'Enable Macros' to view them. This button runs their malicious code instantly."
+        },
+        {
+          title: "Fake invoices, courier notifications, and court notices",
+          text: "Malicious attachments are disguised as invoices, delivery notifications, tax notices, or policy documents. The file name creates urgency or curiosity to make you open it."
+        }
+      ]
+    },
+    seeIt: {
+      sender: "India Post <delivery@india-post-courier.com>",
+      example: "From: India Post <delivery@india-post-courier.com>\nSubject: Your Package Could Not Be Delivered\n\nDear Customer,\nWe attempted to deliver your package but failed. Please find the attached delivery details and follow the instructions to reschedule.\n\nAttachment: Delivery_Notice_9831.zip",
+      redFlags: [
+        { text: "india-post-courier.com", reason: "India Post's official domain is indiapost.gov.in. This is a fake domain." },
+        { text: "Delivery_Notice_9831.zip", reason: "Legitimate couriers never send your delivery details as a ZIP file. This almost certainly contains malware." },
+        { text: "follow the instructions", reason: "Real courier services let you track packages on their official website — they don't ask you to open downloaded files." }
+      ]
+    },
+    tryItYourself: {
+      sender: "HR Payroll <payroll@hr-salary-slip.net>",
+      example: "Dear Employee,\nYour salary slip for July 2025 is attached. Please enable macros to view your complete payslip details.\n\nAttachment: July_Salary_Slip.xlsm",
+      redFlags: [
+        { text: "enable macros", reason: "Real salary slips are plain PDFs. Any file asking you to 'Enable Macros' is running malicious code on your device." },
+        { text: "hr-salary-slip.net", reason: "Your company's HR sends from your company domain, not a random .net domain." }
+      ]
+    },
+    realWorld: {
+      scenario: "You receive an email from an unknown sender with an attachment named 'Income_Tax_Notice_2025.pdf.exe'. Should you open it?",
+      options: [
+        { id: "a", text: "Yes — it says 'Income Tax Notice' which sounds official", correct: false, feedback: "Notice the file extension: it ends in .exe, not .pdf. The '.pdf' in the name is a trick. This is a Windows executable (program) disguised as a PDF." },
+        { id: "b", text: "No — '.exe' files from email are almost always malware", correct: true, feedback: "Correct. Government agencies send notices via official mail, registered post, or directly to your e-filing portal. An .exe file from an unknown email is malware." },
+        { id: "c", text: "Open it but don't do anything suspicious inside", correct: false, feedback: "Just double-clicking an .exe file executes it immediately — no further action from you is needed for it to cause harm." }
+      ]
+    },
+    quiz: [
+      {
+        question: "A Word document asks you to 'Enable Content' or 'Enable Macros' to view its contents. What should you do?",
+        explanation: "Legitimate documents never hide their content behind a 'Enable Macros' prompt. This is a classic delivery method for malware. Clicking Enable runs their code.",
+        options: [
+          { id: "1", text: "Click Enable Content — it's probably just a security feature", correct: false },
+          { id: "2", text: "Close the file immediately and delete the email", correct: true },
+          { id: "3", text: "Enable macros but scan the file with antivirus first", correct: false }
+        ]
+      }
+    ],
+    takeaway: {
+      title: "When in Doubt, Don't Open",
+      summary: "No legitimate company sends executable files, ZIP archives, or macro-enabled documents via email.",
+      points: [
+        { title: "Check the real file extension", text: "File names can be misleading. 'Document.pdf.exe' is an .exe file, not a PDF. Windows hides extensions by default — turn on 'Show file extensions' in settings." },
+        { title: "Never enable macros", text: "If a Word or Excel file asks you to Enable Content or Enable Macros, close it immediately. This is malware delivery." },
+        { title: "Verify through official channels", text: "If you receive an invoice, court notice, or tax document by email, verify it on the official website before opening any attachment." }
+      ]
+    }
+  },
+
+  // ── MOBILE SAFETY ──────────────────────────────────────────────────────────
+
+  "mob-1": {
+    intro: {
+      tagline: "Learn how scam text messages trick you — and how to stop them.",
+      objectives: [
+        "Know what SMS phishing (smishing) is",
+        "Identify the most common smishing templates",
+        "Understand how smishing links steal your data",
+        "Know what to do with suspicious SMS messages"
+      ]
+    },
+    understand: {
+      concept: "Smishing is SMS phishing — scam text messages designed to make you click a link, call a number, or share information.",
+      points: [
+        {
+          title: "Texts feel more personal and urgent",
+          text: "People open almost every text they receive within minutes. Scammers exploit this by sending texts that feel personal and urgent — like a message about your bank account, delivery, or Aadhaar."
+        },
+        {
+          title: "The most common smishing templates",
+          text: "Bank account block notices, failed package delivery, KYC update required, TRAI number block warnings, government subsidy claims, and free reward notifications are the most commonly used templates."
+        },
+        {
+          title: "Smishing links steal credentials",
+          text: "Clicking a smishing link opens a fake website that looks exactly like your bank or payment app login page. Entering credentials there sends them directly to the scammer."
+        },
+        {
+          title: "Some texts are malware delivery",
+          text: "Clicking links on Android can trigger downloads of malicious APK files that, once installed, give scammers remote access to your phone — including your banking apps and OTPs."
+        }
+      ]
+    },
+    seeIt: {
+      sender: "TRAI-NOTICE",
+      example: "Your mobile number will be disconnected today due to pending KYC verification. To avoid disconnection, call 9876XXXXXX immediately or visit: http://trai-kyc-update.in/verify",
+      redFlags: [
+        { text: "disconnected today", reason: "TRAI never sends individual KYC notices by SMS. This creates panic with a false deadline." },
+        { text: "call 9876XXXXXX", reason: "A legitimate government number would not be an unverified mobile number. This connects you to a scammer." },
+        { text: "trai-kyc-update.in", reason: "TRAI's real website is trai.gov.in. This fake domain is designed to look official." }
+      ]
+    },
+    tryItYourself: {
+      sender: "FEDEX-IN",
+      example: "FedEx: Your package #FX7721 is held at customs. Pay a ₹299 clearance fee to release: https://fedex-india-customs.net/pay",
+      redFlags: [
+        { text: "fedex-india-customs.net", reason: "FedEx's official Indian domain is fedex.com/en-in. This fake domain mimics it." },
+        { text: "Pay a ₹299 clearance fee", reason: "Legitimate customs fees are never collected via unverified SMS payment links." }
+      ]
+    },
+    realWorld: {
+      scenario: "You receive an SMS saying your Aadhaar-linked mobile number will be disconnected in 2 hours unless you update your KYC by clicking a link. What do you do?",
+      options: [
+        { id: "a", text: "Click the link and complete the KYC to keep your number active", correct: false, feedback: "TRAI and telecom operators never disconnect numbers this way. This is a scam designed to steal your credentials." },
+        { id: "b", text: "Visit your telecom operator's official website or app to check your KYC status", correct: true, feedback: "Correct. Your operator's app will show your actual KYC status. If it's fine, delete the SMS. If there's a real issue, their app will guide you." },
+        { id: "c", text: "Reply STOP to opt out of spam", correct: false, feedback: "Replying to smishing texts confirms your number is active and often leads to more targeted attacks. Don't reply — just block and delete." }
+      ]
+    },
+    quiz: [
+      {
+        question: "An SMS says your bank account is blocked and shows a link to 'verify now'. The safest action is:",
+        explanation: "Never use links from SMS messages for banking. Your bank's official app is the only safe way to check your account status. If your account were actually blocked, you'd see it immediately in the app.",
+        options: [
+          { id: "1", text: "Click the link — if it opens your bank's website it should be fine", correct: false },
+          { id: "2", text: "Open your bank's official app directly to check your account status", correct: true },
+          { id: "3", text: "Forward the SMS to your bank's customer care number", correct: false }
+        ]
+      }
+    ],
+    takeaway: {
+      title: "Texts Are Not Official Communication",
+      summary: "Banks, TRAI, and government bodies never take critical action through SMS links.",
+      points: [
+        { title: "Don't click SMS links from unknown sources", text: "If you must verify something urgent from an SMS, open the company's official app or type the URL yourself. Never follow the link in the message." },
+        { title: "Urgency + deadline = red flag", text: "Real banks and telecom providers give customers proper notice periods. '2-hour deadline' texts are always scams." },
+        { title: "Block and report smishing texts", text: "Use your phone's built-in spam/block feature and report smishing texts to the TRAI DND app or 1909." }
+      ]
+    }
+  },
+
+  "mob-2": {
+    intro: {
+      tagline: "Learn how phone call scams work and how to shut them down the moment they start.",
+      objectives: [
+        "Understand how vishing (voice phishing) scams work",
+        "Recognise the 5 most common call scam scripts",
+        "Know the verbal tricks scammers use to control you",
+        "Know exactly what to say to end a scam call safely"
+      ]
+    },
+    understand: {
+      concept: "Vishing is voice phishing — scam phone calls where someone pretends to be a bank, government official, or support agent to extract money or information from you.",
+      points: [
+        {
+          title: "Scammers sound completely professional",
+          text: "Vishing scammers are trained. They speak clearly, use official-sounding language, reference your name or account number, and create a believable persona. Sounding professional is their job."
+        },
+        {
+          title: "The 5 most common vishing scripts",
+          text: "1) Bank: 'Fraud detected, verify yourself' · 2) Police: 'You're under arrest for money laundering' · 3) Electricity: 'Power cut in 30 minutes, pay arrears' · 4) Telecom: 'Number being blocked for KYC' · 5) Income Tax: 'You owe arrears — pay now to avoid seizure'."
+        },
+        {
+          title: "They use fear to shut down logic",
+          text: "Police calls, arrest threats, account freeze notices — these create extreme panic. Panic makes it almost impossible to think clearly. Recognising this is half the defence."
+        },
+        {
+          title: "They ask you to stay on the line",
+          text: "Scammers keep you on the call because the moment you hang up and call the real institution, the scam collapses. 'Stay on the line while I transfer you' is their trap."
+        }
+      ]
+    },
+    seeIt: {
+      sender: "Unknown Number (+91-81XXXX-XXXX)",
+      example: "Caller: 'Good afternoon, I am calling from SBI Fraud Prevention Department. We have detected an unauthorised transaction of ₹47,000 from your account. To stop it, you must verify your account details immediately. Can you confirm your card number and the OTP you will receive?'",
+      redFlags: [
+        { text: "verify your account details immediately", reason: "Banks never ask for card numbers, CVV, or OTPs over phone calls — under any circumstances. This is the defining rule of banking security." },
+        { text: "Fraud Prevention Department", reason: "Scammers use official-sounding department names to create legitimacy. Real fraud teams send SMS alerts and ask you to call the number on the back of your card." },
+        { text: "OTP you will receive", reason: "If someone calls you and then immediately asks for the OTP sent to your phone, they are attempting to perform a fraudulent transaction themselves using your account." }
+      ]
+    },
+    tryItYourself: {
+      sender: "Unknown (+91-90XXXX-XXXX)",
+      example: "Caller: 'This is a notice from the Cyber Crime Police. Your mobile number has been linked to illegal activity. You will be arrested unless you transfer ₹25,000 to the following account for verification within the next hour.'",
+      redFlags: [
+        { text: "you will be arrested", reason: "Police do not warn suspects by phone and ask for money to avoid arrest. This is a script designed to induce extreme panic." },
+        { text: "transfer ₹25,000 for verification", reason: "No law enforcement agency collects money via phone transfer. This is a ransom demand disguised as a legal notice." }
+      ]
+    },
+    realWorld: {
+      scenario: "A caller claiming to be from your electricity provider says your power will be cut in 30 minutes unless you pay ₹1,247 in unpaid arrears. They ask you to pay via a UPI ID they'll read out. What do you do?",
+      options: [
+        { id: "a", text: "Pay quickly — ₹1,247 is not much and I don't want a power cut", correct: false, feedback: "This is one of the most common vishing scams. Real electricity providers send physical bills and allow online payment via their official app — not through UPI IDs read out on a call." },
+        { id: "b", text: "Hang up and call your electricity provider's official helpline to check your account", correct: true, feedback: "Correct. The real helpline number is on your bill or their official website. Your actual account balance will be visible there within seconds." },
+        { id: "c", text: "Ask the caller to send you the bill by email first", correct: false, feedback: "This keeps the scammer engaged and they may send a convincing-looking fake. Hang up and verify independently." }
+      ]
+    },
+    quiz: [
+      {
+        question: "A caller from 'your bank's fraud team' asks for the OTP just sent to your phone. You should:",
+        explanation: "OTPs are designed to be used only by you. If you share an OTP with anyone on a call — even someone who appears to be from your bank — they can complete a transaction from your account instantly.",
+        options: [
+          { id: "1", text: "Share it quickly to stop the fraudulent transaction they mentioned", correct: false },
+          { id: "2", text: "Hang up and call your bank using the number on the back of your card", correct: true },
+          { id: "3", text: "Share only the last 2 digits to verify your identity", correct: false }
+        ]
+      }
+    ],
+    takeaway: {
+      title: "Hang Up. Verify. Independently.",
+      summary: "No bank, police force, or government agency will ever ask for OTPs, card numbers, or money over a phone call.",
+      points: [
+        { title: "Hang up without guilt", text: "You owe scammers nothing. If a call feels off — hang up. If you feel bad hanging up, say 'I'll call you back' and call the official number you find yourself." },
+        { title: "The OTP rule is absolute", text: "Never share an OTP on a call, in an SMS, or in a WhatsApp message — regardless of who is asking or how official they sound." },
+        { title: "Fear is the weapon", text: "If a call makes you scared (arrest, account freeze, power cut), slow down. Real emergencies have proper procedures. Panic is the scammer's best tool." }
+      ]
+    }
+  },
+
+  "mob-3": {
+    intro: {
+      tagline: "Learn how mobile apps can steal your data — and how to choose which permissions to grant.",
+      objectives: [
+        "Understand how apps abuse permissions to steal data",
+        "Identify which permissions are genuinely dangerous",
+        "Learn how to audit and revoke unsafe permissions",
+        "Know the signs of a malicious app"
+      ]
+    },
+    understand: {
+      concept: "Apps request permissions to access your camera, contacts, SMS, and location. Legitimate apps only ask for what they need. Malicious apps exploit these permissions to steal your data.",
+      points: [
+        {
+          title: "The most dangerous permissions",
+          text: "SMS access lets an app read your OTPs. Accessibility access gives it control over your screen. Overlay permission lets it draw fake login screens over real apps. These three are most commonly abused by banking malware."
+        },
+        {
+          title: "How malicious apps steal OTPs",
+          text: "A malicious app with SMS permission automatically reads OTPs sent to your phone and forwards them to the scammer — completing bank transactions without you even knowing."
+        },
+        {
+          title: "Fake apps that look real",
+          text: "Scammers create fake versions of real apps (loan apps, games, utility tools) that ask for excessive permissions. Once installed, they silently harvest contacts, photos, and financial app data."
+        },
+        {
+          title: "Only install from official sources",
+          text: "Never install APK files sent via WhatsApp, SMS, or email. Only install from the Google Play Store or Apple App Store, and even there, check reviews and the developer name before installing."
+        }
+      ]
+    },
+    seeIt: {
+      sender: "WhatsApp message from unknown contact",
+      example: "Message: 'Hi! I found this amazing app that shows who visited your WhatsApp profile. Download it here: bit.ly/profile-viewer-wa [APK file attached]\n\nIt asks for: SMS, Contacts, Accessibility, Overlay permission'\n",
+      redFlags: [
+        { text: "APK file attached", reason: "APK files are Android app installers sent outside the Play Store. These bypass all Google security screening and are a common malware delivery method." },
+        { text: "Accessibility, Overlay permission", reason: "No 'profile viewer' app legitimately needs Accessibility or Overlay permissions. These are requested by banking trojans to control your screen and steal credentials." },
+        { text: "bit.ly link", reason: "URL shorteners like bit.ly hide the real destination. A legitimate app would be on the official Play Store with a direct link." }
+      ]
+    },
+    tryItYourself: {
+      sender: "Loan App via Play Store",
+      example: "App Name: InstantCash Loan\nInstalls: 10,000+\nPermissions requested: SMS, Contacts (full), Camera, Microphone, Storage, Call Logs, Location (always on)\n\nReview: 'Great app but they keep calling my family contacts when I miss an EMI'",
+      redFlags: [
+        { text: "SMS, Call Logs", reason: "A loan app has no legitimate need to read your SMS or call logs. SMS access lets it read OTPs. This is a predatory/malicious lending app." },
+        { text: "calling my family contacts", reason: "Legitimate lenders never harass your contacts. This app is using contact access maliciously — a major red flag in reviews." }
+      ]
+    },
+    realWorld: {
+      scenario: "Someone sends you a WhatsApp message with an APK file claiming it's a new feature for your bank's app that isn't on the Play Store yet. They say 'install this to get ₹500 cashback'. What do you do?",
+      options: [
+        { id: "a", text: "Install it — ₹500 cashback is worth trying", correct: false, feedback: "Banks never distribute apps via WhatsApp. This APK is almost certainly malware that will steal your OTPs and banking credentials. Do not install it." },
+        { id: "b", text: "Decline and check your bank's official app on the Play Store for any cashback offers", correct: true, feedback: "Correct. All genuine bank features and offers are available only through the official app on the Play Store or App Store. If the cashback is real, it will be visible there." },
+        { id: "c", text: "Install it but deny all permissions", correct: false, feedback: "Some malware can still operate with minimal permissions, and some will keep prompting you to grant them. The safest choice is not to install APKs from unknown sources at all." }
+      ]
+    },
+    quiz: [
+      {
+        question: "Which permission should you be most concerned about granting a new app?",
+        explanation: "SMS permission allows an app to read all text messages — including OTPs. A malicious app with SMS access can silently read every banking OTP and forward it to the scammer, allowing transactions without your knowledge.",
+        options: [
+          { id: "1", text: "Camera — to take profile photos", correct: false },
+          { id: "2", text: "SMS — to read your text messages", correct: true },
+          { id: "3", text: "Storage — to save downloaded files", correct: false }
+        ]
+      }
+    ],
+    takeaway: {
+      title: "Permissions Are Power — Grant Them Carefully",
+      summary: "Every permission you grant is a level of access to your personal life. Malicious apps exploit this access.",
+      points: [
+        { title: "Audit your permissions regularly", text: "Go to Settings → Apps → [App Name] → Permissions. Review what each app can access. Revoke SMS, Contacts, and Microphone from any app that doesn't clearly need them." },
+        { title: "Never install APKs from outside the Play Store", text: "APK files sent by WhatsApp, SMS, or email bypass all security vetting. The Play Store is imperfect but vastly safer than any random download." },
+        { title: "Check reviews before installing", text: "Real user reviews often reveal when an app is malicious, predatory, or abusing permissions. Read the 1-star reviews before installing any financial or loan app." }
+      ]
+    }
+  },
+
+  // ── PRIVACY & PERSONAL DATA ─────────────────────────────────────────────────
+
+  "prv-1": {
+    intro: {
+      tagline: "Understand how the information you share publicly on social media helps scammers target you.",
+      objectives: [
+        "Know which information is valuable to scammers",
+        "Understand how public profiles are used to craft targeted attacks",
+        "Learn what to keep private online",
+        "Apply practical settings to protect your social media"
+      ]
+    },
+    understand: {
+      concept: "Every detail you share publicly online — your workplace, phone number, hometown, family members — becomes a tool scammers use to build trust and craft convincing targeted attacks.",
+      points: [
+        {
+          title: "What scammers collect from your profile",
+          text: "Your full name, phone number, current city, employer, school, family member names, birthday, and recent activity. These details are used to craft convincing impersonation calls, targeted phishing, and pretexting attacks."
+        },
+        {
+          title: "Pretexting: using your data against you",
+          text: "A scammer who knows your full name, employer, and city can call and say 'I'm from IT support at [your company], we have a security issue with your account.' You immediately trust them because they know details about you."
+        },
+        {
+          title: "Birthday and location give away security answers",
+          text: "Many security questions use birthdate, city of birth, or childhood pet names. Sharing these publicly — especially on platforms like Facebook — can let attackers reset your passwords."
+        },
+        {
+          title: "Vacation posts are robbery announcements",
+          text: "Posting 'Leaving for Goa for a week!' tells burglars your home is empty. Similarly, posting your new phone or laptop helps thieves identify you as a target."
+        }
+      ]
+    },
+    seeIt: {
+      sender: "Unknown (LinkedIn DM)",
+      example: "Hi Priya! Saw you work at TechCorp Bangalore — we have a data breach affecting employees there. I'm from the cybersecurity team. Since your email is priya.sharma@gmail.com, I need to verify your identity. Can you confirm your employee ID and date of birth?",
+      redFlags: [
+        { text: "Saw you work at TechCorp", reason: "This information was harvested from her LinkedIn profile. Scammers use professional details to create a false sense of familiarity and authority." },
+        { text: "your email is priya.sharma@gmail.com", reason: "Her email was found from a previous data breach or social media profile. Having this doesn't prove the caller is legitimate — it proves they've done research." },
+        { text: "confirm your employee ID and date of birth", reason: "A real cybersecurity team never asks employees to confirm identity via social media DM. This is credential harvesting." }
+      ]
+    },
+    tryItYourself: {
+      sender: "Facebook comment on your travel post",
+      example: "Travel post: 'Finally in Shimla! 10 days of peace ❤️ So glad to be away from Bangalore!'\n\nComment from unknown person: 'Beautiful! Is this your first time there? Where are you staying? The mountain routes can be tricky — which route did you take from Bangalore?'",
+      redFlags: [
+        { text: "Is this your first time there?", reason: "Extracting whether you're a regular traveller to assess your experience and vulnerability." },
+        { text: "Where are you staying?", reason: "Attempting to learn your specific location for a follow-up scam or crime." },
+        { text: "which route did you take from Bangalore", reason: "Confirms you're from Bangalore, confirming your home is currently unoccupied." }
+      ]
+    },
+    realWorld: {
+      scenario: "You receive a call from someone who knows your full name, that you work at Infosys in Pune, and that you recently got married (your Facebook shows wedding photos). They say they're from Infosys HR offering a salary revision form to fill out. What do you do?",
+      options: [
+        { id: "a", text: "Fill it out — they clearly know I work there and got married, so they're probably real", correct: false, feedback: "All this information was harvested from your public Facebook and LinkedIn profiles. Knowing your personal details doesn't make a caller legitimate. Verify through your official Infosys HR portal." },
+        { id: "b", text: "Thank them and say you'll check with HR directly through official channels", correct: true, feedback: "Correct. Even if they know everything about you publicly, verify all HR communications through your company's official intranet or HR email — not through calls from unknown numbers." },
+        { id: "c", text: "Ask them how they got your number before deciding", correct: false, feedback: "Scammers have prepared answers for this ('we got your details from HR records'). Getting an answer doesn't make them legitimate. Verify through official channels." }
+      ]
+    },
+    quiz: [
+      {
+        question: "Which of these is the MOST risky thing to share publicly on social media?",
+        explanation: "Your phone number combined with your workplace and full name gives scammers everything they need for a convincing vishing attack. It also helps them find you across platforms and crack security questions.",
+        options: [
+          { id: "1", text: "Your favourite movie", correct: false },
+          { id: "2", text: "Your phone number and workplace together", correct: true },
+          { id: "3", text: "Your city of residence", correct: false }
+        ]
+      }
+    ],
+    takeaway: {
+      title: "Information Is Currency — Protect It",
+      summary: "Every detail you share publicly is a piece of the puzzle scammers use to target you.",
+      points: [
+        { title: "Set all profiles to private", text: "On Instagram, Facebook, and WhatsApp, set your profile to 'Friends Only' or 'Private'. Don't accept follow requests from people you don't know." },
+        { title: "Never share your phone number publicly", text: "Remove your phone number from social media profiles. Use email for public contact instead." },
+        { title: "Knowing your details ≠ being legitimate", text: "Anyone who calls you and knows personal details about you is NOT automatically trustworthy. Scammers do research. Always verify independently." }
+      ]
+    }
+  },
+
+  "prv-2": {
+    intro: {
+      tagline: "Understand what a data breach is, what happens to your data after one, and how to protect yourself.",
+      objectives: [
+        "Know what a data breach is and how it happens",
+        "Understand what scammers do with breached data",
+        "Learn how to check if your data has been exposed",
+        "Know the right steps to take after a breach"
+      ]
+    },
+    understand: {
+      concept: "A data breach is when hackers steal personal information — like passwords, phone numbers, or payment details — from a company's database. Once leaked, this data is sold and used for targeted attacks.",
+      points: [
+        {
+          title: "Breaches happen to big companies too",
+          text: "Major apps and services — including social platforms, e-commerce sites, and food delivery apps — have all experienced data breaches. Your data on any service is only as safe as that service's security."
+        },
+        {
+          title: "What gets stolen in a breach",
+          text: "Email addresses, passwords (sometimes in plain text), phone numbers, home addresses, payment card details, and in larger breaches — Aadhaar numbers, PAN cards, and government ID data."
+        },
+        {
+          title: "Breached data is sold on the dark web",
+          text: "Stolen data is compiled into databases and sold cheaply to other scammers. A database of 10 million email + password pairs might sell for just a few thousand rupees."
+        },
+        {
+          title: "Credential stuffing: the main risk",
+          text: "If you use the same password across multiple sites, and one site is breached, scammers automatically try that password on every other major site (Gmail, banking, Amazon). This is called credential stuffing."
+        }
+      ]
+    },
+    seeIt: {
+      sender: "Email from unknown sender",
+      example: "Subject: Your password is 'Mumbai@1985' — I know everything about you\n\nI have access to all your accounts. I installed malware on your device through an adult website you visited. I have a recording of you. Pay ₹50,000 in Bitcoin within 48 hours or I will send the video to all your contacts.\n\n[Bitcoin wallet address]",
+      redFlags: [
+        { text: "Your password is 'Mumbai@1985'", reason: "This password came from a data breach database purchased cheaply. Including a real password creates panic and feels very personal — but it doesn't mean they have malware or any recording." },
+        { text: "Pay ₹50,000 in Bitcoin", reason: "This is a sextortion scam script — one of the most common. It exploits the fact that the real password makes it feel credible. It is almost always a bluff." },
+        { text: "within 48 hours", reason: "False urgency to prevent you from thinking clearly or asking someone for advice before paying." }
+      ]
+    },
+    tryItYourself: {
+      sender: "Unknown caller",
+      example: "Caller: 'I have your Aadhaar number 1234-XXXX-7890, your date of birth, and your phone number registered with your SBI account. I'm calling to offer you a pre-approved loan.'\n\nThey ask: 'Please confirm your account number and net banking password to proceed.'",
+      redFlags: [
+        { text: "I have your Aadhaar number", reason: "This data came from a breach or public database. Having your Aadhaar does not make this caller a legitimate bank representative." },
+        { text: "confirm your account number and net banking password", reason: "No bank ever asks for your net banking password. This is credential harvesting using breached data to seem legitimate." }
+      ]
+    },
+    realWorld: {
+      scenario: "You receive an email saying a major food delivery app you use was breached and your email and password were exposed. What's the most important first step?",
+      options: [
+        { id: "a", text: "Change your password only on the food delivery app", correct: false, feedback: "If you use the same password elsewhere (Gmail, banking, other apps), you must change it on ALL those platforms immediately — not just the breached one." },
+        { id: "b", text: "Change your password on ALL sites where you used the same password", correct: true, feedback: "Correct. Scammers use breached credentials to try logging into every major platform — your email, banking apps, and shopping sites. Change the password everywhere you used it." },
+        { id: "c", text: "Wait to see if any suspicious activity happens before reacting", correct: false, feedback: "By the time suspicious activity appears, the damage is done. Proactive password changes are always faster and safer than reactive account recovery." }
+      ]
+    },
+    quiz: [
+      {
+        question: "You receive an email that correctly includes a password you use. What does this most likely mean?",
+        explanation: "Receiving an email that includes a real password of yours is almost certainly from a data breach database — not evidence that someone has hacked your device. Change the password immediately and everywhere you used it.",
+        options: [
+          { id: "1", text: "Someone has installed malware on your device and is watching you", correct: false },
+          { id: "2", text: "Your password was exposed in a data breach and is being used to scare you", correct: true },
+          { id: "3", text: "Your email provider has been hacked", correct: false }
+        ]
+      }
+    ],
+    takeaway: {
+      title: "Unique Passwords = Breach Containment",
+      summary: "A single breached password should only affect one account. Use unique passwords everywhere.",
+      points: [
+        { title: "Use a password manager", text: "Tools like Bitwarden or Google Password Manager generate and store unique, complex passwords for every site — so a breach on one site can't unlock others." },
+        { title: "Check if you've been breached", text: "Visit haveibeenpwned.com and enter your email address. It safely shows which services involving your email have experienced public data breaches." },
+        { title: "Enable 2FA on your most important accounts", text: "Two-factor authentication on your email and banking apps means even if your password is breached, the attacker still can't log in without the second factor." }
+      ]
+    }
+  },
+
+  "prv-3": {
+    intro: {
+      tagline: "Understand the real security risks of using public Wi-Fi and how to stay protected.",
+      objectives: [
+        "Know how attackers intercept data on public Wi-Fi",
+        "Understand what a man-in-the-middle attack is",
+        "Identify which activities are unsafe on public networks",
+        "Know how to protect yourself when you must use public Wi-Fi"
+      ]
+    },
+    understand: {
+      concept: "Public Wi-Fi at cafes, airports, and hotels is often unsecured — meaning anyone on the same network can potentially intercept the data you send and receive.",
+      points: [
+        {
+          title: "What is a man-in-the-middle attack",
+          text: "An attacker on the same network positions themselves between you and the internet — intercepting everything you send. Without encryption, they can see your login credentials, emails, and browsing activity in plain text."
+        },
+        {
+          title: "Evil twin hotspots",
+          text: "Scammers set up Wi-Fi hotspots named 'Airport Free WiFi' or 'Cafe Guest' near real hotspots. When you connect, all your traffic goes through their device. They can inject malware or capture your credentials."
+        },
+        {
+          title: "Unencrypted websites are completely transparent",
+          text: "HTTP websites (not HTTPS) send all data in plain text. On a compromised public Wi-Fi, everything you do on an HTTP site — including form submissions — is visible to the attacker."
+        },
+        {
+          title: "The activities most at risk",
+          text: "Online banking, entering card details, logging into email, entering OTPs, and accessing corporate VPN without additional encryption are all highly risky on public Wi-Fi without a VPN."
+        }
+      ]
+    },
+    seeIt: {
+      sender: "Wi-Fi Network List at Airport",
+      example: "Available Networks:\n✓ AirIndia Lounge Wi-Fi (Secured)\n✓ Airport Official Free Wi-Fi (Secured)\n⚠ Free Airport WiFi (Open, no password)\n⚠ Indira Gandhi Int'l Airport Free (Open, no password)\n\nSomeone sitting nearby has a laptop running a Wi-Fi hotspot tool creating the last two networks.",
+      redFlags: [
+        { text: "Free Airport WiFi (Open, no password)", reason: "Any open network with no password at an airport is suspicious. Anyone can create a hotspot with an official-sounding name. Look for the network advertised on official airport signage." },
+        { text: "Indira Gandhi Int'l Airport Free (Open, no password)", reason: "The real airport network has a password or authentication portal on official signage. An open network with a convincing name is a classic evil twin attack." }
+      ]
+    },
+    tryItYourself: {
+      sender: "Coffee Shop Wi-Fi",
+      example: "You're working from a cafe and need to:\nA) Check your Gmail for a work email\nB) Do a bank transfer of ₹15,000\nC) Watch a YouTube video for research\nD) Log into your company's internal portal without VPN\n\nThe cafe Wi-Fi is open (no password) and named 'BlueBeans Guest'.",
+      redFlags: [
+        { text: "Do a bank transfer of ₹15,000", reason: "Never perform banking transactions on public Wi-Fi. Even with HTTPS, an evil twin attack can intercept session tokens and 2FA redirects." },
+        { text: "Log into your company's internal portal without VPN", reason: "Company portals accessed without a VPN on public Wi-Fi expose your work credentials. Always use your company VPN on public networks." }
+      ]
+    },
+    realWorld: {
+      scenario: "You're at an airport and urgently need to transfer money to a family member. The only connection available is the airport's free Wi-Fi. What should you do?",
+      options: [
+        { id: "a", text: "Use the airport Wi-Fi — it's an official network so it should be safe", correct: false, feedback: "Even official public Wi-Fi networks can be compromised. For banking, your mobile data connection is significantly safer than any public Wi-Fi." },
+        { id: "b", text: "Turn off Wi-Fi and use your mobile data to make the transfer", correct: true, feedback: "Correct. Your mobile data connection is encrypted by your carrier and far more secure than public Wi-Fi for banking. Use mobile data for any sensitive activity." },
+        { id: "c", text: "Ask a stranger to confirm the Wi-Fi name matches official airport signs before connecting", correct: false, feedback: "This is better than nothing, but still doesn't guarantee safety. Evil twin names can be created to exactly match official ones. Mobile data remains the safer option." }
+      ]
+    },
+    quiz: [
+      {
+        question: "Which activity is safest to perform on unsecured public Wi-Fi?",
+        explanation: "Watching publicly available video content sends no sensitive personal information. Banking, email login, and corporate access all involve credentials that could be intercepted on an unsecured network.",
+        options: [
+          { id: "1", text: "Logging into your internet banking", correct: false },
+          { id: "2", text: "Watching a public YouTube video", correct: true },
+          { id: "3", text: "Checking your work email without a VPN", correct: false }
+        ]
+      }
+    ],
+    takeaway: {
+      title: "Public Wi-Fi = Public Road",
+      summary: "Treat public Wi-Fi like a public road — anyone can watch what you're doing unless you take precautions.",
+      points: [
+        { title: "Use mobile data for banking", text: "Never perform banking transactions or enter card details on public Wi-Fi. Your mobile data connection is encrypted and private." },
+        { title: "Use a VPN on public networks", text: "A VPN (like ProtonVPN or your company's VPN) encrypts all your traffic on public Wi-Fi, making interception practically impossible." },
+        { title: "Stick to HTTPS websites", text: "Look for the padlock in your browser. HTTPS encrypts data between you and the website — though it doesn't protect you from an evil twin attack itself." }
+      ]
+    }
   }
+
 };
 
 module.exports = ALL_LESSON_STEPS;

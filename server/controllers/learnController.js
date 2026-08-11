@@ -62,6 +62,9 @@ const completeLesson = asyncHandler(async (req, res) => {
     throw new Error("Lesson not found");
   }
 
+  const existingProgress = await LessonProgress.findOne({ userId: req.user._id, lessonId: lesson._id });
+  const alreadyCompleted = existingProgress && existingProgress.status === "completed";
+
   const progress = await LessonProgress.findOneAndUpdate(
     { userId: req.user._id, lessonId: lesson._id },
     { 
@@ -72,13 +75,15 @@ const completeLesson = asyncHandler(async (req, res) => {
     { new: true, upsert: true }
   );
 
-  // Update User XP
-  if (progress.isNew || progress.xpEarned > 0) { // Naive XP award just to match dummy
-    const user = await User.findById(req.user._id);
-    if (user) {
+  // Update User XP & Streak (only award XP if not previously completed)
+  const user = await User.findById(req.user._id);
+  if (user) {
+    if (!alreadyCompleted) {
       user.xp += progress.xpEarned;
-      await user.save();
     }
+    const { updateStreak } = require("../utils/streakHelper");
+    updateStreak(user);
+    await user.save();
   }
 
   return sendSuccess(res, { data: { progress } });

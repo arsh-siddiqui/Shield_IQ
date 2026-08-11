@@ -1,11 +1,12 @@
 import { NavLink } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LayoutDashboard, ScanLine, Gamepad2, BookOpen, User, ShieldCheck, Settings2, LogOut } from "lucide-react";
+import { LayoutDashboard, ScanLine, Gamepad2, BookOpen, User, ShieldCheck, Settings2, LogOut, Bot } from "lucide-react";
 import { useAppData } from "../../context/AppDataContext";
 
 const navItems = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
   { label: "AI Scanner", to: "/scanner", icon: ScanLine },
+  { label: "AI Assistant", to: "/assistant", icon: Bot },
   { label: "Scam Simulator", to: "/simulator", icon: Gamepad2 },
   { label: "Learn", to: "/learn", icon: BookOpen },
   { label: "Profile", to: "/profile", icon: User },

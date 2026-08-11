@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SearchBar from "../ui/SearchBar";
-import NotificationBell from "../ui/NotificationBell";
 import { useAppData } from "../../context/AppDataContext";
 
 const searchTargets = [
   { label: "AI Scanner", to: "/scanner", keywords: ["scan", "scanner", "url", "email", "sms"] },
+  { label: "AI Assistant", to: "/assistant", keywords: ["assistant", "ai", "chat", "ask", "help"] },
   { label: "Scam Simulator", to: "/simulator", keywords: ["simulator", "simulation", "practice", "game"] },
   { label: "Learn", to: "/learn", keywords: ["awareness", "lesson", "article", "learn", "course"] },
   { label: "Attack Replay", to: "/attack-replay", keywords: ["replay", "timeline", "attack"] },
@@ -62,7 +62,6 @@ export default function DesktopTopBar() {
           </div>
         )}
       </div>
-      <NotificationBell />
     </div>
   );
 }

@@ -15,6 +15,7 @@ const simulationRoutes = require("./routes/simulationRoutes");
 const quizRoutes = require("./routes/quizRoutes");
 const scanRoutes = require("./routes/scanRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const assistantRoutes = require("./routes/assistantRoutes");
 
 const app = express();
 
@@ -63,6 +64,7 @@ app.use("/api/simulations", simulationRoutes);
 app.use("/api/quizzes", quizRoutes);
 app.use("/api/scan", scanRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/assistant", assistantRoutes);
 
 // ---------------------------------------------------------------------------
 // 404 + error handling — must be registered last

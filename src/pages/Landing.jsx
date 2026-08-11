@@ -129,7 +129,7 @@ export default function Landing() {
                         <Badge tone="neutral">Analyzing...</Badge>
                       ) : (
                         <Badge tone={sampleItem.safe ? "success" : "danger"} icon={sampleItem.safe ? ShieldCheck : ShieldAlert}>
-                          {sampleItem.risk}% · {sampleItem.verdict}
+                          {sampleItem.verdict}
                         </Badge>
                       )}
                       <motion.div

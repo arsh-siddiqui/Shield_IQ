@@ -55,6 +55,10 @@ const scanContent = asyncHandler(async (req, res) => {
       if (parts.length > 0) threatIntelSummary = parts.join('; ');
     }
 
+    const { updateStreak } = require("../utils/streakHelper");
+    updateStreak(req.user);
+    await req.user.save();
+
     saved = await ScanHistory.create({
       user: req.user._id,
       scanType: result.scanType,

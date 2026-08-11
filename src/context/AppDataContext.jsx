@@ -1,8 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
   currentUser,
-  initialNotifications,
-  recentScans as initialScans,
   profileBadges,
   simulationScenarios,
   adminUsers as initialAdminUsers,
@@ -220,16 +218,6 @@ export function AppDataProvider({ children }) {
     setXp(0);
   }, []);
 
-  // ---- Notification bell ---------------------------------------------------
-  const [notifications, setNotifications] = useState(initialNotifications);
-  const unreadCount = notifications.filter((n) => !n.read).length;
-  const markNotificationRead = useCallback((id) => {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-  }, []);
-  const markAllNotificationsRead = useCallback(() => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  }, []);
-
   // ---- Scan history --------------------------------------------------------
   const addScan = useCallback((scan) => {
     scanIdSeq += 1;
@@ -417,10 +405,6 @@ export function AppDataProvider({ children }) {
     clearOfflineProgress,
     xp,
     runScan,
-    notifications,
-    unreadCount,
-    markNotificationRead,
-    markAllNotificationsRead,
     scanHistory,
     addScan,
     bookmarks,
