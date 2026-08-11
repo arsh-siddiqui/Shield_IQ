@@ -62,8 +62,8 @@ export default function AdminDashboard() {
       const [s, a, u, art, les] = await Promise.all([
         fetchAdminStats(),
         fetchAdminAnalytics(),
-        fetchAdminUsers({ limit: 1000 }), // simplified for admin view
-        fetchArticles({ limit: 1000 }),
+        fetchAdminUsers({ limit: 100 }), // simplified for admin view
+        fetchArticles({ limit: 100 }),
         fetchAdminLessons()
       ]);
       setStats(s);

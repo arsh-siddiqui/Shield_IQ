@@ -19,6 +19,7 @@ const assistantRoutes = require("./routes/assistantRoutes");
 const articleRoutes = require("./routes/articleRoutes");
 
 const app = express();
+app.set("trust proxy", 1); // Trust first proxy (Render/Vercel) for secure cookies
 
 // ---------------------------------------------------------------------------
 // Core middleware

@@ -14,10 +14,11 @@ function signToken(userId) {
 function sendTokenCookie(res, userId) {
   const token = signToken(userId);
 
+  const isProd = env.NODE_ENV.includes("production");
   res.cookie(env.JWT_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: env.NODE_ENV === "production",
-    sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
@@ -25,10 +26,11 @@ function sendTokenCookie(res, userId) {
 }
 
 function clearTokenCookie(res) {
+  const isProd = env.NODE_ENV.includes("production");
   res.clearCookie(env.JWT_COOKIE_NAME, {
     httpOnly: true,
-    secure: env.NODE_ENV === "production",
-    sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
   });
 }
 
