@@ -15,7 +15,7 @@ const env = {
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
   JWT_COOKIE_NAME: 'shieldiq_token',
 
-  CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
+  FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',
 
   ADMIN_SEED_EMAIL: process.env.ADMIN_SEED_EMAIL || 'admin@shieldiq.app',
   ADMIN_SEED_PASSWORD: process.env.ADMIN_SEED_PASSWORD || 'ChangeMe123!',

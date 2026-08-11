@@ -123,7 +123,7 @@ async function runTests() {
     // Now login as Admin to test successful Admin auth
     console.log('Testing Admin Auth (with admin user)...');
     const adminLogin = await api.post('/auth/login', {
-       email: 'admin@shieldiq.local',
+       email: 'admin@shieldiq.app',
        password: 'ChangeMe123!'
     });
     assert.strictEqual(adminLogin.data.success, true);

@@ -1,0 +1,48 @@
+services:
+  # ---------------------------------------------------------------------------
+  # Node.js Backend API
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: shieldiq-api
+    env: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false # Requires manual entry in Render dashboard
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: FRONTEND_URL
+        sync: false
+      - key: PHISHDESTROY_API_URL
+        value: https://api.destroy.tools
+      - key: PHISHDESTROY_TIMEOUT_MS
+        value: 4000
+      - key: THREAT_INTEL_CACHE_TTL
+        value: 6
+      - key: ML_SERVICE_URL
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: llama-3.1-8b-instant
+
+  # ---------------------------------------------------------------------------
+  # Python ML Service
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: shieldiq-ml
+    env: python
+    plan: free
+    rootDir: ml
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0

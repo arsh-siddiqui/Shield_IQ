@@ -20,7 +20,7 @@ export const howItWorks = [
   {
     step: "Detect",
     title: "Detect",
-    description: "Paste a link, email, SMS, or QR code and let ShieldIQ scan it in seconds.",
+    description: "Paste a link, email, or SMS and let ShieldIQ scan it in seconds.",
     icon: "ScanSearch",
   },
   {
@@ -46,7 +46,7 @@ export const howItWorks = [
 export const landingFeatures = [
   {
     title: "AI Scanner",
-    description: "Analyze URLs, emails, SMS, WhatsApp messages, and QR codes for hidden threats.",
+    description: "Analyze URLs, emails, SMS, and WhatsApp messages for hidden threats.",
     icon: "ScanLine",
     color: "primary",
   },
@@ -118,7 +118,7 @@ export const faqs = [
   },
   {
     q: "What can I scan?",
-    a: "Links, emails, SMS texts, WhatsApp messages, and QR codes. Just paste, upload, or type it in.",
+    a: "Links, emails, SMS texts, and WhatsApp messages. Just paste or type it in.",
   },
 ];
 
@@ -140,7 +140,6 @@ export const scannerTabs = [
   { id: "email", label: "Email", icon: "Mail", placeholder: "Paste the full email content here, including sender address..." },
   { id: "sms", label: "SMS", icon: "MessageSquare", placeholder: "Paste the SMS text here..." },
   { id: "whatsapp", label: "WhatsApp", icon: "MessageCircle", placeholder: "Paste the WhatsApp message here..." },
-  { id: "qr", label: "QR Code", icon: "QrCode", placeholder: "Upload a QR code image to scan" },
 ];
 
 export const sampleScanResult = {
@@ -716,6 +715,27 @@ export const newDailyChallenges = [
       { id: "c", text: "The prize amount is too low", correct: false }
     ],
     feedback: "Legitimate lotteries or sweepstakes never ask you to pay money to receive money."
+  },
+  {
+    id: "dc-2",
+    message: "SMS: 'Your bank account will be blocked today. Complete KYC immediately: https://example-bank-verify.com'",
+    question: "What should you do?",
+    options: [
+      { id: "a", text: "Click the link and fill the form to avoid blocks", correct: false },
+      { id: "b", text: "Reply to the sender asking for details", correct: false },
+      { id: "c", text: "Open the official banking app directly", correct: true }
+    ],
+    feedback: "Never trust urgent SMS links. Always log in directly through the official app or website."
+  },
+  {
+    id: "dc-3",
+    message: "Email from 'support@netflix-billing.co': 'Your payment failed. Update your card details within 24 hours or your subscription will be cancelled.'",
+    question: "Is this Safe or Suspicious?",
+    options: [
+      { id: "a", text: "Safe: It's a standard billing alert", correct: false },
+      { id: "b", text: "Suspicious: The sender email domain is slightly off", correct: true }
+    ],
+    feedback: "The sender domain 'netflix-billing.co' is a typosquatting trick. Always check the exact sender address."
   }
 ];
 

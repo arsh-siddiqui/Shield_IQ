@@ -64,7 +64,7 @@ const deleteQuiz = asyncHandler(async (req, res) => {
 // @access Private
 const submitQuiz = asyncHandler(async (req, res) => {
   const { lessonId, correct } = req.body;
-  const xpAwarded = correct ? 20 : 0; // standard 20 XP for now, based on AppDataContext
+  const xpAwarded = correct ? 10 : 0; 
   
   let lessonMongoId = null;
   if (lessonId) {
@@ -73,18 +73,22 @@ const submitQuiz = asyncHandler(async (req, res) => {
      if (lesson) lessonMongoId = lesson._id;
   }
 
+  // Check if it was already correctly completed
+  const existingResult = await QuizResult.findOne({ userId: req.user._id, lessonId: lessonMongoId });
+  const alreadyCompleted = existingResult && existingResult.correctAnswers > 0;
+
   const result = await QuizResult.findOneAndUpdate(
     { userId: req.user._id, lessonId: lessonMongoId },
     { correctAnswers: correct ? 1 : 0, score: correct ? 100 : 0, xpEarned: xpAwarded, completedAt: new Date() },
     { new: true, upsert: true }
   );
 
-  if (xpAwarded > 0 && result.isNew) {
+  if (xpAwarded > 0 && !alreadyCompleted) {
     req.user.xp += xpAwarded;
     await req.user.save();
   }
 
-  return sendSuccess(res, { data: { result, correct, xpAwarded, xpTotal: req.user.xp } });
+  return sendSuccess(res, { data: { result, correct, xpAwarded: !alreadyCompleted ? xpAwarded : 0, xpTotal: req.user.xp } });
 });
 
 const getQuizResults = asyncHandler(async (req, res) => {

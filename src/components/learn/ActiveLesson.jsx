@@ -568,9 +568,20 @@ export default function ActiveLesson({ lesson, steps, onBack }) {
                 </div>
               )}
 
-              <Button onClick={onBack} size="lg" className="shadow-lg shadow-primary/20">
-                Continue Learning <Icons.ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
+              <div className="flex flex-col gap-3 max-w-xs mx-auto">
+                <Button onClick={onBack} size="lg" className="w-full shadow-md shadow-primary/20">
+                  Next Lesson <Icons.ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+                <Button variant="outline" onClick={() => navigate("/dashboard")} size="lg" className="w-full">
+                  Try a Challenge <Icons.Gamepad2 className="w-5 h-5 ml-2" />
+                </Button>
+                <Button variant="secondary" onClick={() => navigate("/assistant", { state: { initialPrompt: `I just finished learning about ${lesson.title}. What else should I know?` } })} size="lg" className="w-full">
+                  Ask ShieldIQ AI <Icons.Bot className="w-5 h-5 ml-2" />
+                </Button>
+                <button onClick={onBack} className="text-sm font-semibold text-ink-light hover:text-ink mt-2 transition-colors">
+                  Back to Learn
+                </button>
+              </div>
             </div>
           </motion.div>
         )}

@@ -26,12 +26,11 @@ export default function AIScanner() {
   const initialTab = location.state?.tab || "url";
   const [activeTab, setActiveTab] = useState(initialTab);
   const [value, setValue] = useState("");
-  const [qrUploaded, setQrUploaded] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [stageIndex, setStageIndex] = useState(0);
 
   const activeConfig = scannerTabs.find((t) => t.id === activeTab);
-  const hasInput = activeTab === "qr" ? qrUploaded : value.trim().length > 0;
+  const hasInput = value.trim().length > 0;
 
   const handleAnalyze = async () => {
     if (!hasInput) {
@@ -48,11 +47,9 @@ export default function AIScanner() {
       });
     }, 400);
 
-    const inputText = activeTab === "qr" ? "https://parking-pay-scan.info/checkout" : value;
+    const inputText = value;
     const target =
-      activeTab === "qr"
-        ? "Uploaded QR code"
-        : inputText.length > 60
+      inputText.length > 60
         ? inputText.slice(0, 60).trim() + "..."
         : inputText;
 
@@ -94,7 +91,6 @@ export default function AIScanner() {
               onClick={() => {
                 setActiveTab(tab.id);
                 setValue("");
-                setQrUploaded(false);
               }}
               className={`relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-colors ${
                 isActive ? "bg-primary text-white shadow-lift" : "bg-white text-ink-light border border-slate-200 hover:border-primary/40"
@@ -111,29 +107,6 @@ export default function AIScanner() {
         <AnimatePresence mode="wait">
           {!scanning ? (
             <motion.div key="input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              {activeTab === "qr" ? (
-                <button
-                  type="button"
-                  onClick={() => setQrUploaded(true)}
-                  className={`w-full border-2 border-dashed rounded-2xl p-12 text-center transition-colors cursor-pointer ${
-                    qrUploaded ? "border-secondary bg-secondary-50" : "border-slate-200 hover:border-primary/50"
-                  }`}
-                >
-                  {qrUploaded ? (
-                    <>
-                      <Icons.CheckCircle2 className="w-12 h-12 text-secondary mx-auto mb-4" />
-                      <p className="text-sm font-semibold text-ink mb-1">parking-qr-photo.png uploaded</p>
-                      <p className="text-xs text-ink-faint">Click Analyze to scan this QR code</p>
-                    </>
-                  ) : (
-                    <>
-                      <Icons.QrCode className="w-12 h-12 text-ink-faint mx-auto mb-4" />
-                      <p className="text-sm font-semibold text-ink mb-1">Upload a QR code image</p>
-                      <p className="text-xs text-ink-faint">PNG, JPG up to 5MB — click to simulate an upload</p>
-                    </>
-                  )}
-                </button>
-              ) : (
                 <textarea
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
@@ -141,7 +114,6 @@ export default function AIScanner() {
                   rows={activeTab === "url" ? 3 : 8}
                   className="w-full rounded-2xl border border-slate-200 p-5 text-sm text-ink placeholder:text-ink-faint focus:border-primary focus:ring-4 focus:ring-primary-50 outline-none transition resize-none"
                 />
-              )}
 
               <div className="flex items-center justify-between mt-6">
                 <p className="text-xs text-ink-faint flex items-center gap-1.5">
