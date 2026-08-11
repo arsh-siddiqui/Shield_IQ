@@ -59,11 +59,25 @@ export default function AdminDashboard() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
+
+      const fetchAll = async (fetcher) => {
+        let all = [];
+        let page = 1;
+        const limit = 100;
+        while (true) {
+          const chunk = await fetcher({ limit, page });
+          all = all.concat(chunk);
+          if (chunk.length < limit) break;
+          page++;
+        }
+        return all;
+      };
+
       const [s, a, u, art, les] = await Promise.all([
         fetchAdminStats(),
         fetchAdminAnalytics(),
-        fetchAdminUsers({ limit: 100 }), // simplified for admin view
-        fetchArticles({ limit: 100 }),
+        fetchAll(fetchAdminUsers),
+        fetchAll(fetchArticles),
         fetchAdminLessons()
       ]);
       setStats(s);
