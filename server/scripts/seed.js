@@ -40,7 +40,7 @@ async function seedDB() {
     const userPassword = await bcrypt.hash("ChangeMe123!", 10);
 
     const admin = await User.findOneAndUpdate(
-      { email: "admin@shieldiq.local" },
+      { email: "admin@detectiq.local" },
       {
         name: "Admin User",
         password: adminPassword,
@@ -53,7 +53,7 @@ async function seedDB() {
     );
     
     const user = await User.findOneAndUpdate(
-      { email: "user@shieldiq.local" },
+      { email: "user@detectiq.local" },
       {
         name: "Demo User",
         password: userPassword,

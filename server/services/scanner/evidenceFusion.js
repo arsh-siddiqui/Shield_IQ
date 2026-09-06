@@ -19,8 +19,8 @@
  * different things. Fusion uses decision rules, not naive averaging.
  */
 
-const RISK_RANK = { Safe: 0, Low: 1, Medium: 2, High: 3 };
-const RISK_FROM_RANK = ['Safe', 'Low', 'Medium', 'High'];
+const RISK_RANK = { safe: 0, low: 1, medium: 2, high: 3 };
+const RISK_FROM_RANK = ['safe', 'low', 'medium', 'high'];
 
 function riskMax(a, b) {
   return RISK_FROM_RANK[Math.max(RISK_RANK[a] || 0, RISK_RANK[b] || 0)];
@@ -35,7 +35,17 @@ function riskMax(a, b) {
  * @param {Object|null} groqResult   - Output from groqService.analyzeWithGroq()
  * @returns {Object} Final merged result with all evidence fields
  */
-function fuseEvidence(heuristicResult, mlEvidence, threatIntel, groqResult) {
+/**
+ * Fuse all evidence into a final scan result.
+ *
+ * @param {Object} heuristicResult   - Output from analyzeContent() (heuristic engine)
+ * @param {Object|null} mlEvidence   - Output from mlService.classifyText()
+ * @param {Object|null} threatIntel  - Output from threatIntelService.getThreatIntelligence()
+ * @param {Object|null} ragEvidence  - Output from ragClient retrieval
+ * @param {Object|null} groqResult   - Output from groqService.analyzeWithGroq()
+ * @returns {Object} Final merged result with all evidence fields
+ */
+function fuseEvidence(heuristicResult, mlEvidence, threatIntel, ragEvidence, groqResult) {
   const analysisSources = ['heuristics'];
   let finalRiskLevel = heuristicResult.riskLevel;
   let finalRiskScore = heuristicResult.riskScore;
@@ -45,9 +55,7 @@ function fuseEvidence(heuristicResult, mlEvidence, threatIntel, groqResult) {
   let finalReasons = [...(heuristicResult.reasons || [])];
   let finalRecommendations = [...(heuristicResult.recommendations || [])];
 
-  // -------------------------------------------------------------------------
   // 1. Threat Intelligence (highest priority evidence)
-  // -------------------------------------------------------------------------
   const phishdestroyFound = threatIntel?.phishdestroy?.status === 'found' && threatIntel.phishdestroy.malicious;
 
   if (phishdestroyFound) {
@@ -56,7 +64,7 @@ function fuseEvidence(heuristicResult, mlEvidence, threatIntel, groqResult) {
     const severity = threatIntel.phishdestroy.severity || 'high';
 
     if (riskScore >= 80 || severity === 'critical') {
-      finalRiskLevel  = 'High';
+      finalRiskLevel  = 'high';
       finalRiskScore  = Math.max(finalRiskScore, riskScore);
       finalConfidence = Math.max(finalConfidence, 95);
       finalCategory   = 'Known Suspicious Domain (PhishDestroy)';
@@ -71,7 +79,7 @@ function fuseEvidence(heuristicResult, mlEvidence, threatIntel, groqResult) {
         ...finalRecommendations,
       ];
     } else {
-      finalRiskLevel  = riskMax(finalRiskLevel, 'High');
+      finalRiskLevel  = riskMax(finalRiskLevel, 'high');
       finalRiskScore  = Math.max(finalRiskScore, riskScore);
       finalConfidence = Math.max(finalConfidence, 85);
       finalCategory   = 'Suspicious Domain (PhishDestroy)';
@@ -82,55 +90,61 @@ function fuseEvidence(heuristicResult, mlEvidence, threatIntel, groqResult) {
     }
   }
 
-  // -------------------------------------------------------------------------
   // 2. Machine Learning evidence
-  // -------------------------------------------------------------------------
   if (mlEvidence?.status === 'available') {
     analysisSources.push('machine_learning');
     const mlPhishProb = mlEvidence.probability;
     const mlLabel     = mlEvidence.label;
 
     if (mlLabel === 'phishing') {
-      // High-confidence ML + heuristic agreement → escalate
-      if (mlPhishProb >= 0.85 && finalRiskLevel === 'Medium') {
-        finalRiskLevel  = 'High';
+      if (mlPhishProb >= 0.85 && finalRiskLevel === 'medium') {
+        finalRiskLevel  = 'high';
         finalRiskScore  = Math.max(finalRiskScore, 72);
         finalConfidence = Math.min(99, finalConfidence + 10);
-      } else if (mlPhishProb >= 0.70 && finalRiskLevel === 'Low') {
-        finalRiskLevel  = riskMax(finalRiskLevel, 'Medium');
+      } else if (mlPhishProb >= 0.70 && finalRiskLevel === 'low') {
+        finalRiskLevel  = riskMax(finalRiskLevel, 'medium');
         finalRiskScore  = Math.max(finalRiskScore, 45);
         finalConfidence = Math.min(99, finalConfidence + 8);
-      } else if (mlPhishProb >= 0.85 && finalRiskLevel === 'Low') {
-        finalRiskLevel  = riskMax(finalRiskLevel, 'Medium');
+      } else if (mlPhishProb >= 0.85 && finalRiskLevel === 'low') {
+        finalRiskLevel  = riskMax(finalRiskLevel, 'medium');
         finalRiskScore  = Math.max(finalRiskScore, 52);
         finalConfidence = Math.min(99, finalConfidence + 12);
       }
-      // High heuristic + high ML → boost confidence, not level (already High)
-      if (finalRiskLevel === 'High' && mlPhishProb >= 0.70) {
+      if (finalRiskLevel === 'high' && mlPhishProb >= 0.70) {
         finalConfidence = Math.min(99, finalConfidence + 5);
       }
     } else if (mlLabel === 'safe') {
-      // ML says safe: only downgrade if heuristic evidence is also weak
-      if (mlPhishProb <= 0.15 && finalRiskLevel === 'Low' && !phishdestroyFound) {
-        finalRiskLevel = 'Safe';
+      if (mlPhishProb <= 0.15 && finalRiskLevel === 'low' && !phishdestroyFound) {
+        finalRiskLevel = 'safe';
         finalRiskScore = Math.min(finalRiskScore, 10);
         finalConfidence = Math.min(99, finalConfidence + 5);
       }
     }
   }
 
-  // -------------------------------------------------------------------------
-  // 3. Groq contextual refinement
-  // -------------------------------------------------------------------------
+  // 3. RAG Personalization Evidence (Deterministic)
+  if (ragEvidence?.status === 'available' && ragEvidence.similarityData?.length > 0) {
+    analysisSources.push('rag');
+    const avgSim = ragEvidence.similarityData.reduce((acc, curr) => acc + curr.similarity, 0) / ragEvidence.similarityData.length;
+    // RAG does not override strong TI or Heuristics, but adds confidence.
+    if (avgSim > 0.8 && finalRiskLevel === 'safe') {
+      finalConfidence = Math.min(99, finalConfidence + 10);
+      finalReasons.push({ title: 'Personalized Context', detail: 'This email is highly similar to your past legitimate correspondence.', severity: 'info' });
+    } else if (avgSim < 0.2 && finalRiskLevel === 'safe') {
+      // Unusual correspondence
+      finalReasons.push({ title: 'Unusual Context', detail: 'This email format is rarely seen in your past legitimate correspondence. Remain vigilant.', severity: 'info' });
+    }
+  }
+
+  // 4. Groq contextual refinement
   if (groqResult) {
     analysisSources.push('groq');
 
-    // Groq can refine category/summary/recommendations UNLESS TI already set definitive category
+    // Classification extraction from LLM (optional, to adhere to new schema)
     if (!phishdestroyFound) {
       if (groqResult.category) finalCategory = groqResult.category;
       if (groqResult.summary)  finalSummary  = groqResult.summary;
       if (Array.isArray(groqResult.recommendations) && groqResult.recommendations.length > 0) {
-        // Merge Groq recommendations (deduplicated)
         const existingSet = new Set(finalRecommendations.map(r => r.toLowerCase()));
         for (const rec of groqResult.recommendations) {
           if (!existingSet.has(rec.toLowerCase())) {
@@ -141,34 +155,55 @@ function fuseEvidence(heuristicResult, mlEvidence, threatIntel, groqResult) {
       }
     }
 
-    // Groq can ADD context reasons (without overriding heuristic signals)
     if (Array.isArray(groqResult.reasons)) {
       for (const reason of groqResult.reasons) {
         finalReasons.push({
-          title: `AI Context: ${reason.slice(0, 80)}`,
+          title: `AI Analysis: ${reason.slice(0, 80)}`,
           detail: reason,
           severity: 'low',
         });
       }
     }
 
-    // Groq confidence as minor signal — does not override TI-driven confidence
+    if (Array.isArray(groqResult.socialEngineeringSignals)) {
+      for (const sig of groqResult.socialEngineeringSignals) {
+        finalReasons.push({
+          title: `Social Engineering: ${sig.slice(0, 80)}`,
+          detail: sig,
+          severity: 'medium',
+        });
+      }
+    }
+
+    if (Array.isArray(groqResult.personalizationEvidence)) {
+      for (const evid of groqResult.personalizationEvidence) {
+        finalReasons.push({
+          title: `Personalization: ${evid.slice(0, 80)}`,
+          detail: evid,
+          severity: 'info',
+        });
+      }
+    }
+
     if (!phishdestroyFound && typeof groqResult.confidence === 'number') {
       finalConfidence = Math.min(99, Math.round((finalConfidence + groqResult.confidence) / 2));
     }
+    
+    // Groq riskScore and riskLevel override ONLY if not overridden by TI
+    if (!phishdestroyFound && typeof groqResult.riskScore === 'number' && groqResult.riskScore > finalRiskScore) {
+       finalRiskScore = Math.max(finalRiskScore, groqResult.riskScore);
+       finalRiskLevel = groqResult.riskLevel || finalRiskLevel;
+    }
   }
 
-  // -------------------------------------------------------------------------
-  // 4. Final clamping
-  // -------------------------------------------------------------------------
   finalRiskScore  = Math.min(100, Math.max(0, Math.round(finalRiskScore)));
   finalConfidence = Math.min(99, Math.max(0, Math.round(finalConfidence)));
 
-  // -------------------------------------------------------------------------
-  // 5. Build intelligence metadata (for ScanResult UI + history)
-  // -------------------------------------------------------------------------
-  const intelligence = {};
+  let finalClassification = 'legitimate';
+  if (finalRiskLevel === 'high' || finalRiskLevel === 'critical') finalClassification = 'phishing';
+  else if (finalRiskLevel === 'medium' || finalRiskLevel === 'low') finalClassification = 'suspicious';
 
+  const intelligence = {};
   if (threatIntel?.phishdestroy && threatIntel.phishdestroy.status !== 'skipped') {
     intelligence.phishdestroy = {
       status:    threatIntel.phishdestroy.status,
@@ -192,7 +227,7 @@ function fuseEvidence(heuristicResult, mlEvidence, threatIntel, groqResult) {
       };
 
   return {
-    // Core result fields (compatible with existing frontend)
+    classification:  finalClassification,
     riskScore:       finalRiskScore,
     confidence:      finalConfidence,
     riskLevel:       finalRiskLevel,
@@ -204,9 +239,9 @@ function fuseEvidence(heuristicResult, mlEvidence, threatIntel, groqResult) {
     recommendations: finalRecommendations,
     detectedSignals: heuristicResult.detectedSignals || [],
 
-    // Extended evidence fields (new — optional for frontend)
     intelligence,
     ml:  mlOutput,
+    rag: ragEvidence,
     heuristics: {
       signalCount: (heuristicResult.detectedSignals || []).length,
       riskLevel:   heuristicResult.riskLevel,

@@ -1,9 +1,9 @@
 /**
- * Database cleanup script for ShieldIQ.
+ * Database cleanup script for DetectIQ.
  *
  * Removes obsolete demo accounts (e.g. aarav.mehta@example.com) and associated
  * legacy test data, while strictly preserving real registered users, real user
- * progress, and the admin account (admin@shieldiq.app).
+ * progress, and the admin account (admin@detectiq.app).
  *
  * Run with: npm run cleanup (inside server directory)
  */
@@ -15,7 +15,7 @@ const User = require("../models/User");
 const LessonProgress = require("../models/LessonProgress");
 const QuizResult = require("../models/QuizResult");
 const SimulationResult = require("../models/SimulationResult");
-const ScanHistory = require("../models/ScanHistory");
+
 
 async function cleanup() {
   await mongoose.connect(env.MONGO_URI);
@@ -31,12 +31,12 @@ async function cleanup() {
     const resProgress = await LessonProgress.deleteMany({ userId: demoUser._id });
     const resQuiz = await QuizResult.deleteMany({ userId: demoUser._id });
     const resSim = await SimulationResult.deleteMany({ userId: demoUser._id });
-    const resScan = await ScanHistory.deleteMany({ userId: demoUser._id });
+
 
     console.log(`[cleanup] Removed ${resProgress.deletedCount} lesson progress records for demo user`);
     console.log(`[cleanup] Removed ${resQuiz.deletedCount} quiz results for demo user`);
     console.log(`[cleanup] Removed ${resSim.deletedCount} simulation results for demo user`);
-    console.log(`[cleanup] Removed ${resScan.deletedCount} scan history records for demo user`);
+
 
     await User.deleteOne({ _id: demoUser._id });
     console.log("[cleanup] Deleted demo user account.");

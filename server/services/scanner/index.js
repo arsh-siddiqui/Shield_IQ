@@ -5,7 +5,7 @@
  *
  * Layer 1: Heuristic engine (always runs, always provides baseline + fallback)
  * Layer 2: ML inference (email/sms/whatsapp only — not a URL classifier)
- * Layer 3: Threat intelligence (URL-bearing content — PhishTank + URLhaus)
+ * Layer 3: Threat intelligence (URL-bearing content — PhishDestroy)
  * Layer 4: Evidence fusion (combines all sources via decision rules)
  * Layer 5: Groq contextual analysis (refines explanation, not primary detector)
  *
@@ -76,71 +76,94 @@ function analyzeContentSync(content, scanType = 'url') {
 /**
  * Run the full multi-layer scan pipeline (async).
  *
- * Heuristic engine always runs first and provides the fallback baseline.
- * ML + Threat Intel + Groq run concurrently where possible.
- *
  * @param {string} content
  * @param {string} scanType
+ * @param {string|null} userId
  * @returns {Promise<Object>} Final fused result
  */
-async function analyzeContent(content, scanType = 'url') {
+async function analyzeContent(content, scanType = 'url', userId = null) {
   const type = VALID_TYPES.includes(scanType) ? scanType : 'url';
 
-  // -------------------------------------------------------------------------
-  // Layer 1: Heuristic engine — synchronous, always completes
-  // -------------------------------------------------------------------------
+  // 1. Heuristic engine
   const heuristicResult = analyzeContentSync(content, type);
 
-  // -------------------------------------------------------------------------
-  // Layers 2 & 3: ML + Threat Intelligence — run concurrently
-  // -------------------------------------------------------------------------
+  // 2. ML + Threat Intelligence + RAG Retrieval
   const TEXT_TYPES = new Set(['email', 'sms', 'whatsapp']);
   const URL_TYPES  = new Set(['url', 'qr']);
 
-  // For email/sms/whatsapp → run ML
-  // For url/qr and messages containing URLs → run Threat Intel
-  // Both can run simultaneously
   const mlTask = TEXT_TYPES.has(type)
     ? getMlService().classifyText(content).catch(() => ({ status: 'unavailable', reason: 'exception' }))
     : Promise.resolve({ status: 'unavailable', reason: 'not_applicable_for_url' });
 
-  // Run threat intel for: URL/QR scans, and messages that contain URLs
   const shouldRunThreatIntel = URL_TYPES.has(type) || /https?:\/\//i.test(content);
   const tiTask = shouldRunThreatIntel
     ? getThreatIntelService().getThreatIntelligence(content, type).catch(() => null)
     : Promise.resolve(null);
 
-  const [mlEvidence, threatIntel] = await Promise.all([mlTask, tiTask]);
+  // RAG Retrieval Task
+  let ragTask = Promise.resolve(null);
+  if (userId && TEXT_TYPES.has(type)) {
+    const ragClient = require('../ragClient');
+    const EmailHistory = require('../../models/EmailHistory');
+    
+    ragTask = (async () => {
+      try {
+        const retrieveRes = await ragClient.retrieveContext(userId, content, 5);
+        if (retrieveRes.success && retrieveRes.results && retrieveRes.results.length > 0) {
+          // Fetch full bodies from Mongo
+          const emailIds = retrieveRes.results.map(r => r.emailId);
+          const historicalEmails = await EmailHistory.find({ _id: { $in: emailIds } });
+          
+          const rawTexts = historicalEmails.map(e => `From: ${e.sender}\nTo: ${e.recipient}\nSubject: ${e.subject}\nBody: ${e.body}`);
+          
+          const contextRes = await ragClient.buildRagContext(content, rawTexts);
+          if (contextRes.success) {
+            return {
+              status: 'available',
+              contextString: contextRes.context,
+              retrievedEmails: emailIds,
+              similarityData: retrieveRes.results
+            };
+          }
+        }
+        return { status: 'unavailable', reason: 'no_results' };
+      } catch (err) {
+        return { status: 'unavailable', reason: 'exception' };
+      }
+    })();
+  }
 
-  // -------------------------------------------------------------------------
-  // Layer 4: Evidence Fusion
-  // -------------------------------------------------------------------------
-  const fusedResult = fuseEvidence(heuristicResult, mlEvidence, threatIntel, null);
+  const [mlEvidence, threatIntel, ragEvidence] = await Promise.all([mlTask, tiTask, ragTask]);
 
-  // -------------------------------------------------------------------------
-  // Layer 5: Groq contextual analysis (sequential — needs fused result)
-  // -------------------------------------------------------------------------
+  // 4. Evidence Fusion
+  const fusedResult = fuseEvidence(heuristicResult, mlEvidence, threatIntel, ragEvidence, null);
+
+  // 5. Groq contextual analysis
   let groqResult = null;
   try {
     groqResult = await getGroqService().analyzeWithGroq(
       content,
       heuristicResult,
       mlEvidence,
-      threatIntel
+      threatIntel,
+      ragEvidence
     );
-  } catch {
-    // Groq failure is non-fatal
+  } catch (err) {
     groqResult = null;
   }
 
-  // Re-fuse with Groq result if Groq succeeded
+  // Re-fuse with Groq result
+  let finalResult = fusedResult;
   if (groqResult) {
-    return fuseEvidence(heuristicResult, mlEvidence, threatIntel, groqResult);
+    finalResult = fuseEvidence(heuristicResult, mlEvidence, threatIntel, ragEvidence, groqResult);
+    finalResult.groq = groqResult;
   }
+  
+  finalResult.rag = ragEvidence;
+  finalResult.ml = mlEvidence;
+  finalResult.intelligence = threatIntel;
 
-  return fusedResult;
+  return finalResult;
 }
 
-// Keep the old export name for backward compatibility with tests
-// (tests import analyzeContent from scanService.js which re-exports from here)
 module.exports = { analyzeContent, analyzeContentSync, VALID_TYPES };

@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * assistantService.js — Backend service communicating with Groq API for ShieldIQ Assistant.
+ * assistantService.js — Backend service communicating with Groq API for DetectIQ Assistant.
  */
 
 const axios = require('axios');
@@ -11,7 +11,7 @@ const { validateAndSanitizeResponse } = require('./responseValidator');
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const DEFAULT_TIMEOUT = 8000;
-const FALLBACK_MESSAGE = 'ShieldIQ Assistant is temporarily unavailable. Please try again later.';
+const FALLBACK_MESSAGE = 'DetectIQ Assistant is temporarily unavailable. Please try again later.';
 
 async function askAssistant({ message, conversationHistory = [], scanContext = null }) {
   const apiKey = env.GROQ_API_KEY;

@@ -1,8 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const User = require("../models/User");
-const ScanHistory = require("../models/ScanHistory");
-const SimulationResult = require("../models/SimulationResult");
-const QuizResult = require("../models/QuizResult");
+const Scan = require("../models/Scan");
 const sendSuccess = require("../utils/apiResponse");
 const { toPublicUser } = require("./authController");
 
@@ -31,18 +29,12 @@ const updateProfile = asyncHandler(async (req, res) => {
 
 // @route  GET /api/users/dashboard
 // @access Private
-// Aggregates everything the Dashboard page needs into one call. Anything not
-// yet backed by real user activity (weekly activity chart, tips, alerts) is
-// returned as clearly-labeled sample data rather than left empty, per the
-// "return dummy values when fields aren't populated yet" instruction.
 const getDashboardData = asyncHandler(async (req, res) => {
-  const [recentScans, totalScans, safeScans, highRiskScans, simulationsCompleted, quizzesCompleted] = await Promise.all([
-    ScanHistory.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(5),
-    ScanHistory.countDocuments({ user: req.user._id }),
-    ScanHistory.countDocuments({ user: req.user._id, riskLevel: { $regex: /safe/i } }),
-    ScanHistory.countDocuments({ user: req.user._id, riskLevel: { $regex: /high/i } }),
-    SimulationResult.countDocuments({ user: req.user._id }),
-    QuizResult.countDocuments({ userId: req.user._id, correct: true }),
+  const [recentScans, totalScans, safeScans, highRiskScans] = await Promise.all([
+    Scan.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(5),
+    Scan.countDocuments({ user: req.user._id }),
+    Scan.countDocuments({ user: req.user._id, riskLevel: { $regex: /safe|low/i } }),
+    Scan.countDocuments({ user: req.user._id, riskLevel: { $regex: /high|critical/i } }),
   ]);
 
   const level = req.user.getLevel();
@@ -57,8 +49,8 @@ const getDashboardData = asyncHandler(async (req, res) => {
         totalScans,
         safeScans,
         highRiskScans,
-        simulationsCompleted,
-        quizzesCompleted,
+        simulationsCompleted: 0,
+        quizzesCompleted: 0,
       },
     },
   });
@@ -71,11 +63,11 @@ const getScanHistory = asyncHandler(async (req, res) => {
   const limit = Math.min(parseInt(req.query.limit, 10) || 20, 100);
 
   const [scans, total] = await Promise.all([
-    ScanHistory.find({ user: req.user._id })
+    Scan.find({ user: req.user._id })
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit),
-    ScanHistory.countDocuments({ user: req.user._id }),
+    Scan.countDocuments({ user: req.user._id }),
   ]);
 
   return sendSuccess(res, {
@@ -87,92 +79,19 @@ const getScanHistory = asyncHandler(async (req, res) => {
 // @route  GET /api/users/progress
 // @access Private
 const getProgress = asyncHandler(async (req, res) => {
-  const LessonProgress = require("../models/LessonProgress");
-  const [simResults, quizResults, lessonProgress] = await Promise.all([
-    SimulationResult.find({ user: req.user._id }).populate("simulation", "slug label"),
-    QuizResult.find({ userId: req.user._id }).populate("quiz", "category"),
-    LessonProgress.find({ userId: req.user._id }).populate("lessonId", "slug"),
-  ]);
-
   return sendSuccess(res, {
     data: {
       xp: req.user.xp,
       level: req.user.getLevel(),
       streakDays: req.user.streakDays,
-      simulations: simResults,
-      quizzes: quizResults,
-      bookmarkedArticles: req.user.bookmarkedArticles,
-      likedArticles: req.user.likedArticles,
-      readArticles: req.user.readArticles,
-      completedChallenges: req.user.completedChallenges,
-      lessonProgress: lessonProgress,
+      simulations: [],
+      quizzes: [],
+      bookmarkedArticles: [],
+      likedArticles: [],
+      readArticles: [],
+      completedChallenges: [],
+      lessonProgress: [],
     },
-  });
-});
-
-// @route  POST /api/users/articles/:id/bookmark
-// @access Private
-const toggleBookmark = asyncHandler(async (req, res) => {
-  const articleId = req.params.id;
-  const already = req.user.bookmarkedArticles.some((a) => a.toString() === articleId);
-
-  const update = already
-    ? { $pull: { bookmarkedArticles: articleId } }
-    : { $addToSet: { bookmarkedArticles: articleId } };
-
-  const user = await User.findByIdAndUpdate(req.user._id, update, { new: true });
-
-  return sendSuccess(res, {
-    message: already ? "Bookmark removed." : "Bookmarked.",
-    data: { bookmarkedArticles: user.bookmarkedArticles },
-  });
-});
-
-// @route  POST /api/users/articles/:id/like
-// @access Private
-const toggleLike = asyncHandler(async (req, res) => {
-  const articleId = req.params.id;
-  const already = req.user.likedArticles.some((a) => a.toString() === articleId);
-
-  const update = already
-    ? { $pull: { likedArticles: articleId } }
-    : { $addToSet: { likedArticles: articleId } };
-
-  const user = await User.findByIdAndUpdate(req.user._id, update, { new: true });
-
-  return sendSuccess(res, {
-    message: already ? "Like removed." : "Liked.",
-    data: { likedArticles: user.likedArticles },
-  });
-});
-
-// @route  POST /api/users/articles/:id/read
-// @access Private
-const markArticleRead = asyncHandler(async (req, res) => {
-  const user = await User.findByIdAndUpdate(
-    req.user._id,
-    { $addToSet: { readArticles: req.params.id } },
-    { new: true }
-  );
-  return sendSuccess(res, { data: { readArticles: user.readArticles } });
-});
-
-// @route  POST /api/users/challenges/:id
-// @access Private
-const completeChallenge = asyncHandler(async (req, res) => {
-  const challengeId = req.params.id;
-  const xpEarned = req.body.xpEarned || 10;
-  const already = req.user.completedChallenges.includes(challengeId);
-
-  if (!already) {
-    req.user.completedChallenges.push(challengeId);
-    req.user.xp += xpEarned;
-    await req.user.save();
-  }
-
-  return sendSuccess(res, {
-    message: already ? "Challenge already completed." : "Challenge completed.",
-    data: { completedChallenges: req.user.completedChallenges, xp: req.user.xp },
   });
 });
 
@@ -182,8 +101,4 @@ module.exports = {
   getDashboardData,
   getScanHistory,
   getProgress,
-  toggleBookmark,
-  toggleLike,
-  markArticleRead,
-  completeChallenge,
 };

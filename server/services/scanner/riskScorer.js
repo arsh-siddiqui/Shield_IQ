@@ -74,19 +74,13 @@ function calculateRisk(signals) {
   riskScore = Math.min(100, Math.max(0, riskScore));
 
   // Map to existing frontend risk bands — no "Critical" band exists
-  let riskLevel;
-  if (riskScore >= 70) {
-    riskLevel = 'High';
-  } else if (riskScore >= 40) {
-    riskLevel = 'Medium';
-  } else if (riskScore >= 15) {
-    riskLevel = 'Low';
-  } else {
-    riskLevel = 'Safe';
-  }
+  let riskLevel = 'safe';
+  if (riskScore >= 80) riskLevel = 'critical';
+  else if (riskScore >= 60) riskLevel = 'high';
+  else if (riskScore >= 30) riskLevel = 'medium';
+  else if (riskScore > 0) riskLevel = 'low';
 
   return { riskScore, confidence: confidenceScore, riskLevel };
 }
 
 module.exports = { calculateRisk };
-

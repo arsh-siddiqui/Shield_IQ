@@ -29,7 +29,7 @@ export default function Navbar() {
           <span className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
             <ShieldCheck className="w-5 h-5 text-white" />
           </span>
-          ShieldIQ
+          DetectIQ
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">

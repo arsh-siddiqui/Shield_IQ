@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * In-memory rate limiter for ShieldIQ Assistant endpoint.
+ * In-memory rate limiter for DetectIQ Assistant endpoint.
  * Limits users to 15 requests per 10 minutes.
  */
 

@@ -1,5 +1,5 @@
 /**
- * Structured lesson step content for all 25 ShieldIQ lessons.
+ * Structured lesson step content for all 25 DetectIQ lessons.
  *
  * Each lesson contains:
  *   intro        — tagline + objectives (What you'll learn)

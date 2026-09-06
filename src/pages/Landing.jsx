@@ -81,7 +81,7 @@ export default function Landing() {
               Protect Yourself From <span className="text-primary">Online Scams</span> With AI
             </motion.h1>
             <motion.p variants={fadeUp} className="text-lg text-ink-light mt-6 leading-relaxed max-w-lg">
-              ShieldIQ detects phishing attacks and teaches users how to stay safe through interactive learning.
+              DetectIQ detects phishing attacks and teaches users how to stay safe through interactive learning.
             </motion.p>
             <motion.div variants={fadeUp} className="flex flex-wrap gap-4 mt-8">
               <Button size="lg" icon={ArrowRight} iconPosition="right" onClick={() => navigate("/register")}>

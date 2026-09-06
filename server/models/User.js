@@ -43,10 +43,19 @@ const userSchema = new mongoose.Schema(
       enum: ["Active", "Suspended"],
       default: "Active",
     },
-    bookmarkedArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Article" }],
-    likedArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Article" }],
-    readArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Article" }],
-    completedChallenges: [{ type: String }],
+    preferences: {
+      theme: { type: String, enum: ['light', 'dark', 'system'], default: 'system' },
+      notifications: { type: Boolean, default: true },
+    },
+    securityProfile: {
+      riskScore: { type: Number, default: 0 },
+      phishingSusceptibility: { type: String, enum: ['Low', 'Medium', 'High'], default: 'Medium' },
+    },
+    learningProfile: {
+      strengths: [{ type: String }],
+      weaknesses: [{ type: String }],
+      recommendedFocus: { type: String },
+    },
   },
   { timestamps: true }
 );

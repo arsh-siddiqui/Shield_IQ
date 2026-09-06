@@ -9,15 +9,15 @@ const env = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   PORT: parseInt(process.env.PORT, 10) || 5000,
 
-  MONGO_URI: process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/shieldiq',
+  MONGO_URI: process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/detectiq',
 
   JWT_SECRET: process.env.JWT_SECRET || 'dev-only-insecure-secret-change-me',
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
-  JWT_COOKIE_NAME: 'shieldiq_token',
+  JWT_COOKIE_NAME: 'detectiq_token',
 
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',
 
-  ADMIN_SEED_EMAIL: process.env.ADMIN_SEED_EMAIL || 'admin@shieldiq.app',
+  ADMIN_SEED_EMAIL: process.env.ADMIN_SEED_EMAIL || 'admin@detectiq.app',
   ADMIN_SEED_PASSWORD: process.env.ADMIN_SEED_PASSWORD || 'ChangeMe123!',
 
   // ---------------------------------------------------------------------------
@@ -43,6 +43,9 @@ const env = {
   /** Timeout for ML service calls (ms) */
   ML_SERVICE_TIMEOUT_MS: process.env.ML_SERVICE_TIMEOUT_MS || '3000',
 
+  /** Secret token for authenticating Node->Python API calls */
+  ML_INTERNAL_TOKEN: process.env.ML_INTERNAL_TOKEN || 'dev-internal-token-change-me',
+
   // ---------------------------------------------------------------------------
   // Groq AI
   // ---------------------------------------------------------------------------
@@ -62,7 +65,7 @@ const isProd = env.NODE_ENV === 'production';
 if (isProd && env.JWT_SECRET === 'dev-only-insecure-secret-change-me') {
   // eslint-disable-next-line no-console
   console.warn(
-    '[shieldiq] WARNING: JWT_SECRET is using the insecure development default in production. ' +
+    '[detectiq] WARNING: JWT_SECRET is using the insecure development default in production. ' +
       'Set a real JWT_SECRET in your environment before deploying.'
   );
 }

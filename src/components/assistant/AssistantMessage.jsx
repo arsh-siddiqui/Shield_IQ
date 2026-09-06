@@ -37,8 +37,15 @@ export default function AssistantMessage({ message }) {
         }`}
       >
         {!isUser && (
-          <div className="text-[11px] font-bold uppercase tracking-wider text-ink-faint mb-1 flex items-center gap-1.5">
-            <span>ShieldIQ Assistant</span>
+          <div className="flex items-center gap-2 mb-1.5 px-1">
+            <span className="font-bold text-xs text-primary tracking-wide uppercase">
+              DetectIQ Assistant
+            </span>
+            {message.fallback && (
+              <span className="bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
+                Fallback
+              </span>
+            )}
           </div>
         )}
         <div className="font-sans leading-relaxed text-[14px]">

@@ -8,8 +8,7 @@ const mongoose = require('mongoose');
  * trailing slash). Raw URLs are never stored as primary keys.
  *
  * TTL strategy:
- *   - PhishTank results: configurable via THREAT_INTEL_CACHE_TTL (hours)
- *   - URLhaus results:   same TTL
+ *   - PhishDestroy results: configurable via THREAT_INTEL_CACHE_TTL (hours)
  *   - MongoDB TTL index on `expiresAt` handles automatic document removal.
  */
 const threatIntelCacheSchema = new mongoose.Schema(
@@ -33,11 +32,7 @@ const threatIntelCacheSchema = new mongoose.Schema(
 
     // Results from each provider, stored as a structured object
     providers: {
-      phishtank: {
-        type: mongoose.Schema.Types.Mixed,
-        default: null,
-      },
-      urlhaus: {
+      phishdestroy: {
         type: mongoose.Schema.Types.Mixed,
         default: null,
       },

@@ -61,7 +61,7 @@ export default function Login() {
               <ShieldCheck className="w-20 h-20 text-white" />
             </div>
           </motion.div>
-          <h3 className="text-white font-bold text-xl mt-8 text-center relative z-10">Welcome back to ShieldIQ</h3>
+          <h3 className="text-white font-bold text-xl mt-8 text-center relative z-10">Welcome back to DetectIQ</h3>
           <p className="text-primary-100 text-sm text-center mt-3 max-w-xs relative z-10 opacity-90">
             Your scan history, progress, and badges are waiting for you.
           </p>
@@ -81,9 +81,9 @@ export default function Login() {
         >
           <Link to="/" className="flex items-center gap-2 font-extrabold text-ink mb-8">
             <span className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-              <ShieldCheck className="w-5 h-5 text-white" />
+               <ShieldCheck className="w-5 h-5 text-white" />
             </span>
-            ShieldIQ
+            DetectIQ
           </Link>
           <h1 className="text-2xl font-extrabold text-ink mb-2">Log in to your account</h1>
           <p className="text-sm text-ink-light mb-8">Stay ahead of scammers — pick up right where you left off.</p>

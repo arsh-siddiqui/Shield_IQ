@@ -46,4 +46,37 @@ class HealthResponse(BaseModel):
     status: str
     modelLoaded: bool
     modelVersion: str | None = None
+    ragLoaded: bool = False
     error: str | None = None
+
+# RAG Schemas
+class EmbedRequest(BaseModel):
+    userId: str = Field(..., description="The user identity for isolation.")
+    emailId: str = Field(..., description="The MongoDB EmailHistory ID.")
+    text: str = Field(..., description="The normalized email text to embed.")
+
+    @field_validator("userId", "emailId", "text")
+    @classmethod
+    def field_must_not_be_blank(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("Field must not be blank")
+        return v
+
+class RetrieveRequest(BaseModel):
+    userId: str = Field(..., description="The user identity for isolation.")
+    queryText: str = Field(..., description="The current email text to search against history.")
+    topK: int = Field(5, ge=1, le=50, description="Number of results to retrieve.")
+
+class RetrievedEmail(BaseModel):
+    emailId: str
+    similarity: float
+
+class RetrieveResponse(BaseModel):
+    results: list[RetrievedEmail]
+
+class RagContextRequest(BaseModel):
+    currentEmail: str = Field(..., description="The current email being scanned.")
+    historicalEmails: list[str] = Field(default_factory=list, description="List of raw texts of the retrieved legitimate emails.")
+
+class RagContextResponse(BaseModel):
+    context: str

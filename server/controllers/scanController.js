@@ -1,7 +1,7 @@
 'use strict';
 
 const asyncHandler = require('express-async-handler');
-const ScanHistory = require('../models/ScanHistory');
+const Scan = require('../models/Scan');
 const sendSuccess = require('../utils/apiResponse');
 const { analyzeContent, VALID_TYPES } = require('../services/scanService');
 
@@ -28,11 +28,13 @@ const scanContent = asyncHandler(async (req, res) => {
   let result;
   try {
     // analyzeContent is now async (multi-layer pipeline)
-    result = await analyzeContent(content, scanType);
+    const userId = req.user ? req.user._id : null;
+    result = await analyzeContent(content, scanType, userId);
   } catch (error) {
     // Return a clean 500 without stack trace if engine fails
+    console.error("Scan engine error:", error);
     res.status(500);
-    throw new Error('An error occurred during analysis.');
+    throw new Error('An error occurred during analysis. ' + error.message);
   }
 
   let saved = null;
@@ -46,11 +48,8 @@ const scanContent = asyncHandler(async (req, res) => {
     let threatIntelSummary = null;
     if (result.intelligence) {
       const parts = [];
-      if (result.intelligence.phishtank?.status === 'found') {
-        parts.push(`PhishTank: found${result.intelligence.phishtank.verified ? ' (verified)' : ''}`);
-      }
-      if (result.intelligence.urlhaus?.status === 'found') {
-        parts.push(`URLhaus: found (${result.intelligence.urlhaus.threat || 'malware'})`);
+      if (result.intelligence.phishdestroy?.status === 'found') {
+        parts.push(`PhishDestroy: malicious`);
       }
       if (parts.length > 0) threatIntelSummary = parts.join('; ');
     }
@@ -59,24 +58,24 @@ const scanContent = asyncHandler(async (req, res) => {
     updateStreak(req.user);
     await req.user.save();
 
-    saved = await ScanHistory.create({
+    const inputHash = require('crypto').createHash('sha256').update(content).digest('hex');
+
+    saved = await Scan.create({
       user: req.user._id,
-      scanType: result.scanType,
-      target,
+      inputType: result.scanType,
+      inputHash: inputHash,
+      classification: result.classification || (result.riskLevel === 'Safe' ? 'legitimate' : result.riskLevel === 'Critical' ? 'phishing' : 'suspicious'),
       riskLevel: result.riskLevel,
       riskScore: result.riskScore,
       confidence: result.confidence,
-      category: result.category,
-      summary: result.summary,
-      reasons: result.reasons,
-      recommendations: result.recommendations,
-      detectedSignals: result.detectedSignals,
-      // Extended fields (new)
-      analysisSources: result.analysisSources || ['heuristics'],
-      mlLabel: result.ml?.status === 'available' ? result.ml.label : undefined,
-      mlProbability: result.ml?.status === 'available' ? result.ml.probability : undefined,
-      threatIntelSummary: threatIntelSummary || undefined,
-      modelVersion: result.ml?.status === 'available' ? result.ml.modelVersion : undefined,
+      mlResult: result.ml,
+      heuristicResult: { category: result.category, detectedSignals: result.detectedSignals },
+      threatIntelResult: result.intelligence,
+      ragResult: result.rag,
+      llmResult: result.groq,
+      evidence: result.reasons || [],
+      retrievedEmails: result.rag?.retrievedEmails || [],
+      recommendations: result.recommendations || []
     });
   }
 

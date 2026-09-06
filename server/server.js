@@ -8,18 +8,18 @@ const env = require("./config/env");
 const { connectDB, isDbConnected } = require("./config/db");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
 
+const app = express();
+app.set("trust proxy", 1); // Trust first proxy (Render/Vercel) for secure cookies
+
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
-const learnRoutes = require("./routes/learnRoutes");
-const simulationRoutes = require("./routes/simulationRoutes");
-const quizRoutes = require("./routes/quizRoutes");
 const scanRoutes = require("./routes/scanRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const assistantRoutes = require("./routes/assistantRoutes");
-const articleRoutes = require("./routes/articleRoutes");
+const emailHistoryRoutes = require("./routes/emailHistoryRoutes");
 
-const app = express();
-app.set("trust proxy", 1); // Trust first proxy (Render/Vercel) for secure cookies
+const vulnerabilityRoutes = require("./routes/vulnerabilityRoutes");
+const progressRoutes = require("./routes/progressRoutes");
 
 // ---------------------------------------------------------------------------
 // Core middleware
@@ -50,7 +50,7 @@ app.use(morgan(env.NODE_ENV === "development" ? "dev" : "combined"));
 app.get("/api/health", (req, res) => {
   res.json({
     success: true,
-    message: "ShieldIQ API is running.",
+    message: "DetectIQ API is running.",
     dbConnected: isDbConnected(),
     env: env.NODE_ENV,
   });
@@ -61,13 +61,12 @@ app.get("/api/health", (req, res) => {
 // ---------------------------------------------------------------------------
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/learn", learnRoutes);
-app.use("/api/simulations", simulationRoutes);
-app.use("/api/quizzes", quizRoutes);
 app.use("/api/scan", scanRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/assistant", assistantRoutes);
-app.use("/api/articles", articleRoutes);
+app.use("/api/email-history", emailHistoryRoutes);
+app.use("/api/vulnerabilities", vulnerabilityRoutes);
+app.use("/api/progress", progressRoutes);
 
 // ---------------------------------------------------------------------------
 // 404 + error handling — must be registered last
@@ -83,7 +82,7 @@ async function start() {
 
   app.listen(env.PORT, "0.0.0.0", () => {
     // eslint-disable-next-line no-console
-    console.log(`[shieldiq] API listening on http://0.0.0.0:${env.PORT} (${env.NODE_ENV})`);
+    console.log(`[detectiq] API listening on http://0.0.0.0:${env.PORT} (${env.NODE_ENV})`);
   });
 }
 

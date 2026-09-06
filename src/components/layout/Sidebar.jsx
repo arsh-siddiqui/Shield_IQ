@@ -1,20 +1,50 @@
 import { NavLink } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LayoutDashboard, ScanLine, Gamepad2, BookOpen, User, ShieldCheck, Settings2, LogOut, Bot } from "lucide-react";
+import { LayoutDashboard, ScanLine, ShieldAlert, History, Shield, FileSearch, TrendingUp, BookOpen, User, ShieldCheck, Settings2, LogOut, Bot, Target } from "lucide-react";
 import { useAppData } from "../../context/AppDataContext";
 
-const navItems = [
-  { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
-  { label: "AI Scanner", to: "/scanner", icon: ScanLine },
-  { label: "AI Assistant", to: "/assistant", icon: Bot },
-  { label: "Scam Simulator", to: "/simulator", icon: Gamepad2 },
-  { label: "Learn", to: "/learn", icon: BookOpen },
-  { label: "Profile", to: "/profile", icon: User },
+const navSections = [
+  {
+    title: "",
+    items: [
+      { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
+    ]
+  },
+  {
+    title: "Detection",
+    items: [
+      { label: "Scan Email", to: "/detection/email", icon: ScanLine },
+      { label: "Scan URL", to: "/detection/url", icon: ShieldAlert },
+      { label: "Scan History", to: "/detection/history", icon: History },
+    ]
+  },
+  {
+    title: "Security Intelligence",
+    items: [
+      { label: "Email Context", to: "/security/email-context", icon: FileSearch },
+      { label: "Detection Evidence", to: "/security/evidence", icon: Shield },
+      { label: "Security Profile", to: "/security/profile", icon: TrendingUp },
+    ]
+  },
+  {
+    title: "Vulnerability Learning",
+    items: [
+      { label: "Vulnerabilities", to: "/vulnerabilities", icon: BookOpen },
+      { label: "My Progress", to: "/learning/progress", icon: Target },
+    ]
+  },
+  {
+    title: "",
+    items: [
+      { label: "AI Assistant", to: "/assistant", icon: Bot },
+      { label: "Profile", to: "/profile", icon: User },
+    ]
+  }
 ];
 
 export default function Sidebar() {
   const { user, xp, logout } = useAppData();
-  const level = Math.max(1, Math.floor(xp / 300) + 1);
+  const level = Math.max(1, Math.floor((xp || 0) / 300) + 1);
 
   const handleLogout = async () => {
     await logout();
@@ -27,34 +57,45 @@ export default function Sidebar() {
         <span className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
           <ShieldCheck className="w-5 h-5 text-white" />
         </span>
-        ShieldIQ
+        DetectIQ
       </div>
 
-      <nav className="flex flex-col gap-1 flex-1">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className={({ isActive }) =>
-              `relative flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${
-                isActive ? "text-primary bg-primary-50" : "text-ink-light hover:bg-slate-50 hover:text-ink"
-              }`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                {isActive && (
-                  <motion.span
-                    layoutId="sidebar-active"
-                    className="absolute inset-0 rounded-xl bg-primary-50"
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  />
-                )}
-                <item.icon className="w-4.5 h-4.5 relative z-10" />
-                <span className="relative z-10">{item.label}</span>
-              </>
+      <nav className="flex flex-col gap-4 flex-1 overflow-y-auto pr-2 pb-4 hide-scrollbar">
+        {navSections.map((section, idx) => (
+          <div key={idx}>
+            {section.title && (
+              <div className="text-xs font-bold text-ink-faint uppercase tracking-wider mb-2 px-4">
+                {section.title}
+              </div>
             )}
-          </NavLink>
+            <div className="flex flex-col gap-1">
+              {section.items.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) =>
+                    `relative flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                      isActive ? "text-primary bg-primary-50" : "text-ink-light hover:bg-slate-50 hover:text-ink"
+                    }`
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      {isActive && (
+                        <motion.span
+                          layoutId="sidebar-active"
+                          className="absolute inset-0 rounded-xl bg-primary-50"
+                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                        />
+                      )}
+                      <item.icon className="w-4.5 h-4.5 relative z-10" />
+                      <span className="relative z-10">{item.label}</span>
+                    </>
+                  )}
+                </NavLink>
+              ))}
+            </div>
+          </div>
         ))}
       </nav>
 

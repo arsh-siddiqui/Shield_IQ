@@ -53,7 +53,7 @@ async function classifyText(text) {
         status: 'available',
         label: data.label,                    // 'phishing' | 'safe'
         probability: data.probability,        // 0.0–1.0
-        modelName: data.model?.name || 'ShieldIQ Phishing Text Classifier',
+        modelName: data.model?.name || 'DetectIQ Phishing Text Classifier',
         modelVersion: data.model?.version || 'unknown',
       };
     }

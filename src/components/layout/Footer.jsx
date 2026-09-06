@@ -5,9 +5,9 @@ const columns = [
   {
     title: "Product",
     links: [
-      { label: "AI Scanner", to: "/scanner" },
-      { label: "Scam Simulator", to: "/simulator" },
-      { label: "Learn", to: "/learn" },
+      { label: "Scan Email", to: "/detection/email" },
+      { label: "Security Profile", to: "/security/profile" },
+      { label: "Vulnerabilities", to: "/vulnerabilities" },
     ],
   },
   {
@@ -37,7 +37,7 @@ export default function Footer() {
             <span className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
               <ShieldCheck className="w-5 h-5 text-white" />
             </span>
-            ShieldIQ
+            DetectIQ
           </div>
           <p className="text-sm text-ink-light leading-relaxed max-w-xs">
             Learn Smart. Detect Fast. Stay Safe. AI-powered fraud awareness for everyone, everywhere.
@@ -70,7 +70,7 @@ export default function Footer() {
         ))}
       </div>
       <div className="border-t border-slate-100 py-6 text-center text-xs text-ink-faint">
-        © 2026 ShieldIQ. All rights reserved. Built for a safer internet.
+        © 2026 DetectIQ. All rights reserved. Built for a safer internet.
       </div>
     </footer>
   );

@@ -10,7 +10,7 @@ test('1. Normal cybersecurity question prompt construction', () => {
   const payload = buildMessagesPayload('What is phishing?');
   assert.equal(Array.isArray(payload), true);
   assert.equal(payload[0].role, 'system');
-  assert.match(payload[0].content, /ShieldIQ Assistant/);
+  assert.match(payload[0].content, /DetectIQ Assistant/);
   assert.equal(payload[payload.length - 1].content, 'What is phishing?');
 });
 

@@ -4,7 +4,7 @@ const asyncHandler = require('express-async-handler');
 const { askAssistant } = require('../services/assistant/assistantService');
 
 /**
- * @desc    Chat with ShieldIQ AI Assistant
+ * @desc    Chat with DetectIQ AI Assistant
  * @route   POST /api/assistant/chat
  * @access  Private (Authenticated users)
  */

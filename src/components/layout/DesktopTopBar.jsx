@@ -4,13 +4,16 @@ import SearchBar from "../ui/SearchBar";
 import { useAppData } from "../../context/AppDataContext";
 
 const searchTargets = [
-  { label: "AI Scanner", to: "/scanner", keywords: ["scan", "scanner", "url", "email", "sms"] },
+  { label: "Dashboard", to: "/dashboard", keywords: ["home", "dash", "metrics"] },
+  { label: "Scan Email", to: "/detection/email", keywords: ["scan", "email", "analyze"] },
+  { label: "Scan URL", to: "/detection/url", keywords: ["scan", "url", "link", "website"] },
+  { label: "Scan History", to: "/detection/history", keywords: ["history", "past", "results"] },
+  { label: "Email Context", to: "/security/email-context", keywords: ["email", "context", "history", "rag"] },
+  { label: "Security Profile", to: "/security/profile", keywords: ["profile", "security", "strengths", "weaknesses"] },
+  { label: "Vulnerabilities", to: "/vulnerabilities", keywords: ["vulnerability", "learn", "course", "practice"] },
+  { label: "My Progress", to: "/learning/progress", keywords: ["progress", "stats", "assessments"] },
   { label: "AI Assistant", to: "/assistant", keywords: ["assistant", "ai", "chat", "ask", "help"] },
-  { label: "Scam Simulator", to: "/simulator", keywords: ["simulator", "simulation", "practice", "game"] },
-  { label: "Learn", to: "/learn", keywords: ["awareness", "lesson", "article", "learn", "course"] },
-  { label: "Attack Replay", to: "/attack-replay", keywords: ["replay", "timeline", "attack"] },
-  { label: "Scam Decoder", to: "/decoder", keywords: ["decoder", "decode", "highlight"] },
-  { label: "Profile", to: "/profile", keywords: ["profile", "badge", "settings"] },
+  { label: "Profile", to: "/profile", keywords: ["profile", "settings"] },
   { label: "Admin Dashboard", to: "/admin", keywords: ["admin", "users", "manage"] },
 ];
 

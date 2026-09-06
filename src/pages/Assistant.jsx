@@ -13,7 +13,7 @@ import { useToast } from "../context/ToastContext";
 
 const INITIAL_WELCOME = {
   role: "assistant",
-  content: "Hello! I am your ShieldIQ Cybersecurity Assistant. Ask me anything about phishing emails, UPI fraud, suspicious links, malware, or how to understand your scan results.",
+  content: "Hello! I am your DetectIQ Cybersecurity Assistant. Ask me anything about phishing emails, UPI fraud, suspicious links, malware, or how to understand your scan results.",
   timestamp: new Date().toISOString(),
 };
 
@@ -104,7 +104,7 @@ export default function Assistant() {
               <span className="w-8 h-8 rounded-xl bg-primary text-white flex items-center justify-center shadow-sm">
                 <ShieldCheck className="w-5 h-5" />
               </span>
-              <h1 className="text-2xl font-extrabold text-ink">ShieldIQ Assistant</h1>
+              <h1 className="text-2xl font-extrabold text-ink">DetectIQ Assistant</h1>
             </div>
             <p className="text-sm text-ink-light">
               Ask anything about cybersecurity, scams, phishing, and online safety.
@@ -191,7 +191,7 @@ export default function Assistant() {
             </form>
             <div className="flex items-center gap-1 text-[11px] text-ink-faint mt-2 justify-center">
               <Info className="w-3 h-3" />
-              ShieldIQ Assistant provides defensive guidance based on safety best practices.
+              DetectIQ Assistant provides defensive guidance based on safety best practices.
             </div>
           </div>
 

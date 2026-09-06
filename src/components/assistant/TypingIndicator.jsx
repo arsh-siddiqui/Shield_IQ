@@ -8,7 +8,7 @@ export default function TypingIndicator() {
         <ShieldCheck className="w-4 h-4" />
       </div>
       <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-none px-5 py-4 shadow-softer flex items-center gap-1.5">
-        <span className="text-xs text-ink-light font-semibold mr-1">ShieldIQ Assistant is thinking</span>
+        <span className="text-xs text-ink-light font-semibold mr-1">DetectIQ Assistant is thinking</span>
         {[0, 1, 2].map((i) => (
           <motion.span
             key={i}

@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * promptBuilder.js — Prompt constructor for ShieldIQ Assistant.
+ * promptBuilder.js — Prompt constructor for DetectIQ Assistant.
  */
 
 function buildSystemPrompt(scanContext = null) {
@@ -31,9 +31,9 @@ ${recsStr}
 `;
   }
 
-  return `You are ShieldIQ Assistant, an expert AI cybersecurity advisor embedded in ShieldIQ.
+  return `You are DetectIQ Assistant, an expert AI cybersecurity advisor embedded in DetectIQ.
 
-Your primary mission is to help users understand cybersecurity concepts, recognize phishing and fraud tactics (such as UPI scams, OTP theft, fake authority, typosquatting, malware), understand ShieldIQ scan results, and take safe defensive actions.
+Your primary mission is to help users understand cybersecurity concepts, recognize phishing and fraud tactics (such as UPI scams, OTP theft, fake authority, typosquatting, malware), understand DetectIQ scan results, and take safe defensive actions.
 
 STRICT OPERATIONAL GUIDELINES:
 1. EXPLAIN CLEARLY: Use simple, plain English without unnecessary jargon.

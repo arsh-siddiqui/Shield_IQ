@@ -19,18 +19,18 @@ async function connectDB() {
   mongoose.connection.on("connected", () => {
     hasConnected = true;
     // eslint-disable-next-line no-console
-    console.log(`[shieldiq] MongoDB connected → ${mongoose.connection.name}`);
+    console.log(`[detectiq] MongoDB connected → ${mongoose.connection.name}`);
   });
 
   mongoose.connection.on("error", (err) => {
     // eslint-disable-next-line no-console
-    console.error(`[shieldiq] MongoDB connection error: ${err.message}`);
+    console.error(`[detectiq] MongoDB connection error: ${err.message}`);
   });
 
   mongoose.connection.on("disconnected", () => {
     hasConnected = false;
     // eslint-disable-next-line no-console
-    console.warn("[shieldiq] MongoDB disconnected");
+    console.warn("[detectiq] MongoDB disconnected");
   });
 
   try {
@@ -40,8 +40,8 @@ async function connectDB() {
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error(
-      `[shieldiq] Initial MongoDB connection failed: ${err.message}\n` +
-        "[shieldiq] The API server will keep running, but any route touching the database will return 503 until MONGO_URI is reachable."
+      `[detectiq] Initial MongoDB connection failed: ${err.message}\n` +
+        "[detectiq] The API server will keep running, but any route touching the database will return 503 until MONGO_URI is reachable."
     );
   }
 }

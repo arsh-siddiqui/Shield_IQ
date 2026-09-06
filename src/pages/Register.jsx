@@ -53,13 +53,7 @@ export default function Register() {
     }
 
     if (result.offline) {
-      // Backend isn't reachable — fall back to the local demo flow so the
-      // app still works end-to-end without a server.
-      clearOfflineProgress();
-      updateUser({ name: values.name, email: values.email, role, streakDays: 0 });
-      toast("Offline mode — setting up local session.", "info");
-      setSuccess(true);
-      setTimeout(() => navigate("/dashboard"), 1600);
+      toast("Offline mode not available.", "info");
       return;
     }
 
@@ -79,7 +73,7 @@ export default function Register() {
             <span className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
               <ShieldCheck className="w-5 h-5 text-white" />
             </span>
-            ShieldIQ
+            DetectIQ
           </Link>
 
           <AnimatePresence mode="wait">
@@ -180,7 +174,7 @@ export default function Register() {
                 >
                   <CheckCircle2 className="w-10 h-10 text-success" />
                 </motion.div>
-                <h2 className="text-xl font-extrabold text-ink mb-2">Welcome to ShieldIQ!</h2>
+                <h2 className="text-xl font-extrabold text-ink mb-2">Welcome to DetectIQ!</h2>
                 <p className="text-sm text-ink-light">Setting up your dashboard...</p>
               </motion.div>
             )}
