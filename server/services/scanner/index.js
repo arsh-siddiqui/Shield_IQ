@@ -143,6 +143,7 @@ async function analyzeContent(content, scanType = 'url', userId = null) {
   try {
     groqResult = await getGroqService().analyzeWithGroq(
       content,
+      type,
       heuristicResult,
       mlEvidence,
       threatIntel,

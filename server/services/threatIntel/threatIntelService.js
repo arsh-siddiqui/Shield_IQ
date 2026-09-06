@@ -21,6 +21,7 @@
 
 const crypto = require('crypto');
 const { checkPhishDestroy, normalizeDomain } = require('./phishDestroyService');
+const { checkVirusTotal } = require('./virusTotalService');
 const env = require('../../config/env');
 
 const DEFAULT_CACHE_TTL_HOURS = 6;
@@ -106,7 +107,7 @@ async function checkUrl(url) {
   const normalized = normalizeDomain(url);
   if (!normalized) {
     return {
-      phishdestroy: { source: 'phishdestroy', status: 'error', malicious: false },
+      threatintel: { provider: 'Unknown', status: 'error', malicious: false },
       fromCache: false
     };
   }
@@ -114,20 +115,34 @@ async function checkUrl(url) {
 
   // Check cache first
   const cached = await getCachedResult(hash);
-  if (cached && cached.providers && cached.providers.phishdestroy) {
+  if (cached && cached.providers && cached.providers.threatintel) {
     return {
-      phishdestroy: cached.providers.phishdestroy,
+      threatintel: cached.providers.threatintel,
       fromCache: true,
     };
   }
 
-  // Run provider
-  const phishdestroy = await checkPhishDestroy(url);
+  // Run provider (VirusTotal if key exists, else PhishDestroy)
+  let threatintel;
+  if (env.VIRUSTOTAL_API_KEY) {
+    threatintel = await checkVirusTotal(url);
+  } else {
+    const pdResult = await checkPhishDestroy(url);
+    threatintel = {
+      provider: 'PhishDestroy',
+      status: pdResult.status,
+      malicious: pdResult.malicious,
+      riskScore: pdResult.riskScore,
+      severity: pdResult.severity,
+      detail: pdResult.status === 'found' ? 'Flagged by PhishDestroy.' : 'Not flagged.',
+      checkedAt: pdResult.checkedAt
+    };
+  }
 
   // Cache the results
-  await setCachedResult(hash, normalized, { phishdestroy });
+  await setCachedResult(hash, normalized, { threatintel });
 
-  return { phishdestroy, fromCache: false };
+  return { threatintel, fromCache: false };
 }
 
 /**
@@ -160,7 +175,7 @@ async function getThreatIntelligence(content, scanType) {
     return {
       checked: false,
       reason: 'no_urls_found',
-      phishdestroy: { source: 'phishdestroy', status: 'skipped', malicious: false }
+      threatintel: { provider: 'None', status: 'skipped', malicious: false }
     };
   }
 
@@ -174,14 +189,14 @@ async function getThreatIntelligence(content, scanType) {
       checked: true,
       checkedUrl: primaryUrl,
       fromCache: result.fromCache,
-      phishdestroy: result.phishdestroy,
+      threatintel: result.threatintel,
     };
   } catch (err) {
     return {
       checked: false,
       reason: 'lookup_failed',
       error: err.message,
-      phishdestroy: { source: 'phishdestroy', status: 'error', malicious: false }
+      threatintel: { provider: 'Unknown', status: 'error', malicious: false }
     };
   }
 }

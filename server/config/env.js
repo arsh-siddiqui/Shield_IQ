@@ -33,6 +33,12 @@ const env = {
   /** Threat intel cache TTL in hours */
   THREAT_INTEL_CACHE_TTL: process.env.THREAT_INTEL_CACHE_TTL || '6',
 
+  /** VirusTotal API Key */
+  VIRUSTOTAL_API_KEY: process.env.VIRUSTOTAL_API_KEY || '',
+
+  /** Timeout for VirusTotal API calls (ms) */
+  VIRUSTOTAL_TIMEOUT_MS: process.env.VIRUSTOTAL_TIMEOUT_MS || '4000',
+
   // ---------------------------------------------------------------------------
   // ML Inference Service
   // ---------------------------------------------------------------------------

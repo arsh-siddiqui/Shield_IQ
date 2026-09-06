@@ -56,21 +56,22 @@ function fuseEvidence(heuristicResult, mlEvidence, threatIntel, ragEvidence, gro
   let finalRecommendations = [...(heuristicResult.recommendations || [])];
 
   // 1. Threat Intelligence (highest priority evidence)
-  const phishdestroyFound = threatIntel?.phishdestroy?.status === 'found' && threatIntel.phishdestroy.malicious;
+  const tiFound = threatIntel?.threatintel?.status === 'found' && threatIntel.threatintel.malicious;
 
-  if (phishdestroyFound) {
-    analysisSources.push('phishdestroy');
-    const riskScore = threatIntel.phishdestroy.riskScore || 80;
-    const severity = threatIntel.phishdestroy.severity || 'high';
+  if (tiFound) {
+    analysisSources.push('threatintel');
+    const tiProvider = threatIntel.threatintel.provider || 'Threat Intelligence';
+    const riskScore = threatIntel.threatintel.riskScore || 80;
+    const severity = threatIntel.threatintel.severity || 'high';
 
     if (riskScore >= 80 || severity === 'critical') {
       finalRiskLevel  = 'high';
       finalRiskScore  = Math.max(finalRiskScore, riskScore);
       finalConfidence = Math.max(finalConfidence, 95);
-      finalCategory   = 'Known Suspicious Domain (PhishDestroy)';
-      finalSummary    = 'This URL/domain was flagged by PhishDestroy threat intelligence as highly suspicious or malicious.';
+      finalCategory   = `Known Suspicious Domain (${tiProvider})`;
+      finalSummary    = `This URL/domain was flagged by ${tiProvider} threat intelligence as highly suspicious or malicious.`;
       finalReasons = [
-        { source: 'PhishDestroy', title: 'Known Threat Domain', detail: `PhishDestroy classified this domain as malicious. Severity: ${severity}.`, severity: 'high' },
+        { source: 'Threat_Intelligence', title: 'Known Threat Domain', detail: `${tiProvider} classified this domain as malicious. Severity: ${severity}.`, severity: 'high' },
         ...finalReasons,
       ];
       finalRecommendations = [
@@ -82,9 +83,9 @@ function fuseEvidence(heuristicResult, mlEvidence, threatIntel, ragEvidence, gro
       finalRiskLevel  = riskMax(finalRiskLevel, 'high');
       finalRiskScore  = Math.max(finalRiskScore, riskScore);
       finalConfidence = Math.max(finalConfidence, 85);
-      finalCategory   = 'Suspicious Domain (PhishDestroy)';
+      finalCategory   = `Suspicious Domain (${tiProvider})`;
       finalReasons = [
-        { source: 'PhishDestroy', title: 'Suspicious Domain', detail: `PhishDestroy flagged this domain. Severity: ${severity}.`, severity: 'medium' },
+        { source: 'Threat_Intelligence', title: 'Suspicious Domain', detail: `${tiProvider} flagged this domain. Severity: ${severity}.`, severity: 'medium' },
         ...finalReasons,
       ];
     }
@@ -124,7 +125,7 @@ function fuseEvidence(heuristicResult, mlEvidence, threatIntel, ragEvidence, gro
         finalConfidence = Math.min(99, finalConfidence + 5);
       }
     } else if (mlLabel === 'safe') {
-      if (mlPhishProb <= 0.15 && finalRiskLevel === 'low' && !phishdestroyFound) {
+      if (mlPhishProb <= 0.15 && finalRiskLevel === 'low' && !tiFound) {
         finalRiskLevel = 'safe';
         finalRiskScore = Math.min(finalRiskScore, 10);
         finalConfidence = Math.min(99, finalConfidence + 5);
@@ -155,7 +156,7 @@ function fuseEvidence(heuristicResult, mlEvidence, threatIntel, ragEvidence, gro
     analysisSources.push('groq');
 
     // Classification extraction from LLM (optional, to adhere to new schema)
-    if (!phishdestroyFound) {
+    if (!tiFound) {
       if (groqResult.category) finalCategory = groqResult.category;
       if (groqResult.summary)  finalSummary  = groqResult.summary;
       if (Array.isArray(groqResult.recommendations) && groqResult.recommendations.length > 0) {
@@ -205,12 +206,12 @@ function fuseEvidence(heuristicResult, mlEvidence, threatIntel, ragEvidence, gro
       }
     }
 
-    if (!phishdestroyFound && typeof groqResult.confidence === 'number') {
+    if (!tiFound && typeof groqResult.confidence === 'number') {
       finalConfidence = Math.min(99, Math.round((finalConfidence + groqResult.confidence) / 2));
     }
     
     // Groq riskScore and riskLevel override ONLY if not overridden by TI
-    if (!phishdestroyFound && typeof groqResult.riskScore === 'number' && groqResult.riskScore > finalRiskScore) {
+    if (!tiFound && typeof groqResult.riskScore === 'number' && groqResult.riskScore > finalRiskScore) {
        finalRiskScore = Math.max(finalRiskScore, groqResult.riskScore);
        finalRiskLevel = groqResult.riskLevel || finalRiskLevel;
     }
@@ -224,12 +225,14 @@ function fuseEvidence(heuristicResult, mlEvidence, threatIntel, ragEvidence, gro
   else if (finalRiskLevel === 'medium' || finalRiskLevel === 'low') finalClassification = 'suspicious';
 
   const intelligence = {};
-  if (threatIntel?.phishdestroy && threatIntel.phishdestroy.status !== 'skipped') {
-    intelligence.phishdestroy = {
-      status:    threatIntel.phishdestroy.status,
-      malicious: threatIntel.phishdestroy.malicious || false,
-      riskScore: threatIntel.phishdestroy.riskScore,
-      severity:  threatIntel.phishdestroy.severity,
+  if (threatIntel?.threatintel && threatIntel.threatintel.status !== 'skipped') {
+    intelligence.threatintel = {
+      provider:  threatIntel.threatintel.provider,
+      status:    threatIntel.threatintel.status,
+      malicious: threatIntel.threatintel.malicious || false,
+      riskScore: threatIntel.threatintel.riskScore,
+      severity:  threatIntel.threatintel.severity,
+      detail:    threatIntel.threatintel.detail,
     };
   }
 

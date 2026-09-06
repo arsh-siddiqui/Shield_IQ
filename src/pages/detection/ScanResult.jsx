@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ShieldAlert, ShieldCheck, AlertTriangle, Loader2, Info, Search, Cpu, BookOpen, Brain } from "lucide-react";
+import { ShieldAlert, ShieldCheck, AlertTriangle, Loader2, Info, Search, Cpu, BookOpen, Brain, ChevronDown, ChevronUp } from "lucide-react";
 import { getScanResult } from "../../services/detectionService";
 import Button from "../../components/ui/Button";
 
@@ -9,6 +9,7 @@ export default function ScanResult() {
   const [scan, setScan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -60,8 +61,10 @@ export default function ScanResult() {
   const evidenceList = scan.evidence || [];
   const heuristics = evidenceList.filter(e => e.source === 'Heuristics');
   const ml = evidenceList.filter(e => e.source === 'ML_Classifier');
-  const threatIntel = evidenceList.filter(e => e.source === 'PhishDestroy');
+  const threatIntel = evidenceList.filter(e => e.source === 'PhishDestroy' || e.source === 'Threat_Intelligence' || e.source === 'VirusTotal');
   const personalization = evidenceList.filter(e => e.source === 'Personalization_RAG');
+  
+  const isUrlScan = scan.inputType === 'url' || scan.scanType === 'url';
 
   // Display fields — use stored target/scanType, fall back to heuristicResult
   const displayTarget = scan.target || scan.heuristicResult?.category || 'Scanned Content';
@@ -128,68 +131,93 @@ export default function ScanResult() {
         
         {/* Evidence */}
         <div className="lg:col-span-2 space-y-6">
-          <h2 className="text-xl font-bold text-ink flex items-center gap-2">
-            <Search className="w-5 h-5 text-primary" /> Detection Evidence
-          </h2>
-
-          <EvidenceCard
-            title="Heuristic Analysis"
-            icon={Search}
-            evidence={heuristics}
-            emptyMsg="No heuristic signals detected — content appears normal."
-          />
-
-          <EvidenceCard
-            title="Machine Learning Classifier"
-            icon={Cpu}
-            evidence={ml}
-            emptyMsg="ML classifier was not applicable for this scan type (URLs skip text ML)."
-          />
-
           <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
-              <ShieldAlert className="w-5 h-5 text-primary" />
-              <h3 className="text-lg font-bold text-ink">Threat Intelligence (PhishDestroy)</h3>
+              <Search className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-bold text-ink">What we checked</h3>
             </div>
-            {threatIntel.length > 0 ? (
-              <ul className="space-y-3">
-                {threatIntel.map((e, i) => (
-                  <li key={i} className="flex gap-3 text-sm">
-                    <Info className={`w-5 h-5 flex-shrink-0 ${e.severity === 'high' ? 'text-danger' : 'text-primary'}`} />
-                    <div>
-                      <span className="font-semibold text-ink">{e.title || e.type}:</span>{" "}
-                      <span className="text-ink-light">{e.detail}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-ink-light italic">No threat intelligence hits for this content.</p>
-            )}
-            <div className="mt-4 p-3 bg-slate-50 rounded-lg text-xs font-medium text-ink-faint">
-              Not listed in threat intelligence does not guarantee safety.
-            </div>
+            <ul className="space-y-3">
+              <li className="flex items-center gap-2 text-sm text-ink"><ShieldCheck className="w-4 h-4 text-success" /> {isUrlScan ? 'URL Structure & Domain Info' : 'Message Content & Wording'}</li>
+              {!isUrlScan && <li className="flex items-center gap-2 text-sm text-ink"><ShieldCheck className="w-4 h-4 text-success" /> Sender & Recipient Context</li>}
+              <li className="flex items-center gap-2 text-sm text-ink"><ShieldCheck className="w-4 h-4 text-success" /> Threat Intelligence Databases</li>
+              {!isUrlScan && <li className="flex items-center gap-2 text-sm text-ink"><ShieldCheck className="w-4 h-4 text-success" /> Saved Email Patterns (if available)</li>}
+            </ul>
           </div>
 
-          <EvidenceCard
-            title="Personalized Email Patterns (RAG)"
-            icon={BookOpen}
-            evidence={personalization}
-            emptyMsg="No email history available. Add legitimate emails to My Email Patterns to enable personalized detection."
-          />
-        </div>
-
-        {/* AI Reasoning */}
-        <div className="lg:col-span-1">
+          {/* AI Reasoning */}
           <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col h-full">
             <div className="flex items-center gap-2 mb-4">
               <Brain className="w-5 h-5 text-primary" />
-              <h3 className="text-lg font-bold text-ink">AI Reasoning</h3>
+              <h3 className="text-lg font-bold text-ink">Why this result? (AI Explanation)</h3>
             </div>
             <div className="text-sm text-ink-light leading-relaxed flex-1 whitespace-pre-wrap">
               {llmAnalysisStr}
             </div>
           </div>
+          
+          <button 
+            onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
+            className="flex items-center justify-between w-full p-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors"
+          >
+            <span className="font-bold text-ink">Technical Details</span>
+            {showTechnicalDetails ? <ChevronUp className="w-5 h-5 text-ink-light" /> : <ChevronDown className="w-5 h-5 text-ink-light" />}
+          </button>
+          
+          {showTechnicalDetails && (
+            <div className="space-y-6 animate-in slide-in-from-top-4 duration-300">
+              <EvidenceCard
+                title={isUrlScan ? "URL Safety Checks" : "Message Safety Checks"}
+                icon={Search}
+                evidence={heuristics}
+                emptyMsg="No heuristic signals detected — content appears normal."
+              />
+
+              {!isUrlScan && (
+                <EvidenceCard
+                  title="Machine Learning Classifier"
+                  icon={Cpu}
+                  evidence={ml}
+                  emptyMsg="ML classifier was not applicable for this scan."
+                />
+              )}
+
+              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <ShieldAlert className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-bold text-ink">Threat Intelligence</h3>
+                </div>
+                {threatIntel.length > 0 ? (
+                  <ul className="space-y-3">
+                    {threatIntel.map((e, i) => (
+                      <li key={i} className="flex gap-3 text-sm">
+                        <Info className={`w-5 h-5 flex-shrink-0 ${e.severity === 'high' || e.severity === 'critical' ? 'text-danger' : 'text-primary'}`} />
+                        <div>
+                          <span className="font-semibold text-ink">{e.title || e.type} ({e.source}):</span>{" "}
+                          <span className="text-ink-light">{e.detail}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-ink-light italic">No threat intelligence hits for this content.</p>
+                )}
+                <div className="mt-4 p-3 bg-slate-50 rounded-lg text-xs font-medium text-ink-faint">
+                  Not listed in threat intelligence does not guarantee safety.
+                </div>
+              </div>
+
+              {!isUrlScan && (
+                <EvidenceCard
+                  title="Email Pattern Comparison"
+                  icon={BookOpen}
+                  evidence={personalization}
+                  emptyMsg="No email history available. Add legitimate emails to My Email Patterns to enable personalized detection."
+                />
+              )}
+            </div>
+          )}
+        </div>
+
         </div>
       </div>
 
