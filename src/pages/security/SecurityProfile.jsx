@@ -3,18 +3,24 @@ import { TrendingUp, Target, Loader2, AlertCircle } from "lucide-react";
 import { useAppData } from "../../context/AppDataContext";
 import { getAllProgress } from "../../services/progressService";
 import { Link } from "react-router-dom";
+import { getEmailHistory } from "../../services/emailHistoryService";
 
 export default function SecurityProfile() {
   const { user } = useAppData();
   const [progressData, setProgressData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [emailCount, setEmailCount] = useState(0);
 
   useEffect(() => {
     async function load() {
       try {
-        const data = await getAllProgress();
+        const [data, emails] = await Promise.all([
+          getAllProgress(),
+          getEmailHistory().catch(() => [])
+        ]);
         setProgressData(data || []);
+        setEmailCount(emails?.length || 0);
       } catch (err) {
         setError("Failed to load progress data.");
       } finally {
@@ -121,6 +127,24 @@ export default function SecurityProfile() {
         </div>
 
       </div>
+
+      {/* Personalized Detection */}
+      <section className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <h2 className="text-xl font-bold text-ink mb-6">Personalized Detection</h2>
+        <div className="flex flex-col md:flex-row justify-between items-center bg-slate-50 p-6 rounded-xl border border-slate-100">
+          <div>
+            <h3 className="text-lg font-bold text-ink mb-1">My Email Patterns</h3>
+            <div className="text-sm text-ink-light">
+              <span className="font-semibold text-ink">{emailCount} stored</span> &middot; <span className="font-semibold text-primary">{emailCount} embeddings ready</span>
+            </div>
+          </div>
+          <div className="mt-4 md:mt-0">
+            <Link to="/detection/email-context" className="bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary-600 transition shadow-sm inline-block">
+              Manage My Email Patterns
+            </Link>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

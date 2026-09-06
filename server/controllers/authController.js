@@ -14,13 +14,23 @@ function toPublicUser(user) {
     email: user.email,
     role: user.accountRole,
     avatar: user.avatarInitials,
-    xp: user.xp,
+    xp: user.xp || 0,
     streakDays: user.streakDays,
     status: user.status,
     isAdmin: user.role === "admin",
     memberSince: user.createdAt,
+    learningProfile: {
+      strengths: user.learningProfile?.strengths || [],
+      weaknesses: user.learningProfile?.weaknesses || [],
+      recommendedFocus: user.learningProfile?.recommendedFocus || null,
+    },
+    securityProfile: {
+      riskScore: user.securityProfile?.riskScore || 0,
+      phishingSusceptibility: user.securityProfile?.phishingSusceptibility || 'Medium',
+    },
   };
 }
+
 
 // @route  POST /api/auth/register
 // @access Public

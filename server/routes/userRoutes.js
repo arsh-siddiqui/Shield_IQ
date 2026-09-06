@@ -4,6 +4,7 @@ const {
   updateProfile,
   getDashboardData,
   getScanHistory,
+  getScanById,
   getProgress,
 } = require("../controllers/userController");
 const { protect } = require("../middleware/auth");
@@ -17,6 +18,8 @@ router.get("/profile", getProfile);
 router.put("/profile", updateProfile);
 router.get("/dashboard", getDashboardData);
 router.get("/scans", getScanHistory);
+router.get("/scans/:id", getScanById);
 router.get("/progress", getProgress);
 
 module.exports = router;
+

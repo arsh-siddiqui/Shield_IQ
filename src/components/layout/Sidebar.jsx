@@ -13,16 +13,14 @@ const navSections = [
   {
     title: "Detection",
     items: [
-      { label: "Scan Email", to: "/detection/email", icon: ScanLine },
-      { label: "Scan URL", to: "/detection/url", icon: ShieldAlert },
-      { label: "Scan History", to: "/detection/history", icon: History },
+      { label: "Scanner", to: "/detection/scanner", icon: ScanLine },
+      { label: "History", to: "/detection/history", icon: History },
+      { label: "My Email Patterns", to: "/detection/email-context", icon: FileSearch },
     ]
   },
   {
-    title: "Security Intelligence",
+    title: "Security",
     items: [
-      { label: "Email Context", to: "/security/email-context", icon: FileSearch },
-      { label: "Detection Evidence", to: "/security/evidence", icon: Shield },
       { label: "Security Profile", to: "/security/profile", icon: TrendingUp },
     ]
   },

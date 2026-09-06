@@ -53,6 +53,9 @@ export default function ScanHistory() {
           <ShieldAlert className="w-12 h-12 text-slate-300 mx-auto mb-4" />
           <h3 className="text-lg font-bold text-ink">No scans yet.</h3>
           <p className="text-sm text-ink-light mt-1">Submit an email or URL for analysis to see your history.</p>
+          <Link to="/detection/scanner" className="mt-6 inline-block bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary-600 transition">
+            Go to Scanner
+          </Link>
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
@@ -70,10 +73,16 @@ export default function ScanHistory() {
               {scans.map((scan) => (
                 <tr key={scan._id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4">
-                    <div className="text-sm font-semibold text-ink truncate max-w-xs">{scan.target}</div>
+                    <div className="text-sm font-semibold text-ink truncate max-w-xs">
+                      {/* target stored in new scans; old scans fall back to classification */}
+                      {scan.target || `[${scan.classification}]`}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-ink-light capitalize">{scan.scanType}</div>
+                    <div className="text-sm font-medium text-ink-light capitalize">
+                      {/* scanType stored in new scans; inputType in old scans */}
+                      {scan.scanType || scan.inputType || '—'}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold capitalize ${

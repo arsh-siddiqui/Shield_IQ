@@ -56,6 +56,17 @@ const getDashboardData = asyncHandler(async (req, res) => {
   });
 });
 
+// @route  GET /api/users/scans/:id
+// @access Private
+const getScanById = asyncHandler(async (req, res) => {
+  const scan = await Scan.findOne({ _id: req.params.id, user: req.user._id });
+  if (!scan) {
+    res.status(404);
+    throw new Error('Scan result not found.');
+  }
+  return sendSuccess(res, { data: scan });
+});
+
 // @route  GET /api/users/scans
 // @access Private
 const getScanHistory = asyncHandler(async (req, res) => {
@@ -100,5 +111,6 @@ module.exports = {
   updateProfile,
   getDashboardData,
   getScanHistory,
+  getScanById,
   getProgress,
 };

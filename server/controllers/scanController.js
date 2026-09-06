@@ -44,16 +44,6 @@ const scanContent = asyncHandler(async (req, res) => {
         ? 'Uploaded QR code'
         : (content || '').trim().slice(0, 300) || '(empty input)';
 
-    // Build threat intel summary for storage (no raw external responses)
-    let threatIntelSummary = null;
-    if (result.intelligence) {
-      const parts = [];
-      if (result.intelligence.phishdestroy?.status === 'found') {
-        parts.push(`PhishDestroy: malicious`);
-      }
-      if (parts.length > 0) threatIntelSummary = parts.join('; ');
-    }
-
     const { updateStreak } = require("../utils/streakHelper");
     updateStreak(req.user);
     await req.user.save();
@@ -62,9 +52,11 @@ const scanContent = asyncHandler(async (req, res) => {
 
     saved = await Scan.create({
       user: req.user._id,
+      target,
+      scanType: result.scanType,
       inputType: result.scanType,
-      inputHash: inputHash,
-      classification: result.classification || (result.riskLevel === 'Safe' ? 'legitimate' : result.riskLevel === 'Critical' ? 'phishing' : 'suspicious'),
+      inputHash,
+      classification: result.classification || (result.riskLevel === 'safe' ? 'legitimate' : result.riskLevel === 'high' || result.riskLevel === 'critical' ? 'phishing' : 'suspicious'),
       riskLevel: result.riskLevel,
       riskScore: result.riskScore,
       confidence: result.confidence,
@@ -81,7 +73,7 @@ const scanContent = asyncHandler(async (req, res) => {
 
   return sendSuccess(res, {
     message: 'Scan complete.',
-    data: { result, savedToHistory: Boolean(saved), scanId: saved?._id },
+    data: { result, savedToHistory: Boolean(saved), scanId: saved?._id, scan: saved },
   });
 });
 

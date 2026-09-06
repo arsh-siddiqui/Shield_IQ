@@ -52,7 +52,7 @@ function fuseEvidence(heuristicResult, mlEvidence, threatIntel, ragEvidence, gro
   let finalConfidence = heuristicResult.confidence;
   let finalCategory = heuristicResult.category;
   let finalSummary = heuristicResult.summary;
-  let finalReasons = [...(heuristicResult.reasons || [])];
+  let finalReasons = (heuristicResult.reasons || []).map(r => ({ ...r, source: 'Heuristics' }));
   let finalRecommendations = [...(heuristicResult.recommendations || [])];
 
   // 1. Threat Intelligence (highest priority evidence)
@@ -70,7 +70,7 @@ function fuseEvidence(heuristicResult, mlEvidence, threatIntel, ragEvidence, gro
       finalCategory   = 'Known Suspicious Domain (PhishDestroy)';
       finalSummary    = 'This URL/domain was flagged by PhishDestroy threat intelligence as highly suspicious or malicious.';
       finalReasons = [
-        { title: 'Known Threat Domain', detail: `PhishDestroy classified this domain as malicious. Severity: ${severity}.`, severity: 'high' },
+        { source: 'PhishDestroy', title: 'Known Threat Domain', detail: `PhishDestroy classified this domain as malicious. Severity: ${severity}.`, severity: 'high' },
         ...finalReasons,
       ];
       finalRecommendations = [
@@ -84,7 +84,7 @@ function fuseEvidence(heuristicResult, mlEvidence, threatIntel, ragEvidence, gro
       finalConfidence = Math.max(finalConfidence, 85);
       finalCategory   = 'Suspicious Domain (PhishDestroy)';
       finalReasons = [
-        { title: 'Suspicious Domain', detail: `PhishDestroy flagged this domain. Severity: ${severity}.`, severity: 'medium' },
+        { source: 'PhishDestroy', title: 'Suspicious Domain', detail: `PhishDestroy flagged this domain. Severity: ${severity}.`, severity: 'medium' },
         ...finalReasons,
       ];
     }
@@ -95,6 +95,16 @@ function fuseEvidence(heuristicResult, mlEvidence, threatIntel, ragEvidence, gro
     analysisSources.push('machine_learning');
     const mlPhishProb = mlEvidence.probability;
     const mlLabel     = mlEvidence.label;
+    const mlPct = Math.round(mlPhishProb * 100);
+
+    // Always add an ML evidence item
+    finalReasons.push({
+      source: 'ML_Classifier',
+      title: `ML Classifier: ${mlLabel === 'phishing' ? 'Phishing' : 'Legitimate'}`,
+      detail: `The machine learning model classified this content as ${mlLabel} with ${mlPct}% probability.`,
+      severity: mlLabel === 'phishing' && mlPhishProb >= 0.7 ? 'high' : mlLabel === 'phishing' ? 'medium' : 'low',
+      type: 'ML Classification',
+    });
 
     if (mlLabel === 'phishing') {
       if (mlPhishProb >= 0.85 && finalRiskLevel === 'medium') {
@@ -126,14 +136,18 @@ function fuseEvidence(heuristicResult, mlEvidence, threatIntel, ragEvidence, gro
   if (ragEvidence?.status === 'available' && ragEvidence.similarityData?.length > 0) {
     analysisSources.push('rag');
     const avgSim = ragEvidence.similarityData.reduce((acc, curr) => acc + curr.similarity, 0) / ragEvidence.similarityData.length;
+    const simPct = Math.round(avgSim * 100);
     // RAG does not override strong TI or Heuristics, but adds confidence.
     if (avgSim > 0.8 && finalRiskLevel === 'safe') {
       finalConfidence = Math.min(99, finalConfidence + 10);
-      finalReasons.push({ title: 'Personalized Context', detail: 'This email is highly similar to your past legitimate correspondence.', severity: 'info' });
-    } else if (avgSim < 0.2 && finalRiskLevel === 'safe') {
-      // Unusual correspondence
-      finalReasons.push({ title: 'Unusual Context', detail: 'This email format is rarely seen in your past legitimate correspondence. Remain vigilant.', severity: 'info' });
+      finalReasons.push({ source: 'Personalization_RAG', title: 'Personalized Context: Familiar Pattern', detail: `This email is highly similar (${simPct}% match) to your saved legitimate email patterns.`, severity: 'info', type: 'RAG Match' });
+    } else if (avgSim < 0.3) {
+      finalReasons.push({ source: 'Personalization_RAG', title: 'Personalized Context: Unusual Pattern', detail: `This email format has low similarity (${simPct}%) with your saved legitimate email patterns. Remain vigilant.`, severity: 'medium', type: 'RAG Anomaly' });
+    } else {
+      finalReasons.push({ source: 'Personalization_RAG', title: 'Personalized Context', detail: `Email pattern similarity to your history: ${simPct}%.`, severity: 'info', type: 'RAG Context' });
     }
+  } else if (ragEvidence?.status === 'unavailable' && ragEvidence?.reason !== 'not_applicable_for_url') {
+    finalReasons.push({ source: 'Personalization_RAG', title: 'No Email History', detail: 'Add legitimate emails to My Email Patterns to enable personalized detection.', severity: 'info', type: 'RAG Unavailable' });
   }
 
   // 4. Groq contextual refinement
@@ -158,9 +172,11 @@ function fuseEvidence(heuristicResult, mlEvidence, threatIntel, ragEvidence, gro
     if (Array.isArray(groqResult.reasons)) {
       for (const reason of groqResult.reasons) {
         finalReasons.push({
+          source: 'AI_Analysis',
           title: `AI Analysis: ${reason.slice(0, 80)}`,
           detail: reason,
           severity: 'low',
+          type: 'Groq Reasoning',
         });
       }
     }
@@ -168,9 +184,11 @@ function fuseEvidence(heuristicResult, mlEvidence, threatIntel, ragEvidence, gro
     if (Array.isArray(groqResult.socialEngineeringSignals)) {
       for (const sig of groqResult.socialEngineeringSignals) {
         finalReasons.push({
+          source: 'AI_Analysis',
           title: `Social Engineering: ${sig.slice(0, 80)}`,
           detail: sig,
           severity: 'medium',
+          type: 'Social Engineering',
         });
       }
     }
@@ -178,9 +196,11 @@ function fuseEvidence(heuristicResult, mlEvidence, threatIntel, ragEvidence, gro
     if (Array.isArray(groqResult.personalizationEvidence)) {
       for (const evid of groqResult.personalizationEvidence) {
         finalReasons.push({
+          source: 'Personalization_RAG',
           title: `Personalization: ${evid.slice(0, 80)}`,
           detail: evid,
           severity: 'info',
+          type: 'Personalization',
         });
       }
     }

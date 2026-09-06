@@ -16,7 +16,7 @@ import ScanHistory from "./pages/detection/ScanHistory";
 import ScanResult from "./pages/detection/ScanResult";
 
 // Security
-import EmailContext from "./pages/security/EmailContext";
+import MyEmailPatterns from "./pages/detection/MyEmailPatterns";
 import SecurityProfile from "./pages/security/SecurityProfile";
 
 // Learning
@@ -70,15 +70,13 @@ function AppRoutes() {
       <Route path="/dashboard" element={<RequireAuth><AppLayoutWrapper><Dashboard /></AppLayoutWrapper></RequireAuth>} />
       
       {/* Detection */}
-      <Route path="/detection/email" element={<RequireAuth><AppLayoutWrapper><Scan /></AppLayoutWrapper></RequireAuth>} />
-      <Route path="/detection/url" element={<RequireAuth><AppLayoutWrapper><Scan /></AppLayoutWrapper></RequireAuth>} />
+      <Route path="/detection/scanner" element={<RequireAuth><AppLayoutWrapper><Scan /></AppLayoutWrapper></RequireAuth>} />
       <Route path="/detection/history" element={<RequireAuth><AppLayoutWrapper><ScanHistory /></AppLayoutWrapper></RequireAuth>} />
       <Route path="/detection/result/:id" element={<RequireAuth><AppLayoutWrapper><ScanResult /></AppLayoutWrapper></RequireAuth>} />
+      <Route path="/detection/email-context" element={<RequireAuth><AppLayoutWrapper><MyEmailPatterns /></AppLayoutWrapper></RequireAuth>} />
       
       {/* Security */}
-      <Route path="/security/email-context" element={<RequireAuth><AppLayoutWrapper><EmailContext /></AppLayoutWrapper></RequireAuth>} />
       <Route path="/security/profile" element={<RequireAuth><AppLayoutWrapper><SecurityProfile /></AppLayoutWrapper></RequireAuth>} />
-      <Route path="/security/evidence" element={<RequireAuth><Navigate to="/detection/history" replace /></RequireAuth>} />
 
       {/* Learning */}
       <Route path="/vulnerabilities" element={<RequireAuth><AppLayoutWrapper><VulnerabilityList /></AppLayoutWrapper></RequireAuth>} />

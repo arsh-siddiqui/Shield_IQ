@@ -2,24 +2,18 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Target, Loader2, BookOpen, AlertCircle } from "lucide-react";
 import { getAllProgress } from "../../services/progressService";
-import { getVulnerabilities } from "../../services/vulnerabilityService";
 import Button from "../../components/ui/Button";
 
 export default function MyProgress() {
   const [progress, setProgress] = useState([]);
-  const [vulns, setVulns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     async function load() {
       try {
-        const [progData, vulnData] = await Promise.all([
-          getAllProgress(),
-          getVulnerabilities()
-        ]);
+        const progData = await getAllProgress();
         setProgress(progData || []);
-        setVulns(vulnData || []);
       } catch (err) {
         setError("Failed to load progress.");
       } finally {
@@ -37,11 +31,17 @@ export default function MyProgress() {
     );
   }
 
-  // Map progress to vulnerability metadata
+  // p.vulnerability is populated (title, slug, category, severity) from progressController
   const progressList = progress.map(p => {
-    const v = vulns.find(vul => vul._id === p.vulnerabilityId) || {};
-    return { ...p, title: v.title || "Unknown Module", slug: v.slug };
+    const vuln = p.vulnerability || {};
+    return {
+      ...p,
+      title: typeof vuln === 'object' ? vuln.title : 'Unknown Module',
+      slug: typeof vuln === 'object' ? vuln.slug : null,
+      category: typeof vuln === 'object' ? vuln.category : null,
+    };
   });
+
 
   return (
     <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500">

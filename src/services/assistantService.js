@@ -2,6 +2,7 @@ import apiClient, { isBackendUnreachable } from "./apiClient";
 
 export async function askAssistantRemote({ message, conversationHistory = [], scanContext = null }) {
   try {
+    // Backend route is /api/assistant/chat (not /ask)
     const { data } = await apiClient.post("/assistant/chat", {
       message,
       conversationHistory,

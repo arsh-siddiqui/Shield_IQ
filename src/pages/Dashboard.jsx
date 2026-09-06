@@ -66,6 +66,19 @@ export default function Dashboard() {
         <p className="text-ink-light">Here is your security and learning overview.</p>
       </header>
 
+      {/* Quick Actions */}
+      <div className="flex flex-wrap gap-4 mb-8">
+        <Link to="/detection/scanner?mode=email" className="bg-primary text-white px-5 py-3 rounded-xl font-bold text-sm hover:bg-primary-600 transition shadow-sm flex items-center gap-2">
+          Analyze Email
+        </Link>
+        <Link to="/detection/scanner?mode=url" className="bg-primary text-white px-5 py-3 rounded-xl font-bold text-sm hover:bg-primary-600 transition shadow-sm flex items-center gap-2">
+          Analyze URL
+        </Link>
+        <Link to="/vulnerabilities" className="bg-slate-100 text-ink px-5 py-3 rounded-xl font-bold text-sm hover:bg-slate-200 transition shadow-sm flex items-center gap-2">
+          Continue Learning
+        </Link>
+      </div>
+
       {error && (
         <div className="bg-danger-50 text-danger p-4 rounded-xl text-sm mb-6">
           {error}

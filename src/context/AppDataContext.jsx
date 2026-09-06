@@ -20,8 +20,11 @@ function mergeRemoteUser(local, remote) {
     email: remote.email,
     role: remote.role,
     isAdmin: remote.isAdmin,
+    xp: remote.xp || 0,
+    streakDays: remote.streakDays || 0,
     avatar: remote.avatar || (remote.name ? remote.name.substring(0, 2).toUpperCase() : "U"),
-    learningProfile: remote.learningProfile || {}, // Extract learning profile
+    learningProfile: remote.learningProfile || { strengths: [], weaknesses: [], recommendedFocus: null },
+    securityProfile: remote.securityProfile || { riskScore: 0, phishingSusceptibility: 'Medium' },
     memberSince: remote.memberSince
       ? new Date(remote.memberSince).toLocaleDateString("en-US", { month: "short", year: "numeric" })
       : local.memberSince,
@@ -37,11 +40,13 @@ export function AppDataProvider({ children }) {
   const updateUser = useCallback((patch) => setUser((u) => ({ ...u, ...patch })), []);
 
   const loadUserData = useCallback(async (remoteUser) => {
-    const mergedUser = mergeRemoteUser(user, remoteUser);
+    const mergedUser = mergeRemoteUser(defaultGuestUser, remoteUser);
     setUser(mergedUser);
     setIsAuthenticated(true);
-    setXp(mergedUser.learningProfile?.xp || 0);
-  }, [user]);
+    // XP is at top level of the User model, not inside learningProfile
+    setXp(remoteUser.xp || 0);
+  }, []);
+
 
   useEffect(() => {
     let cancelled = false;

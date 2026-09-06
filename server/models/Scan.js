@@ -13,6 +13,16 @@ const scanSchema = new mongoose.Schema(
       enum: ['url', 'email', 'sms', 'whatsapp', 'qr'],
       required: true,
     },
+    // Display alias kept in sync with inputType
+    scanType: {
+      type: String,
+      enum: ['url', 'email', 'sms', 'whatsapp', 'qr'],
+    },
+    // Truncated copy of the submitted content for display purposes
+    target: {
+      type: String,
+      maxlength: 300,
+    },
     inputHash: {
       type: String,
       description: 'Hash of the input to avoid duplicate scans',
