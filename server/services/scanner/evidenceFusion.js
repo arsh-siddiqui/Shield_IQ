@@ -212,8 +212,15 @@ function fuseEvidence(heuristicResult, mlEvidence, threatIntel, ragEvidence, gro
     
     // Groq riskScore and riskLevel override ONLY if not overridden by TI
     if (!tiFound && typeof groqResult.riskScore === 'number' && groqResult.riskScore > finalRiskScore) {
-       finalRiskScore = Math.max(finalRiskScore, groqResult.riskScore);
-       finalRiskLevel = groqResult.riskLevel || finalRiskLevel;
+       const isCurrentlySafe = finalRiskLevel === 'safe' || finalRiskLevel === 'low';
+       const groqWantsToEscalate = groqResult.riskScore >= 30; // 30 is medium threshold
+       
+       if (isCurrentlySafe && groqWantsToEscalate) {
+           finalRiskScore = Math.min(29, Math.max(finalRiskScore, groqResult.riskScore));
+       } else {
+           finalRiskScore = Math.max(finalRiskScore, groqResult.riskScore);
+           finalRiskLevel = groqResult.riskLevel || finalRiskLevel;
+       }
     }
   }
 
@@ -222,7 +229,7 @@ function fuseEvidence(heuristicResult, mlEvidence, threatIntel, ragEvidence, gro
 
   let finalClassification = 'legitimate';
   if (finalRiskLevel === 'high' || finalRiskLevel === 'critical') finalClassification = 'phishing';
-  else if (finalRiskLevel === 'medium' || finalRiskLevel === 'low') finalClassification = 'suspicious';
+  else if (finalRiskLevel === 'medium') finalClassification = 'suspicious';
 
   const intelligence = {};
   if (threatIntel?.threatintel && threatIntel.threatintel.status !== 'skipped') {

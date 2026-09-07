@@ -10,18 +10,22 @@ const scanSchema = new mongoose.Schema(
     },
     inputType: {
       type: String,
-      enum: ['url', 'email', 'sms', 'whatsapp', 'qr'],
+      enum: ['url', 'email', 'sms', 'whatsapp', 'qr', 'message', 'screenshot'],
       required: true,
     },
     // Display alias kept in sync with inputType
     scanType: {
       type: String,
-      enum: ['url', 'email', 'sms', 'whatsapp', 'qr'],
+      enum: ['url', 'email', 'sms', 'whatsapp', 'qr', 'message', 'screenshot'],
     },
     // Truncated copy of the submitted content for display purposes
     target: {
       type: String,
       maxlength: 300,
+    },
+    // The complete text analyzed, for later personalization (Email RAG)
+    fullContent: {
+      type: String,
     },
     inputHash: {
       type: String,

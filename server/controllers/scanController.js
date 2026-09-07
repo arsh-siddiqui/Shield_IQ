@@ -8,7 +8,7 @@ const { analyzeContent, VALID_TYPES } = require('../services/scanService');
 // @route  POST /api/scan
 // @access Public (saves to history only when authenticated)
 const scanContent = asyncHandler(async (req, res) => {
-  const { scanType, content } = req.body;
+  const { scanType, content, inputType } = req.body;
 
   if (!scanType || typeof scanType !== 'string' || !VALID_TYPES.includes(scanType)) {
     res.status(400);
@@ -53,8 +53,9 @@ const scanContent = asyncHandler(async (req, res) => {
     saved = await Scan.create({
       user: req.user._id,
       target,
+      fullContent: content,
       scanType: result.scanType,
-      inputType: result.scanType,
+      inputType: inputType || result.scanType,
       inputHash,
       classification: result.classification || (result.riskLevel === 'safe' ? 'legitimate' : result.riskLevel === 'high' || result.riskLevel === 'critical' ? 'phishing' : 'suspicious'),
       riskLevel: result.riskLevel,

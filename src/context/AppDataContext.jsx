@@ -97,6 +97,34 @@ export function AppDataProvider({ children }) {
     setXp(0);
   }, []);
 
+  const [theme, setThemeState] = useState(() => {
+    return localStorage.getItem("detectiq-theme") || "dark";
+  });
+
+  const setTheme = useCallback((newTheme) => {
+    setThemeState(newTheme);
+    localStorage.setItem("detectiq-theme", newTheme);
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    setThemeState((prev) => {
+      const nextTheme = prev === "dark" ? "light" : "dark";
+      localStorage.setItem("detectiq-theme", nextTheme);
+      return nextTheme;
+    });
+  }, []);
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.remove("light", "dark");
+    const activeTheme = (theme === "dark" || theme === "light") ? theme : "dark";
+    if (theme !== activeTheme) {
+        localStorage.setItem("detectiq-theme", activeTheme);
+        setThemeState(activeTheme);
+    }
+    root.classList.add(activeTheme);
+  }, [theme]);
+
   const value = {
     isInitializing,
     user,
@@ -106,6 +134,8 @@ export function AppDataProvider({ children }) {
     register,
     logout,
     xp,
+    theme,
+    toggleTheme,
   };
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;

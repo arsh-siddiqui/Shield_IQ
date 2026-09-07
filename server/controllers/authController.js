@@ -35,7 +35,8 @@ function toPublicUser(user) {
 // @route  POST /api/auth/register
 // @access Public
 const register = asyncHandler(async (req, res) => {
-  const { name, email, password, accountRole } = req.body;
+  let { name, email, password, accountRole } = req.body;
+  email = (email || "").toLowerCase().trim();
 
   const existing = await User.findOne({ email });
   if (existing) {
@@ -56,7 +57,8 @@ const register = asyncHandler(async (req, res) => {
 // @route  POST /api/auth/login
 // @access Public
 const login = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  let { email, password } = req.body;
+  email = (email || "").toLowerCase().trim();
 
   const user = await User.findOne({ email }).select("+password");
   if (!user || !(await user.comparePassword(password))) {

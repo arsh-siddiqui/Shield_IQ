@@ -25,6 +25,11 @@ import VulnerabilityDetail from "./pages/learning/VulnerabilityDetail";
 import Assessment from "./pages/learning/Assessment";
 import MyProgress from "./pages/learning/MyProgress";
 
+import Features from "./pages/public/Features";
+import About from "./pages/public/About";
+import Solutions from "./pages/public/Solutions";
+import Resources from "./pages/public/Resources";
+
 import { Loader2 } from "lucide-react";
 import AppLayout from "./components/layout/AppLayout";
 
@@ -63,6 +68,10 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
+      <Route path="/features" element={<Features />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/solutions" element={<Solutions />} />
+      <Route path="/resources" element={<Resources />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       

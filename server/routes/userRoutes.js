@@ -6,6 +6,7 @@ const {
   getScanHistory,
   getScanById,
   getProgress,
+  personalizeScan,
 } = require("../controllers/userController");
 const { protect } = require("../middleware/auth");
 const requireDb = require("../middleware/requireDb");
@@ -19,6 +20,7 @@ router.put("/profile", updateProfile);
 router.get("/dashboard", getDashboardData);
 router.get("/scans", getScanHistory);
 router.get("/scans/:id", getScanById);
+router.post("/scans/:id/personalize", personalizeScan);
 router.get("/progress", getProgress);
 
 module.exports = router;

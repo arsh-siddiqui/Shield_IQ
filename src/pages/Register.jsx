@@ -17,10 +17,10 @@ const roles = [
 
 export default function Register() {
   const navigate = useNavigate();
-  const { updateUser, register, clearOfflineProgress } = useAppData();
+  const { register } = useAppData();
   const { toast } = useToast();
   const [role, setRole] = useState("Student");
-  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const { values, setValue, handleBlur, validateAll, errorFor } = useFormValidation(
     { name: "", email: "", password: "", confirmPassword: "" },
@@ -39,50 +39,92 @@ export default function Register() {
       return;
     }
 
+    setLoading(true);
     const result = await register({
       name: values.name,
       email: values.email,
       password: values.password,
       accountRole: role,
     });
+    setLoading(false);
 
     if (result.ok) {
-      setSuccess(true);
-      setTimeout(() => navigate("/dashboard"), 1600);
+      toast("Welcome to DetectIQ!", "success");
+      navigate("/dashboard");
       return;
     }
 
-    if (result.offline) {
-      toast("Offline mode not available.", "info");
-      return;
-    }
-
-    toast(result.message, "warning");
+    toast(result.message || "Registration failed", "warning");
   };
 
   return (
-    <div className="min-h-screen bg-surface flex items-center justify-center p-6">
-      <div className="w-full max-w-4xl grid lg:grid-cols-2 gap-0 bg-white rounded-3xl shadow-lift overflow-hidden">
-        <motion.div
-          initial={{ opacity: 0, x: -16 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4 }}
-          className="p-8 sm:p-12 flex flex-col justify-center order-2 lg:order-1"
-        >
-          <Link to="/" className="flex items-center gap-2 font-extrabold text-ink mb-8">
-            <span className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-              <ShieldCheck className="w-5 h-5 text-white" />
-            </span>
-            DetectIQ
+    <div className="min-h-screen bg-background text-primary flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-y-auto">
+      
+      {/* Ambient Lighting */}
+      <div className="absolute top-10 left-10 w-[500px] h-[500px] bg-accent-blue/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-[500px] h-[500px] bg-accent-violet/5 rounded-full blur-[120px] pointer-events-none" />
+
+      <div className="w-full max-w-5xl my-auto grid lg:grid-cols-12 bg-card rounded-3xl shadow-elevated overflow-hidden relative z-10">
+        
+        {/* Left 45% Visual Panel */}
+        <div className="hidden lg:flex lg:col-span-5 flex-col justify-between bg-gradient-to-br from-[#050B16] via-[#081120] to-[#0D1728] p-12 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-tr from-accent-blue/10 via-transparent to-accent-violet/10 pointer-events-none" />
+          
+          <Link to="/" className="flex items-center gap-2.5 relative z-10">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-accent-blue to-accent-violet flex items-center justify-center text-white shadow-soft">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <span className="font-heading font-black text-xl text-white tracking-tight">DetectIQ</span>
           </Link>
 
-          <AnimatePresence mode="wait">
-            {!success ? (
-              <motion.div key="form" exit={{ opacity: 0, y: -10 }}>
-                <h1 className="text-2xl font-extrabold text-ink mb-2">Create your free account</h1>
-                <p className="text-sm text-ink-light mb-8">Takes less than a minute.</p>
+          <div className="relative z-10 my-auto py-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-violet/10 text-accent-violet text-xs font-bold uppercase tracking-wider mb-6">
+              <span className="w-2 h-2 rounded-full bg-accent-violet animate-pulse" /> Start Free
+            </div>
+            <h2 className="text-3xl font-heading font-extrabold text-white tracking-tight mb-4 leading-tight">
+              Join the next generation of threat intelligence.
+            </h2>
+            <p className="text-slate-400 text-sm font-medium leading-relaxed mb-8">
+              AI detection models, personalized RAG baselines, and vulnerability assessments in one workspace.
+            </p>
 
-                <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+            <div className="space-y-3.5">
+              {[
+                "Instant multi-channel analysis",
+                "Personalized email pattern learning",
+                "Bite-sized security lessons & assessments",
+                "Full security profile tracking"
+              ].map((text, i) => (
+                <div key={i} className="flex items-center gap-3 text-xs font-medium text-slate-300">
+                  <div className="w-4 h-4 rounded-full bg-accent-violet/20 text-accent-violet flex items-center justify-center flex-shrink-0">
+                    <ShieldCheck className="w-3 h-3" />
+                  </div>
+                  {text}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative z-10 text-xs font-medium text-slate-500">
+            © 2026 DetectIQ Inc. All rights reserved.
+          </div>
+        </div>
+
+        {/* Right 55% Form Panel */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="lg:col-span-7 p-8 sm:p-12 lg:p-14 flex flex-col justify-center bg-card"
+        >
+          <div className="max-w-md mx-auto w-full">
+            <div className="mb-6">
+              <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-primary tracking-tight mb-1.5">Create your account</h1>
+              <p className="text-xs sm:text-sm text-secondary font-medium">Join DetectIQ in less than a minute</p>
+            </div>
+
+            <AnimatePresence mode="wait">
+                <form onSubmit={handleSubmit} className="space-y-3.5" noValidate>
                   <Input
                     label="Full Name"
                     icon={User}
@@ -92,8 +134,9 @@ export default function Register() {
                     onBlur={() => handleBlur("name")}
                     error={errorFor("name")}
                   />
+
                   <Input
-                    label="Email"
+                    label="Email Address"
                     type="email"
                     icon={Mail}
                     placeholder="you@example.com"
@@ -102,19 +145,21 @@ export default function Register() {
                     onBlur={() => handleBlur("email")}
                     error={errorFor("email")}
                   />
+
                   <div>
                     <Input
                       label="Password"
                       type="password"
                       icon={Lock}
-                      placeholder="Create a password"
+                      placeholder="At least 8 characters"
                       value={values.password}
                       onChange={(e) => setValue("password", e.target.value)}
                       onBlur={() => handleBlur("password")}
                       error={errorFor("password")}
                     />
-                    <PasswordStrengthMeter password={values.password} />
+                    <div className="pt-1"><PasswordStrengthMeter password={values.password} /></div>
                   </div>
+
                   <Input
                     label="Confirm Password"
                     type="password"
@@ -126,81 +171,48 @@ export default function Register() {
                     error={errorFor("confirmPassword")}
                   />
 
-                  <div>
-                    <span className="block text-sm font-medium text-ink mb-2">I am a...</span>
-                    <div className="grid grid-cols-3 gap-3">
+                  <div className="pt-1">
+                    <label className="block text-xs font-bold text-secondary uppercase tracking-wider mb-2">Account Role</label>
+                    <div className="grid grid-cols-3 gap-2.5">
                       {roles.map((r) => (
                         <button
                           type="button"
                           key={r.id}
                           onClick={() => setRole(r.id)}
-                          className={`flex flex-col items-center gap-2 py-4 rounded-xl border text-xs font-semibold transition-colors ${
+                          className={`flex flex-col items-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold transition-all ${
                             role === r.id
-                              ? "border-primary bg-primary-50 text-primary"
-                              : "border-slate-200 text-ink-light hover:border-slate-300"
+                              ? "bg-accent-blue/10 text-accent-blue border border-accent-blue/30"
+                              : "bg-secondary/50 text-secondary hover:text-primary hover:bg-secondary"
                           }`}
                         >
-                          <r.icon className="w-5 h-5" />
+                          <r.icon className="w-4 h-4" />
                           {r.label}
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  <Button type="submit" size="lg" className="w-full mt-2">
-                    Create Account
-                  </Button>
+                  <button 
+                    type="submit" 
+                    className="w-full mt-4 bg-gradient-to-r from-accent-blue to-accent-violet hover:opacity-95 text-white py-3.5 rounded-xl font-bold shadow-soft transition-all text-sm disabled:opacity-50"
+                    disabled={loading}
+                  >
+                    {loading ? "Creating Account..." : "Create Free Account"}
+                  </button>
                 </form>
+            </AnimatePresence>
 
-                <p className="text-sm text-ink-light text-center mt-8">
-                  Already have an account?{" "}
-                  <Link to="/login" className="text-primary font-semibold hover:underline">
-                    Log in
-                  </Link>
-                </p>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="success"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="flex flex-col items-center text-center py-12"
-              >
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 260, damping: 18 }}
-                  className="w-20 h-20 rounded-full bg-success-50 flex items-center justify-center mb-6"
-                >
-                  <CheckCircle2 className="w-10 h-10 text-success" />
-                </motion.div>
-                <h2 className="text-xl font-extrabold text-ink mb-2">Welcome to DetectIQ!</h2>
-                <p className="text-sm text-ink-light">Setting up your dashboard...</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
+            <div className="pt-6 text-center">
+              <p className="text-xs text-secondary font-medium">
+                Already have an account?{" "}
+                <Link to="/login" className="text-accent-blue font-bold hover:underline">
+                  Sign in
+                </Link>
+              </p>
+            </div>
+          </div>
         </motion.div>
 
-        <div className="hidden lg:flex flex-col justify-center items-center bg-gradient-to-br from-secondary to-secondary-600 p-12 relative overflow-hidden order-1 lg:order-2">
-          <motion.div
-            animate={{ y: [0, -14, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="relative z-10"
-          >
-            <div className="w-40 h-40 rounded-3xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
-              <User className="w-20 h-20 text-white" />
-            </div>
-          </motion.div>
-          <h3 className="text-white font-bold text-xl mt-8 text-center relative z-10">Start your cybersecurity journey</h3>
-          <p className="text-white/80 text-sm text-center mt-3 max-w-xs relative z-10">
-            Learn to spot scams and protect your digital life.
-          </p>
-          <motion.div
-            className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"
-            animate={{ scale: [1, 1.15, 1] }}
-            transition={{ duration: 5, repeat: Infinity }}
-          />
-        </div>
       </div>
     </div>
   );

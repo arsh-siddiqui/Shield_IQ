@@ -106,6 +106,47 @@ const getProgress = asyncHandler(async (req, res) => {
   });
 });
 
+// @route  POST /api/users/scans/:id/personalize
+// @access Private
+const personalizeScan = asyncHandler(async (req, res) => {
+  const scan = await Scan.findOne({ _id: req.params.id, user: req.user._id });
+  if (!scan) {
+    res.status(404);
+    throw new Error('Scan result not found.');
+  }
+  
+  if (scan.inputType !== 'email') {
+    res.status(400);
+    throw new Error('Only email scans can be added to your email patterns.');
+  }
+  
+  // Safe validation check (low risk or safe)
+  if (scan.riskLevel !== 'safe' && scan.riskLevel !== 'low') {
+    res.status(400);
+    throw new Error('Only safe or low-risk emails can be added to patterns.');
+  }
+
+  const bodyContent = scan.fullContent || scan.target;
+  
+  if (!bodyContent) {
+    res.status(400);
+    throw new Error('Email content is missing from this scan.');
+  }
+
+  const emailHistoryService = require('../services/emailHistoryService');
+  
+  // Create an email pattern. We might not have sender/recipient split perfectly,
+  // but emailHistoryService accepts what we give it.
+  const result = await emailHistoryService.createEmailHistory(req.user._id, { 
+    sender: 'Unknown', 
+    recipient: 'Me', 
+    subject: 'Added from Scan', 
+    body: bodyContent 
+  });
+  
+  return sendSuccess(res, { message: 'Successfully added to your email patterns.', data: result });
+});
+
 module.exports = {
   getProfile,
   updateProfile,
@@ -113,4 +154,5 @@ module.exports = {
   getScanHistory,
   getScanById,
   getProgress,
+  personalizeScan,
 };

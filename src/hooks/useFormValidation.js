@@ -4,7 +4,8 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function validateEmail(value) {
   if (!value) return "Email is required";
-  if (!EMAIL_RE.test(value)) return "Enter a valid email address";
+  const trimmed = value.trim();
+  if (!EMAIL_RE.test(trimmed)) return "Enter a valid email address";
   return "";
 }
 

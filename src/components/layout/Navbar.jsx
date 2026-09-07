@@ -1,84 +1,120 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShieldCheck, Menu, X } from "lucide-react";
-import Button from "../ui/Button";
+import { ShieldCheck, Menu, X, Sun, Moon } from "lucide-react";
+import { useAppData } from "../../context/AppDataContext";
 import useScrollPosition from "../../hooks/useScrollPosition";
 
 const links = [
   { label: "Home", to: "/" },
-  { label: "Features", to: "/#features" },
-  { label: "About", to: "/#about" },
+  { label: "Features", to: "/features" },
+  { label: "About", to: "/about" },
+  { label: "Solutions", to: "/solutions" },
+  { label: "Resources", to: "/resources" },
 ];
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const scrolled = useScrollPosition(24);
+  const scrolled = useScrollPosition(20);
+  const { theme, toggleTheme } = useAppData();
 
   return (
     <header
-      className={`sticky top-0 z-40 backdrop-blur-lg border-b transition-all duration-300 ${
-        scrolled ? "bg-white/95 border-slate-100 shadow-softer" : "bg-white/60 border-transparent"
+      className={`sticky top-0 z-40 transition-all duration-300 ${
+        scrolled
+          ? "backdrop-blur-xl bg-card/80 border-b border-border/40 shadow-sm"
+          : "backdrop-blur-md bg-background/70 border-b border-transparent"
       }`}
     >
-      <div className={`max-w-7xl mx-auto px-6 flex items-center justify-between transition-all duration-300 ${
-        scrolled ? "h-16" : "h-20"
-      }`}>
-        <Link to="/" className="flex items-center gap-2 font-extrabold text-lg text-ink">
-          <span className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-            <ShieldCheck className="w-5 h-5 text-white" />
-          </span>
-          DetectIQ
+      <div className="max-w-7xl mx-auto px-6 h-[68px] flex items-center justify-between">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2.5 font-bold text-base text-primary">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-accent-blue to-accent-violet flex items-center justify-center flex-shrink-0 shadow-sm">
+            <ShieldCheck className="w-4.5 h-4.5 text-white" />
+          </div>
+          <span className="font-heading tracking-tight font-black text-lg">DetectIQ</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-8">
+        {/* Center nav */}
+        <nav className="hidden md:flex items-center gap-7">
           {links.map((l) => (
-            <a
+            <Link
               key={l.label}
-              href={l.to}
-              className="text-sm font-medium text-ink-light hover:text-primary transition-colors"
+              to={l.to}
+              className="text-sm font-medium text-secondary hover:text-primary transition-colors"
             >
               {l.label}
-            </a>
+            </Link>
           ))}
         </nav>
 
+        {/* Right controls */}
         <div className="hidden md:flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>
+          <button
+            onClick={toggleTheme}
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-muted hover:text-primary hover:bg-secondary/80 border border-border/50 transition-colors"
+            aria-label="Toggle theme"
+          >
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+          <button
+            onClick={() => navigate("/login")}
+            className="px-4 py-2 text-sm font-semibold text-primary hover:bg-secondary/80 rounded-xl transition-colors"
+          >
             Login
-          </Button>
-          <Button variant="primary" size="sm" onClick={() => navigate("/register")}>
+          </button>
+          <button
+            onClick={() => navigate("/register")}
+            className="px-5 py-2 text-sm font-semibold bg-gradient-to-r from-accent-blue to-accent-violet hover:opacity-95 text-white rounded-xl shadow-soft transition-all"
+          >
             Get Started
-          </Button>
+          </button>
         </div>
 
-        <button className="md:hidden p-2 text-ink" onClick={() => setOpen(!open)}>
-          {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        {/* Mobile controls */}
+        <div className="flex md:hidden items-center gap-2">
+          <button
+            onClick={toggleTheme}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-primary border border-border"
+          >
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+          <button className="p-1.5 text-primary" onClick={() => setOpen(!open)}>
+            {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
+      {/* Mobile menu */}
       <AnimatePresence>
         {open && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="md:hidden overflow-hidden border-t border-slate-100"
+            transition={{ duration: 0.2 }}
+            className="md:hidden overflow-hidden border-t border-border bg-card"
           >
-            <div className="px-6 py-4 flex flex-col gap-4">
+            <div className="px-6 py-4 flex flex-col gap-3">
               {links.map((l) => (
-                <a key={l.label} href={l.to} className="text-sm font-medium text-ink-light">
+                <a key={l.label} href={l.to} className="text-sm font-medium text-secondary hover:text-primary">
                   {l.label}
                 </a>
               ))}
-              <div className="flex gap-3 pt-2">
-                <Button variant="outline" size="sm" className="flex-1" onClick={() => navigate("/login")}>
+              <div className="flex gap-2 pt-2">
+                <button
+                  className="flex-1 py-2 text-sm font-semibold text-primary border border-border rounded-lg hover:bg-secondary transition-colors"
+                  onClick={() => navigate("/login")}
+                >
                   Login
-                </Button>
-                <Button variant="primary" size="sm" className="flex-1" onClick={() => navigate("/register")}>
+                </button>
+                <button
+                  className="flex-1 py-2 text-sm font-semibold bg-accent-blue text-white rounded-lg hover:bg-accent-blue/90 transition-colors"
+                  onClick={() => navigate("/register")}
+                >
                   Get Started
-                </Button>
+                </button>
               </div>
             </div>
           </motion.div>
@@ -87,3 +123,5 @@ export default function Navbar() {
     </header>
   );
 }
+
+

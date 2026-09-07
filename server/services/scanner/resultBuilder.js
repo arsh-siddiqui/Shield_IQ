@@ -24,7 +24,7 @@ function buildResult(signals, riskLevel) {
     category = 'Investment Scam';
   } else if (hasSignal('otp_request') || hasSignal('payment_request')) {
     category = 'Banking / Payment Scam';
-  } else if (riskLevel === 'High') {
+  } else if (riskLevel === 'high' || riskLevel === 'critical') {
     category = 'Suspicious — Potential Scam';
   } else {
     category = 'Unknown / Minor Flags';
@@ -33,9 +33,9 @@ function buildResult(signals, riskLevel) {
   // 2. Generate Summary
   if (signals.length === 0) {
     summary = 'No phishing indicators, suspicious links, or manipulation tactics were found in this message.';
-  } else if (riskLevel === 'High') {
+  } else if (riskLevel === 'high' || riskLevel === 'critical') {
     summary = 'This content shows multiple severe warning signs of a scam or phishing attempt. It is highly recommended not to interact with it.';
-  } else if (riskLevel === 'Medium') {
+  } else if (riskLevel === 'medium') {
     summary = 'This message has some warning signs but isn\'t a clear-cut scam. Treat it with caution before acting.';
   } else {
     summary = 'This message looks mostly legitimate, with only minor points worth a second glance.';

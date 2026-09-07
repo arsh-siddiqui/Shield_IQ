@@ -22,7 +22,6 @@ export default function Assistant() {
   const { toast } = useToast();
   const chatEndRef = useRef(null);
 
-  // Read initial scanContext from router location state (if navigated from ScanResult)
   const [scanContext, setScanContext] = useState(location.state?.scanContext || null);
   const [messages, setMessages] = useState([INITIAL_WELCOME]);
   const [input, setInput] = useState("");
@@ -59,7 +58,6 @@ export default function Assistant() {
     if (!customText) setInput("");
     setLoading(true);
 
-    // Format previous messages for API history
     const history = messages
       .filter((m) => m.role === "user" || m.role === "assistant")
       .map((m) => ({ role: m.role, content: m.content }));
@@ -93,109 +91,137 @@ export default function Assistant() {
     toast("Chat history cleared.", "info");
   };
 
+  const hasOnlyWelcome = messages.length === 1;
+
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto flex flex-col h-[calc(100vh-7rem)]">
+      <div className="flex flex-col h-[calc(100vh-6rem)] relative overflow-hidden bg-background">
         
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-8 h-8 rounded-xl bg-primary text-white flex items-center justify-center shadow-sm">
-                <ShieldCheck className="w-5 h-5" />
-              </span>
-              <h1 className="text-2xl font-extrabold text-ink">DetectIQ Assistant</h1>
-            </div>
-            <p className="text-sm text-ink-light">
-              Ask anything about cybersecurity, scams, phishing, and online safety.
-            </p>
-          </div>
-
-          {messages.length > 1 && (
-            <Button variant="ghost" size="sm" onClick={handleClearChat} icon={Trash2}>
-              Clear Chat
-            </Button>
-          )}
-        </div>
-
-        {/* Scan Context Pill */}
-        {scanContext && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-4 bg-primary-50 border border-primary/20 rounded-2xl p-3.5 flex items-center justify-between gap-3 text-xs"
-          >
-            <div className="flex items-center gap-2 font-medium text-primary-900 min-w-0">
-              <Sparkles className="w-4 h-4 text-primary flex-shrink-0" />
-              <span className="font-bold">Active Scan Context:</span>
-              <span className="truncate">
-                {scanContext.target || scanContext.content || "Scan Result"} ({scanContext.riskLevel || "Analyzed"} Risk)
-              </span>
-            </div>
-            <button
-              onClick={() => {
-                setScanContext(null);
-                toast("Scan context cleared.", "info");
-              }}
-              className="text-ink-faint hover:text-danger flex items-center gap-1 font-semibold transition-colors flex-shrink-0"
-            >
-              <XCircle className="w-4 h-4" /> Clear Context
-            </button>
-          </motion.div>
-        )}
-
-        {/* Main Chat Box */}
-        <Card className="flex-1 p-4 sm:p-6 flex flex-col min-h-0 border-slate-200 shadow-lift">
+        {/* Chat Area */}
+        <div className="flex-1 overflow-y-auto scrollbar-thin relative z-10">
           
-          {/* Scrollable messages container */}
-          <div className="flex-1 overflow-y-auto pr-1 space-y-2 scrollbar-thin">
-            {messages.map((msg, index) => (
-              <AssistantMessage key={index} message={msg} />
-            ))}
+          {/* Empty State / Welcome Screen */}
+          {hasOnlyWelcome && !loading && (
+            <div className="flex flex-col items-center justify-center min-h-full p-6 pb-32">
+              <div className="relative mb-10 group">
+                <div className="absolute inset-0 bg-accent-blue/20 blur-[60px] rounded-full w-40 h-40 mx-auto transition-all duration-700 group-hover:bg-accent-blue/30 group-hover:scale-110" />
+                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#0B1120] to-[#111827] border border-accent-blue/30 shadow-elevated flex items-center justify-center relative z-10 mx-auto">
+                  <Sparkles className="w-10 h-10 text-accent-blue" />
+                </div>
+              </div>
+              <h1 className="text-4xl md:text-5xl font-extrabold text-primary mb-4 text-center tracking-tight">
+                DetectIQ <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-blue to-accent-violet">Assistant</span>
+              </h1>
+              <p className="text-secondary font-medium text-lg max-w-lg text-center mb-12">
+                Your AI-powered cybersecurity expert. Ask about phishing, scams, online safety, or get help analyzing your scan results.
+              </p>
+              
+              <div className="w-full max-w-2xl px-4">
+                <SuggestedQuestions onSelect={(q) => handleSend(q)} />
+              </div>
+            </div>
+          )}
 
-            {loading && <TypingIndicator />}
-
-            {/* Suggested questions for brand new chat */}
-            {messages.length === 1 && !loading && (
-              <SuggestedQuestions onSelect={(q) => handleSend(q)} />
+          {/* Messages */}
+          <div className="max-w-4xl mx-auto px-4 py-8 space-y-6 pb-40">
+            {/* Context Pill (if active and conversation started) */}
+            {scanContext && !hasOnlyWelcome && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mx-auto max-w-fit bg-primary/5 border border-primary/10 rounded-full px-5 py-2.5 flex items-center justify-center gap-3 text-xs mb-8 backdrop-blur-sm shadow-sm"
+              >
+                <div className="flex items-center gap-2 font-medium text-primary">
+                  <Sparkles className="w-4 h-4 text-accent-blue flex-shrink-0" />
+                  <span className="font-bold uppercase tracking-wider text-[10px]">Active Context:</span>
+                  <span className="truncate max-w-[200px] sm:max-w-[300px]">
+                    {scanContext.target || scanContext.content || "Scan Result"}
+                  </span>
+                </div>
+                <div className="w-px h-4 bg-border mx-1"></div>
+                <button
+                  onClick={() => {
+                    setScanContext(null);
+                    toast("Scan context cleared.", "info");
+                  }}
+                  className="text-secondary hover:text-danger flex items-center gap-1 font-semibold transition-colors flex-shrink-0 uppercase tracking-wider text-[10px]"
+                >
+                  <XCircle className="w-3 h-3" /> Clear
+                </button>
+              </motion.div>
             )}
 
+            {!hasOnlyWelcome && messages.map((msg, index) => {
+              if (index === 0) return null; // Skip welcome message in chat view
+              return <AssistantMessage key={index} message={msg} />;
+            })}
+
+            {loading && !hasOnlyWelcome && (
+              <div className="flex justify-start">
+                <TypingIndicator />
+              </div>
+            )}
             <div ref={chatEndRef} />
           </div>
+        </div>
 
-          {/* Input Bar */}
-          <div className="pt-4 border-t border-slate-100 mt-2">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSend();
-              }}
-              className="flex items-center gap-2"
-            >
-              <input
-                type="text"
-                placeholder="Ask about phishing, scams, URL safety, or your scan result..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                disabled={loading}
-                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:border-primary focus:bg-white transition-all disabled:opacity-60"
-              />
-              <Button
-                type="submit"
-                disabled={!input.trim() || loading}
-                icon={Send}
-                className="flex-shrink-0 shadow-md shadow-primary/20"
+        {/* Input Dock */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 bg-gradient-to-t from-background via-background/95 to-transparent z-20 pointer-events-none">
+          <div className="max-w-4xl mx-auto pointer-events-auto">
+            <div className="bg-card/80 backdrop-blur-xl border border-border rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] overflow-hidden transition-all focus-within:border-accent-blue/50 focus-within:shadow-[0_10px_40px_-10px_rgba(59,130,246,0.15)] relative group">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSend();
+                }}
+                className="flex items-end gap-2 p-3 sm:p-4"
               >
-                Send
-              </Button>
-            </form>
-            <div className="flex items-center gap-1 text-[11px] text-ink-faint mt-2 justify-center">
-              <Info className="w-3 h-3" />
-              DetectIQ Assistant provides defensive guidance based on safety best practices.
+                <textarea
+                  rows="1"
+                  placeholder="Ask a security question..."
+                  value={input}
+                  onChange={(e) => {
+                    setInput(e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  disabled={loading}
+                  className="flex-1 max-h-[120px] bg-transparent resize-none border-none px-2 py-1.5 text-base text-primary placeholder:text-muted focus:outline-none focus:ring-0 scrollbar-thin transition-all disabled:opacity-60"
+                  style={{ minHeight: '44px' }}
+                />
+                
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {messages.length > 1 && (
+                    <button 
+                      type="button"
+                      onClick={handleClearChat}
+                      className="w-10 h-10 rounded-xl flex items-center justify-center text-secondary hover:text-danger hover:bg-danger/10 transition-colors"
+                      title="Clear Chat"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={!input.trim() || loading}
+                    className="w-10 h-10 rounded-xl bg-accent-blue text-white flex items-center justify-center disabled:opacity-50 disabled:bg-muted shadow-soft transition-all hover:bg-accent-blue/90"
+                  >
+                    <Send className="w-5 h-5 ml-0.5" />
+                  </button>
+                </div>
+              </form>
+            </div>
+            <div className="text-center mt-3 text-[11px] font-medium text-muted">
+              DetectIQ Assistant can make mistakes. Consider verifying critical security advice.
             </div>
           </div>
-
-        </Card>
+        </div>
 
       </div>
     </AppLayout>

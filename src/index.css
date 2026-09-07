@@ -1,54 +1,172 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;0,14..32,900;1,14..32,400&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
-html {
-  scroll-behavior: smooth;
-}
+html { scroll-behavior: smooth; }
 
 body {
   margin: 0;
   font-family: 'Inter', system-ui, sans-serif;
-  background-color: #F8FAFC;
-  color: #1E293B;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-background);
+  color: var(--text-primary);
+  min-height: 100vh;
 }
 
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: 999px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+/* ====================================================
+   DESIGN TOKENS — LIGHT MODE
+==================================================== */
+
+:root {
+  --bg-background: #F6F8FC;
+  --bg-secondary: #EEF2F7;
+  --bg-card: #FFFFFF;
+  --bg-elevated: #FFFFFF;
+  --bg-input: #FFFFFF;
+
+  --text-primary: #07111F;
+  --text-secondary: #52647B;
+  --text-muted: #7B8AA0;
+
+  --border-border: #E2E8F0;
+  --border-input: #D1D9E6;
+
+  --accent-blue: #2563EB;
+  --accent-cyan: #06B6D4;
+  --accent-violet: #7C3AED;
+
+  --success: #0D9488;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+
+  --radius-card: 1rem;
+  --radius-control: 0.625rem;
+
+  --shadow-soft: 0 1px 4px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.03);
+  --shadow-card: 0 2px 12px rgba(0,0,0,0.05);
+  --shadow-elevated: 0 4px 24px rgba(0,0,0,0.07);
 }
 
-.shimmer-bg {
-  background: linear-gradient(90deg, #E2E8F0 0%, #F1F5F9 50%, #E2E8F0 100%);
-  background-size: 800px 100%;
+/* ====================================================
+   DESIGN TOKENS — DARK MODE
+==================================================== */
+
+.dark, html.dark {
+  --bg-background: #050B16;
+  --bg-secondary: #081120;
+  --bg-surface: #0B1424;
+  --bg-card: #0D1728;
+  --bg-elevated: #101D31;
+  --bg-interactive: #132039;
+  --bg-input: #0B1424;
+
+  --text-primary: #F8FAFC;
+  --text-secondary: #A7B4C7;
+  --text-muted: #718096;
+
+  --border-border: transparent;
+  --border-input: rgba(255, 255, 255, 0.06);
+
+  --accent-blue: #4F83FF;
+  --accent-cyan: #22D3EE;
+  --accent-violet: #8B5CF6;
+
+  --success: #14B8A6;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+
+  --shadow-soft: 0 4px 20px rgba(0,0,0,0.35);
+  --shadow-card: 0 8px 30px rgba(0,0,0,0.45);
+  --shadow-elevated: 0 12px 40px rgba(0,0,0,0.6);
 }
 
-button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible {
-  outline: 2px solid #2563EB;
+/* Enforce Zero-Border Aesthetic in Dark Mode */
+.dark .border-border,
+.dark [class*="border-border"] {
+  border-color: transparent !important;
+}
+
+.dark input, .dark textarea, .dark select, .dark .border-input {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ====================================================
+   SCROLLBARS
+==================================================== */
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(150,150,150,0.15); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(150,150,150,0.3); }
+.dark ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); }
+.dark ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ====================================================
+   FOCUS
+==================================================== */
+
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--accent-blue);
   outline-offset: 2px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+/* ====================================================
+   TRANSITIONS
+==================================================== */
+
+body { transition: background-color 200ms ease, color 200ms ease; }
+
+/* ====================================================
+   UTILITIES
+==================================================== */
+
+.animate-in {
+  animation: fadeSlideIn 0.3s ease both;
 }
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-violet));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+
+/* ====================================================
+   ACCENT COLOR UTILITIES
+==================================================== */
+
+.bg-accent-blue { background-color: var(--accent-blue) !important; }
+.text-accent-blue { color: var(--accent-blue) !important; }
+.border-accent-blue { border-color: var(--accent-blue) !important; }
+
+.bg-accent-cyan { background-color: var(--accent-cyan) !important; }
+.text-accent-cyan { color: var(--accent-cyan) !important; }
+
+.bg-accent-violet { background-color: var(--accent-violet) !important; }
+.text-accent-violet { color: var(--accent-violet) !important; }
+
+.bg-accent-blue\/10 { background-color: rgba(37, 99, 235, 0.1) !important; }
+.bg-accent-blue\/20 { background-color: rgba(37, 99, 235, 0.2) !important; }
+.border-accent-blue\/20 { border-color: rgba(37, 99, 235, 0.2) !important; }
+.border-accent-blue\/30 { border-color: rgba(37, 99, 235, 0.3) !important; }
+
+.dark .bg-accent-blue\/10 { background-color: rgba(59, 130, 246, 0.12) !important; }
+.dark .bg-accent-blue\/20 { background-color: rgba(59, 130, 246, 0.22) !important; }
+.dark .border-accent-blue\/20 { border-color: rgba(59, 130, 246, 0.22) !important; }
+.dark .border-accent-blue\/30 { border-color: rgba(59, 130, 246, 0.32) !important; }
+
+

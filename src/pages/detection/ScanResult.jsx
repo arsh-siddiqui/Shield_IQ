@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ShieldAlert, ShieldCheck, AlertTriangle, Loader2, Info, Search, Cpu, BookOpen, Brain, ChevronDown, ChevronUp } from "lucide-react";
-import { getScanResult } from "../../services/detectionService";
+import { ShieldAlert, ShieldCheck, AlertTriangle, Loader2, Info, Search, Cpu, BookOpen, Brain, ChevronDown, ChevronUp, CheckCircle } from "lucide-react";
+import { getScanResult, personalizeScan } from "../../services/detectionService";
 import Button from "../../components/ui/Button";
 
 export default function ScanResult() {
@@ -10,6 +10,19 @@ export default function ScanResult() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
+  const [personalizeStatus, setPersonalizeStatus] = useState('idle'); // 'idle', 'loading', 'success', 'skipped'
+
+  const handlePersonalize = async () => {
+    setPersonalizeStatus('loading');
+    try {
+      await personalizeScan(id);
+      setPersonalizeStatus('success');
+    } catch (err) {
+      console.error(err);
+      setPersonalizeStatus('idle');
+      // Could show toast error here
+    }
+  };
 
   useEffect(() => {
     async function load() {
@@ -28,7 +41,7 @@ export default function ScanResult() {
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        <Loader2 className="w-8 h-8 text-accent animate-spin" />
       </div>
     );
   }
@@ -52,9 +65,9 @@ export default function ScanResult() {
   const isMedium = scan.riskLevel === 'medium';
   const isDanger = scan.riskLevel === 'high' || scan.riskLevel === 'critical';
 
-  const riskColor = isDanger ? 'text-danger' : isMedium ? 'text-warning-dark' : 'text-success';
-  const riskBg = isDanger ? 'bg-danger' : isMedium ? 'bg-warning-dark' : 'bg-success';
-  const riskLightBg = isDanger ? 'bg-danger-50' : isMedium ? 'bg-warning-light' : 'bg-success-50';
+  const riskColor = isDanger ? 'text-danger' : isMedium ? 'text-warning' : 'text-success';
+  const riskBg = isDanger ? 'bg-danger' : isMedium ? 'bg-warning' : 'bg-success';
+  const riskLightBg = isDanger ? 'bg-danger/10' : isMedium ? 'bg-warning/10' : 'bg-success/10';
   const RiskIcon = isDanger ? ShieldAlert : isMedium ? AlertTriangle : ShieldCheck;
 
   // Evidence — items have { source, title, detail, severity }
@@ -70,8 +83,7 @@ export default function ScanResult() {
   const displayTarget = scan.target || scan.heuristicResult?.category || 'Scanned Content';
   const displayType = scan.scanType || scan.inputType || 'unknown';
 
-  // LLM analysis — stored as llmResult (not groqAnalysis)
-  let llmAnalysisStr = "No AI analysis available for this scan.";
+  let llmAnalysisStr = "No analysis available for this scan.";
   try {
     const llm = scan.llmResult;
     if (llm) {
@@ -86,164 +98,308 @@ export default function ScanResult() {
       } else {
         llmAnalysisStr = JSON.stringify(llm, null, 2);
       }
+    } else if (scan.summary) {
+      llmAnalysisStr = scan.summary;
     }
   } catch {
-    llmAnalysisStr = "AI analysis could not be parsed.";
+    llmAnalysisStr = "Analysis could not be parsed.";
   }
 
   // confidence (not confidenceScore)
   const confidenceDisplay = scan.confidence ?? scan.confidenceScore ?? 0;
 
   return (
-    <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
+    <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
-      {/* Header */}
-      <div className={`p-8 rounded-3xl ${riskLightBg} border ${isDanger ? 'border-danger-200' : isMedium ? 'border-warning' : 'border-success-200'}`}>
-        <div className="flex flex-col md:flex-row items-center gap-6">
-          <div className={`w-20 h-20 rounded-full ${riskBg} text-white flex items-center justify-center flex-shrink-0 shadow-lg`}>
-            <RiskIcon className="w-10 h-10" />
+      {/* Top Navigation */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
+        <Link to="/detection/scanner" className="inline-flex items-center gap-2 text-sm font-bold text-secondary hover:text-primary transition-colors">
+          <ChevronDown className="w-4 h-4 rotate-90" /> Back to Scanner
+        </Link>
+        <div className="flex items-center gap-2">
+          <Link to="/detection/history" className="text-sm font-bold text-accent-blue hover:underline">
+            View Scan History
+          </Link>
+        </div>
+      </div>
+
+      {/* Header Banner */}
+      <div className={`relative overflow-hidden rounded-3xl border p-8 md:p-12 shadow-elevated ${
+        isDanger ? 'bg-danger/5 border-danger/20' : 
+        isMedium ? 'bg-warning/5 border-warning/20' : 
+        'bg-success/5 border-success/20'
+      }`}>
+        <div className={`absolute top-0 right-0 w-[600px] h-[600px] rounded-full blur-[120px] pointer-events-none opacity-20 -mr-20 -mt-20 ${
+          isDanger ? 'bg-danger' : 
+          isMedium ? 'bg-warning' : 
+          'bg-success'
+        }`} />
+        
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-8">
+          <div className={`w-28 h-28 rounded-[2rem] flex items-center justify-center flex-shrink-0 shadow-soft border ${
+            isDanger ? 'bg-gradient-to-br from-danger to-red-900 border-danger/50 text-white' : 
+            isMedium ? 'bg-gradient-to-br from-warning to-orange-700 border-warning/50 text-white' : 
+            'bg-gradient-to-br from-success to-emerald-900 border-success/50 text-white'
+          }`}>
+            <RiskIcon className="w-14 h-14" />
           </div>
-          <div className="flex-1 text-center md:text-left">
-            <div className="text-sm font-bold uppercase tracking-wider mb-1 capitalize" style={{ color: riskColor }}>
-              Scan Complete · {displayType}
+          
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-3">
+              <span className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border ${
+                isDanger ? 'bg-danger/10 text-danger border-danger/20' : 
+                isMedium ? 'bg-warning/10 text-warning border-warning/20' : 
+                'bg-success/10 text-success border-success/20'
+              }`}>
+                {displayType} Analysis
+              </span>
+              <span className="text-xs font-semibold text-muted">{new Date(scan.createdAt || Date.now()).toLocaleString()}</span>
             </div>
-            <h1 className={`text-4xl font-extrabold mb-2 ${riskColor} capitalize`}>
+            
+            <h1 className={`text-4xl md:text-5xl font-heading font-black mb-4 capitalize tracking-tight ${riskColor}`}>
               {scan.classification}
             </h1>
-            <p className="text-ink-light font-medium truncate max-w-xl text-base">
+            
+            <p className="text-secondary font-medium text-base md:text-lg break-all max-w-2xl leading-relaxed">
               {displayTarget}
             </p>
           </div>
-          <div className="flex flex-row md:flex-col gap-4 text-center">
-            <div className="bg-white/80 p-4 rounded-xl shadow-sm min-w-[120px]">
-              <div className="text-xs font-bold text-ink-light uppercase mb-1">Risk Score</div>
-              <div className={`text-2xl font-extrabold ${riskColor}`}>{scan.riskScore}/100</div>
+          
+          <div className="flex flex-row md:flex-col gap-4 w-full md:w-auto mt-6 md:mt-0">
+            <div className="flex-1 md:flex-none bg-card/80 backdrop-blur-md p-6 rounded-2xl border border-border shadow-sm flex flex-col items-center justify-center min-w-[160px]">
+              <div className="text-xs font-bold text-muted uppercase tracking-wider mb-1">Risk Score</div>
+              <div className={`text-4xl font-heading font-black tracking-tight ${riskColor}`}>{scan.riskScore}<span className="text-xl text-muted font-bold">/100</span></div>
             </div>
-            <div className="bg-white/80 p-4 rounded-xl shadow-sm min-w-[120px]">
-              <div className="text-xs font-bold text-ink-light uppercase mb-1">Confidence</div>
-              <div className="text-2xl font-extrabold text-ink">{confidenceDisplay}%</div>
+            <div className="flex-1 md:flex-none bg-card/80 backdrop-blur-md p-6 rounded-2xl border border-border shadow-sm flex flex-col items-center justify-center min-w-[160px]">
+              <div className="text-xs font-bold text-muted uppercase tracking-wider mb-1">AI Confidence</div>
+              <div className="text-4xl font-heading font-black tracking-tight text-primary">{confidenceDisplay}<span className="text-xl text-muted font-bold">%</span></div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Evidence */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <Search className="w-5 h-5 text-primary" />
-              <h3 className="text-lg font-bold text-ink">What we checked</h3>
+      {/* QR / Screenshot Decoder Details */}
+      {(scan.inputType === 'qr' || scan.inputType === 'screenshot') && (
+        <div className="bg-secondary/30 p-8 rounded-3xl border border-border shadow-sm flex flex-col gap-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-accent-blue/10 text-accent-blue flex items-center justify-center">
+              <Info className="w-5 h-5" />
             </div>
-            <ul className="space-y-3">
-              <li className="flex items-center gap-2 text-sm text-ink"><ShieldCheck className="w-4 h-4 text-success" /> {isUrlScan ? 'URL Structure & Domain Info' : 'Message Content & Wording'}</li>
-              {!isUrlScan && <li className="flex items-center gap-2 text-sm text-ink"><ShieldCheck className="w-4 h-4 text-success" /> Sender & Recipient Context</li>}
-              <li className="flex items-center gap-2 text-sm text-ink"><ShieldCheck className="w-4 h-4 text-success" /> Threat Intelligence Databases</li>
-              {!isUrlScan && <li className="flex items-center gap-2 text-sm text-ink"><ShieldCheck className="w-4 h-4 text-success" /> Saved Email Patterns (if available)</li>}
-            </ul>
+            <h2 className="text-xl font-heading font-bold text-primary">
+              {scan.inputType === 'qr' ? 'QR Code Extracted Payload' : 'Screenshot Extracted Text'}
+            </h2>
           </div>
-
-          {/* AI Reasoning */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col h-full">
-            <div className="flex items-center gap-2 mb-4">
-              <Brain className="w-5 h-5 text-primary" />
-              <h3 className="text-lg font-bold text-ink">Why this result? (AI Explanation)</h3>
-            </div>
-            <div className="text-sm text-ink-light leading-relaxed flex-1 whitespace-pre-wrap">
-              {llmAnalysisStr}
-            </div>
-          </div>
-          
-          <button 
-            onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
-            className="flex items-center justify-between w-full p-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors"
-          >
-            <span className="font-bold text-ink">Technical Details</span>
-            {showTechnicalDetails ? <ChevronUp className="w-5 h-5 text-ink-light" /> : <ChevronDown className="w-5 h-5 text-ink-light" />}
-          </button>
-          
-          {showTechnicalDetails && (
-            <div className="space-y-6 animate-in slide-in-from-top-4 duration-300">
-              <EvidenceCard
-                title={isUrlScan ? "URL Safety Checks" : "Message Safety Checks"}
-                icon={Search}
-                evidence={heuristics}
-                emptyMsg="No heuristic signals detected — content appears normal."
-              />
-
-              {!isUrlScan && (
-                <EvidenceCard
-                  title="Machine Learning Classifier"
-                  icon={Cpu}
-                  evidence={ml}
-                  emptyMsg="ML classifier was not applicable for this scan."
-                />
-              )}
-
-              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                <div className="flex items-center gap-2 mb-4">
-                  <ShieldAlert className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-bold text-ink">Threat Intelligence</h3>
-                </div>
-                {threatIntel.length > 0 ? (
-                  <ul className="space-y-3">
-                    {threatIntel.map((e, i) => (
-                      <li key={i} className="flex gap-3 text-sm">
-                        <Info className={`w-5 h-5 flex-shrink-0 ${e.severity === 'high' || e.severity === 'critical' ? 'text-danger' : 'text-primary'}`} />
-                        <div>
-                          <span className="font-semibold text-ink">{e.title || e.type} ({e.source}):</span>{" "}
-                          <span className="text-ink-light">{e.detail}</span>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-ink-light italic">No threat intelligence hits for this content.</p>
-                )}
-                <div className="mt-4 p-3 bg-slate-50 rounded-lg text-xs font-medium text-ink-faint">
-                  Not listed in threat intelligence does not guarantee safety.
-                </div>
-              </div>
-
-              {!isUrlScan && (
-                <EvidenceCard
-                  title="Email Pattern Comparison"
-                  icon={BookOpen}
-                  evidence={personalization}
-                  emptyMsg="No email history available. Add legitimate emails to My Email Patterns to enable personalized detection."
-                />
-              )}
-            </div>
-          )}
-        </div>
-
-        </div>
-      </div>
-
-      {/* Recommendations */}
-      {scan.recommendations && scan.recommendations.length > 0 && (
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-          <h2 className="text-xl font-bold text-ink mb-4 flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-primary" /> Recommendations
-          </h2>
-          <ul className="space-y-2">
-            {scan.recommendations.map((rec, i) => (
-              <li key={i} className="flex gap-3 text-sm">
-                <ShieldCheck className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                <span className="text-ink-light">{rec}</span>
-              </li>
-            ))}
-          </ul>
+          <p className="p-5 bg-card border border-border rounded-2xl text-primary font-mono text-sm break-all max-h-40 overflow-y-auto shadow-inner">
+            {displayTarget}
+          </p>
         </div>
       )}
 
-      <div className="flex gap-3">
-        <Link to="/detection/scanner">
-          <Button variant="primary">Scan Another</Button>
+      {/* Row 2: Why this result & Recommended Action */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Why this result? */}
+        <div className="bg-card p-6 md:p-10 rounded-3xl border border-border shadow-elevated flex flex-col h-full relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-accent-violet/5 rounded-full blur-[80px] pointer-events-none" />
+          <div className="flex items-center gap-4 mb-6 relative z-10">
+            <div className="w-12 h-12 rounded-2xl bg-accent-violet/10 text-accent-violet flex items-center justify-center shadow-sm">
+              <Brain className="w-6 h-6" />
+            </div>
+            <h3 className="text-2xl font-heading font-extrabold text-primary">Why this result?</h3>
+          </div>
+          <div className="text-base md:text-lg font-medium text-secondary leading-relaxed flex-1 relative z-10 p-6 md:p-8 bg-background rounded-2xl border border-border shadow-inner">
+            {scan.llmResult?.reasons && Array.isArray(scan.llmResult.reasons) && scan.llmResult.reasons.length > 0 ? (
+              <ul className="space-y-4">
+                {scan.llmResult.reasons.map((r, i) => (
+                  <li key={i} className="flex gap-3">
+                    <span className="text-accent-violet font-bold mt-0.5">•</span>
+                    <span>{r}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="whitespace-pre-wrap">{llmAnalysisStr}</div>
+            )}
+          </div>
+        </div>
+
+        {/* Recommended Action */}
+        <div className="bg-card p-6 md:p-10 rounded-3xl border border-border shadow-elevated flex flex-col h-full">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-12 h-12 rounded-2xl bg-accent-blue/10 text-accent-blue flex items-center justify-center shadow-sm">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <h2 className="text-2xl font-heading font-extrabold text-primary">Recommended Action</h2>
+          </div>
+          {scan.recommendations && scan.recommendations.length > 0 ? (
+            <ul className="space-y-4 flex-1">
+              {scan.recommendations.map((rec, i) => (
+                <li key={i} className="flex gap-4 text-sm bg-background p-5 rounded-2xl border border-border shadow-sm">
+                  <div className="w-7 h-7 rounded-full bg-accent-blue/10 text-accent-blue flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-sm font-bold">{i + 1}</span>
+                  </div>
+                  <span className="text-primary font-bold leading-relaxed pt-0.5">{rec}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="flex-1 bg-background p-6 rounded-2xl border border-border flex items-center justify-center text-center">
+              <p className="text-sm font-medium text-secondary">
+                No specific actions recommended. Proceed with standard caution.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Row 3: What we checked */}
+      <div className="bg-card p-6 md:p-10 rounded-3xl border border-border shadow-elevated relative overflow-hidden">
+        <div className="flex items-center gap-4 mb-8 relative z-10">
+          <div className="w-12 h-12 rounded-2xl bg-accent-cyan/10 text-accent-cyan flex items-center justify-center shadow-sm">
+            <Search className="w-6 h-6" />
+          </div>
+          <h3 className="text-2xl font-heading font-extrabold text-primary">What we checked</h3>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
+          <div className="bg-background p-6 rounded-2xl border border-border flex items-start gap-4 shadow-sm">
+            <CheckCircle className="w-6 h-6 text-success mt-0.5 shrink-0" />
+            <span className="text-sm font-bold text-primary">{isUrlScan ? 'URL Structure & Domain' : 'Content & Linguistics'}</span>
+          </div>
+          {!isUrlScan && (
+            <div className="bg-background p-6 rounded-2xl border border-border flex items-start gap-4 shadow-sm">
+              <CheckCircle className="w-6 h-6 text-success mt-0.5 shrink-0" />
+              <span className="text-sm font-bold text-primary">Sender Context</span>
+            </div>
+          )}
+          <div className="bg-background p-6 rounded-2xl border border-border flex items-start gap-4 shadow-sm">
+            <CheckCircle className="w-6 h-6 text-success mt-0.5 shrink-0" />
+            <span className="text-sm font-bold text-primary">Threat Intelligence</span>
+          </div>
+          {!isUrlScan && (
+            <div className="bg-background p-6 rounded-2xl border border-border flex items-start gap-4 shadow-sm">
+              <CheckCircle className="w-6 h-6 text-success mt-0.5 shrink-0" />
+              <span className="text-sm font-bold text-primary">Personalized Baselines</span>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Add to My Email Patterns */}
+      {scan.scanType === 'email' && isSafe && (
+        <div className="bg-accent-blue/10 p-6 md:p-10 rounded-3xl border border-accent-blue/20 shadow-soft flex flex-col md:flex-row items-center justify-between gap-8">
+          <div>
+            <h2 className="text-2xl font-heading font-extrabold text-primary mb-3 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-accent-blue/20 flex items-center justify-center text-accent-blue">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              Add to My Patterns
+            </h2>
+            <p className="text-base text-secondary font-medium max-w-xl">
+              Save this legitimate email to help DetectIQ learn your normal communication patterns, significantly reducing future false positives.
+            </p>
+          </div>
+          <div className="flex gap-4 w-full md:w-auto flex-shrink-0">
+            <button 
+              className="px-8 py-4 bg-gradient-to-r from-accent-blue to-accent-violet text-white rounded-xl font-bold shadow-soft hover:opacity-95 transition-all flex items-center justify-center min-w-[200px]"
+              disabled={personalizeStatus === 'loading' || personalizeStatus === 'success'}
+              onClick={handlePersonalize}
+            >
+              {personalizeStatus === 'loading' ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : null}
+              {personalizeStatus === 'success' ? 'Saved Successfully' : 'Add to Patterns'}
+            </button>
+            {personalizeStatus !== 'success' && (
+              <button 
+                className="px-8 py-4 bg-card border border-border text-primary rounded-xl font-bold hover:bg-secondary transition-all shadow-sm"
+                onClick={() => setPersonalizeStatus('skipped')}
+              >
+                Not Now
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Row 4: Technical Details */}
+      <div className="mt-8">
+        <button 
+          onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
+          className={`flex items-center justify-between w-full p-8 bg-card hover:bg-secondary border border-border transition-all ${
+            showTechnicalDetails ? 'rounded-t-3xl border-b-transparent' : 'rounded-3xl shadow-sm hover:shadow-card'
+          }`}
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-secondary text-primary flex items-center justify-center">
+              <Cpu className="w-6 h-6" />
+            </div>
+            <span className="font-heading font-extrabold text-primary text-xl">Technical Details</span>
+          </div>
+          {showTechnicalDetails ? <ChevronUp className="w-6 h-6 text-muted" /> : <ChevronDown className="w-6 h-6 text-muted" />}
+        </button>
+        
+        {showTechnicalDetails && (
+          <div className="space-y-6 animate-in slide-in-from-top-4 duration-300 -mt-8 pt-12 pb-10 px-6 md:px-10 border border-t-0 border-border bg-card rounded-b-3xl">
+            <EvidenceCard
+              title={isUrlScan ? "URL Safety Checks" : "Message Safety Checks"}
+              icon={Search}
+              evidence={heuristics}
+              emptyMsg="No heuristic signals detected — content appears normal."
+            />
+
+            {!isUrlScan && (
+              <EvidenceCard
+                title="Machine Learning Classifier"
+                icon={Cpu}
+                evidence={ml}
+                emptyMsg="ML classifier was not applicable for this scan."
+              />
+            )}
+
+            <div className="bg-background p-6 md:p-8 rounded-3xl border border-border shadow-sm">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-accent-blue/10 text-accent-blue flex items-center justify-center">
+                  <ShieldAlert className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-bold text-primary">Threat Intelligence</h3>
+              </div>
+              {threatIntel.length > 0 ? (
+                <ul className="space-y-4">
+                  {threatIntel.map((e, i) => (
+                    <li key={i} className="flex gap-4 text-sm bg-card p-5 rounded-2xl border border-border shadow-sm">
+                      <Info className={`w-6 h-6 flex-shrink-0 mt-0.5 ${e.severity === 'high' || e.severity === 'critical' ? 'text-danger' : 'text-accent-blue'}`} />
+                      <div>
+                        <span className="font-bold text-primary text-base">{e.title || e.type} ({e.source}):</span>{" "}
+                        <span className="text-secondary font-medium leading-relaxed block mt-1">{e.detail}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-secondary font-medium">No threat intelligence hits for this content.</p>
+              )}
+            </div>
+
+            {!isUrlScan && (
+              <EvidenceCard
+                title="Email Pattern Comparison"
+                icon={BookOpen}
+                evidence={personalization}
+                emptyMsg="No email history available. Add legitimate emails to My Email Patterns to enable personalized detection."
+              />
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex flex-col sm:flex-row gap-6 pt-4 mt-8">
+        <Link to="/detection/scanner" className="flex-1">
+          <button className="w-full bg-gradient-to-r from-accent-blue to-accent-violet text-white px-8 py-5 rounded-2xl font-bold shadow-soft hover:opacity-95 transition-all flex items-center justify-center gap-2 text-base">
+            Scan Another Item
+          </button>
         </Link>
-        <Link to="/detection/history">
-          <Button variant="secondary">View History</Button>
+        <Link to="/detection/history" className="flex-1">
+          <button className="w-full bg-card border border-border text-primary px-8 py-5 rounded-2xl font-bold shadow-sm hover:bg-secondary transition-colors text-base">
+            View Scan History
+          </button>
         </Link>
       </div>
     </div>
@@ -252,29 +408,31 @@ export default function ScanResult() {
 
 function EvidenceCard({ title, icon: Icon, evidence, emptyMsg }) {
   return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-      <div className="flex items-center gap-2 mb-4">
-        <Icon className="w-5 h-5 text-primary" />
-        <h3 className="text-lg font-bold text-ink">{title}</h3>
+    <div className="bg-background p-6 md:p-8 rounded-3xl border border-border shadow-sm">
+      <div className="flex items-center gap-4 mb-6">
+        <div className="w-10 h-10 rounded-xl bg-accent-blue/10 text-accent-blue flex items-center justify-center">
+          <Icon className="w-5 h-5" />
+        </div>
+        <h3 className="text-lg font-bold text-primary">{title}</h3>
       </div>
       {evidence.length > 0 ? (
-        <ul className="space-y-3">
+        <ul className="space-y-4">
           {evidence.map((e, i) => (
-            <li key={i} className="flex gap-3 text-sm">
-              <Info className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
-                e.severity === 'high' ? 'text-danger' :
-                e.severity === 'medium' ? 'text-warning-dark' :
-                e.severity === 'info' ? 'text-primary' : 'text-success'
+            <li key={i} className="flex gap-4 text-sm bg-card p-5 rounded-2xl border border-border shadow-sm">
+              <Info className={`w-6 h-6 flex-shrink-0 mt-0.5 ${
+                e.severity === 'high' || e.severity === 'critical' ? 'text-danger' :
+                e.severity === 'medium' ? 'text-warning' :
+                e.severity === 'info' ? 'text-accent-blue' : 'text-success'
               }`} />
               <div>
-                <span className="font-semibold text-ink">{e.title || e.type}:</span>{" "}
-                <span className="text-ink-light">{e.detail}</span>
+                <span className="font-bold text-primary text-base">{e.title || e.type}:</span>{" "}
+                <span className="text-secondary font-medium leading-relaxed block mt-1">{e.detail}</span>
               </div>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-ink-light italic">{emptyMsg || "No evidence detected in this category."}</p>
+        <p className="text-sm text-secondary font-medium">{emptyMsg || "No evidence detected in this category."}</p>
       )}
     </div>
   );

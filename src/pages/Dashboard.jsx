@@ -1,31 +1,27 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ShieldAlert, BookOpen, Target, Activity, ShieldCheck, History } from "lucide-react";
+import { ShieldAlert, BookOpen, Target, Activity, Shield, CheckCircle, BarChart3, Mail, Lightbulb, GraduationCap, ArrowRight, ScanLine, Loader2, Brain, ChevronRight } from "lucide-react";
 import { useAppData } from "../context/AppDataContext";
 import { getScanHistory } from "../services/detectionService";
 import { getAllProgress } from "../services/progressService";
-import { Loader2 } from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { motion } from "framer-motion";
 
 export default function Dashboard() {
   const { user } = useAppData();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  
   const [scanHistory, setScanHistory] = useState([]);
   const [learningProgress, setLearningProgress] = useState([]);
 
   useEffect(() => {
     async function loadData() {
       try {
-        setLoading(true);
         const [scans, progress] = await Promise.all([
           getScanHistory().catch(() => []),
           getAllProgress().catch(() => [])
         ]);
         setScanHistory(scans || []);
         setLearningProgress(progress || []);
-      } catch (err) {
-        setError("Failed to load dashboard data.");
       } finally {
         setLoading(false);
       }
@@ -33,170 +29,366 @@ export default function Dashboard() {
     loadData();
   }, []);
 
+  const totalScans = scanHistory.length;
+  const phishingScans = scanHistory.filter(s => s.riskLevel === 'high' || s.riskLevel === 'critical').length;
+  const safeScans = scanHistory.filter(s => s.riskLevel === 'safe' || s.riskLevel === 'low').length;
+  const suspiciousScans = scanHistory.filter(s => s.riskLevel === 'medium').length;
+  const completedLearning = learningProgress.filter(p => p.status === 'completed').length;
+  const recommendedFocus = user?.learningProfile?.recommendedFocus || "Security Fundamentals";
+
+  const securityScore = useMemo(() => {
+    if (!totalScans) return null;
+    const safeRatio = safeScans / totalScans;
+    return Math.round(50 + safeRatio * 50);
+  }, [safeScans, totalScans]);
+
+  const chartData = useMemo(() => {
+    const dataMap = {};
+    const today = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const key = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      dataMap[key] = { name: key, safe: 0, threat: 0 };
+    }
+    scanHistory.forEach(scan => {
+      const key = new Date(scan.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      if (dataMap[key]) {
+        if (scan.riskLevel === 'safe' || scan.riskLevel === 'low') dataMap[key].safe++;
+        else dataMap[key].threat++;
+      }
+    });
+    return Object.values(dataMap);
+  }, [scanHistory]);
+
+  const scoreColor = securityScore >= 80 ? 'text-success' : securityScore >= 50 ? 'text-warning' : 'text-danger';
+  const scoreLabel = securityScore >= 80 ? 'Strong' : securityScore >= 50 ? 'Improving' : 'At Risk';
+  const scoreBg = securityScore >= 80 ? 'bg-success' : securityScore >= 50 ? 'bg-warning' : 'bg-danger';
+
   if (loading) {
     return (
-      <div className="p-8 flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-7 h-7 text-accent-blue animate-spin" />
       </div>
     );
   }
 
-  // Calculate Metrics
-  const totalScans = scanHistory.length;
-  const phishingScans = scanHistory.filter(s => s.riskLevel === 'high' || s.riskLevel === 'critical').length;
-  const suspiciousScans = scanHistory.filter(s => s.riskLevel === 'medium').length;
-  const legitimateScans = scanHistory.filter(s => s.riskLevel === 'safe' || s.riskLevel === 'low').length;
-
-  const completedLearning = learningProgress.filter(p => p.status === 'completed').length;
-  const inProgressLearning = learningProgress.filter(p => p.status === 'in_progress').length;
-  const attemptedLearning = learningProgress.filter(p => p.attempts > 0);
-  const avgScore = attemptedLearning.length > 0
-    ? Math.round(attemptedLearning.reduce((acc, curr) => acc + curr.assessmentScore, 0) / attemptedLearning.length)
-    : 0;
-
-  const strengths = user?.learningProfile?.strengths || [];
-  const weaknesses = user?.learningProfile?.weaknesses || [];
-  const recommendedFocus = user?.learningProfile?.recommendedFocus || "None";
-
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      
-      <header className="mb-8">
-        <h1 className="text-3xl font-extrabold text-ink mb-2">Welcome back, {user?.name?.split(' ')[0]}</h1>
-        <p className="text-ink-light">Here is your security and learning overview.</p>
-      </header>
-
-      {/* Quick Actions */}
-      <div className="flex flex-wrap gap-4 mb-8">
-        <Link to="/detection/scanner?mode=email" className="bg-primary text-white px-5 py-3 rounded-xl font-bold text-sm hover:bg-primary-600 transition shadow-sm flex items-center gap-2">
-          Analyze Email
-        </Link>
-        <Link to="/detection/scanner?mode=url" className="bg-primary text-white px-5 py-3 rounded-xl font-bold text-sm hover:bg-primary-600 transition shadow-sm flex items-center gap-2">
-          Analyze URL
-        </Link>
-        <Link to="/vulnerabilities" className="bg-slate-100 text-ink px-5 py-3 rounded-xl font-bold text-sm hover:bg-slate-200 transition shadow-sm flex items-center gap-2">
-          Continue Learning
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-8"
+    >
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-heading font-black text-primary tracking-tight">
+            Welcome back, {user?.name?.split(' ')[0]} 👋
+          </h1>
+          <p className="text-sm font-medium text-secondary mt-1">Here is your security overview for today.</p>
+        </div>
+        <Link
+          to="/detection/scanner"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-accent-blue to-accent-violet hover:opacity-95 text-white rounded-xl text-sm font-bold transition-all shadow-soft"
+        >
+          <ScanLine className="w-4 h-4" /> New Scan
         </Link>
       </div>
 
-      {error && (
-        <div className="bg-danger-50 text-danger p-4 rounded-xl text-sm mb-6">
-          {error}
-        </div>
-      )}
+      {/* TOP ROW: Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <StatCard icon={Activity} label="Total Scans" value={totalScans} sub="All time activity" iconColor="text-primary" iconBg="bg-primary/5" />
+        <StatCard icon={ShieldAlert} label="Threats Found" value={phishingScans} sub="High risk items" iconColor="text-danger" iconBg="bg-danger/10" />
+        <StatCard icon={CheckCircle} label="Safe Items" value={safeScans} sub="Verified clean" iconColor="text-success" iconBg="bg-success/10" />
+        <StatCard icon={GraduationCap} label="Lessons Done" value={completedLearning} sub="Training modules" iconColor="text-accent-blue" iconBg="bg-accent-blue/10" />
+      </div>
 
-      {/* Detection Overview */}
-      <section>
-        <div className="flex items-center gap-2 mb-4">
-          <ShieldAlert className="w-5 h-5 text-primary" />
-          <h2 className="text-xl font-bold text-ink">Detection Overview</h2>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard title="Total Scans" value={totalScans} />
-          <StatCard title="Phishing" value={phishingScans} color="text-danger" />
-          <StatCard title="Suspicious" value={suspiciousScans} color="text-warning-dark" />
-          <StatCard title="Legitimate" value={legitimateScans} color="text-success" />
-        </div>
-      </section>
+      {/* MIDDLE ROW: Security Overview + Chart */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
-      {/* Learning Overview */}
-      <section>
-        <div className="flex items-center gap-2 mb-4 mt-8">
-          <BookOpen className="w-5 h-5 text-primary" />
-          <h2 className="text-xl font-bold text-ink">Vulnerability Learning</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard title="Completed" value={completedLearning} />
-          <StatCard title="In Progress" value={inProgressLearning} />
-          <StatCard title="Avg Assessment Score" value={avgScore > 0 ? `${avgScore}%` : '-'} />
-        </div>
-      </section>
+        {/* Security Overview */}
+        <div className="xl:col-span-1 bg-card rounded-3xl p-6 sm:p-8 shadow-sm border border-border relative overflow-hidden flex flex-col">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-accent-blue/5 rounded-full blur-[80px] pointer-events-none" />
+          
+          <div className="flex items-center justify-between mb-8 relative z-10">
+            <h2 className="text-lg font-heading font-extrabold text-primary">Security Posture</h2>
+            <Link to="/security/profile" className="text-xs font-bold text-accent-blue hover:underline">View Details</Link>
+          </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-        
-        {/* Security Profile */}
-        <section className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-          <div className="flex items-center gap-2 mb-6">
-            <Target className="w-5 h-5 text-primary" />
-            <h2 className="text-xl font-bold text-ink">Security Profile</h2>
+          <div className="flex-1 flex flex-col items-center justify-center relative z-10 mb-8">
+            {securityScore !== null ? (
+              <div className="relative w-48 h-24 flex items-end justify-center overflow-hidden mb-4">
+                <svg className="absolute top-0 left-0 w-full h-full" viewBox="0 0 100 50" style={{ overflow: 'visible' }}>
+                  <path d="M5 50 A45 45 0 0 1 95 50" fill="none" stroke="var(--bg-secondary)" strokeWidth="8" strokeLinecap="round"/>
+                  <path
+                    d="M5 50 A45 45 0 0 1 95 50"
+                    fill="none"
+                    stroke={securityScore >= 80 ? 'var(--success)' : securityScore >= 50 ? 'var(--warning)' : 'var(--danger)'}
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                    strokeDasharray="141"
+                    strokeDashoffset={141 - (141 * securityScore / 100)}
+                    className="drop-shadow-sm transition-all duration-1000 ease-out"
+                  />
+                </svg>
+                <div className="relative z-10 flex flex-col items-center">
+                  <span className="text-4xl font-heading font-black text-primary tracking-tight leading-none">{securityScore}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <Shield className="w-12 h-12 text-muted mx-auto mb-3 opacity-50" />
+                <p className="text-sm font-bold text-secondary">Profile Building</p>
+                <p className="text-xs text-muted mt-1">Scan more items to calculate score</p>
+              </div>
+            )}
+            
+            {securityScore !== null && (
+              <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+                securityScore >= 80 ? 'bg-success/10 text-success' : 
+                securityScore >= 50 ? 'bg-warning/10 text-warning' : 
+                'bg-danger/10 text-danger'
+              }`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                {scoreLabel} Status
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 relative z-10">
+            <StatusRow
+              icon={phishingScans === 0 ? CheckCircle : ShieldAlert}
+              color={phishingScans === 0 ? "text-success" : "text-danger"}
+              bg={phishingScans === 0 ? "bg-success/10" : "bg-danger/10"}
+              title={phishingScans === 0 ? "Zero Active Threats" : `${phishingScans} Threats Detected`}
+              desc={phishingScans === 0 ? "System is secure" : "Action required"}
+            />
+            <StatusRow
+              icon={Brain}
+              color="text-accent-blue"
+              bg="bg-accent-blue/10"
+              title="AI Detection Active"
+              desc="Adaptive learning enabled"
+            />
+          </div>
+        </div>
+
+        {/* Scan Activity Chart & Quick Actions */}
+        <div className="xl:col-span-2 flex flex-col gap-6">
+          {/* Chart */}
+          <div className="bg-card rounded-3xl p-6 sm:p-8 shadow-sm border border-border flex-1">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-heading font-extrabold text-primary">Activity Timeline</h2>
+              <div className="flex items-center gap-4 text-xs font-bold text-secondary">
+                <span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-success" />Safe</span>
+                <span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-danger" />Threat</span>
+              </div>
+            </div>
+            <div className="h-64 w-full">
+              {totalScans > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 10, right: 0, left: -25, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gSafe" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--success)" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="var(--success)" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="gThreat" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--danger)" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="var(--danger)" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--border-border)" opacity={0.5} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 11, fontWeight: 500 }} dy={12} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 11, fontWeight: 500 }} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-border)', borderRadius: '12px', fontSize: '13px', fontWeight: 600, boxShadow: 'var(--shadow-elevated)' }}
+                      itemStyle={{ color: 'var(--text-primary)' }}
+                      labelStyle={{ color: 'var(--text-secondary)', marginBottom: '4px' }}
+                    />
+                    <Area type="monotone" dataKey="safe" name="Safe" stroke="var(--success)" strokeWidth={3} fillOpacity={1} fill="url(#gSafe)" />
+                    <Area type="monotone" dataKey="threat" name="Threat" stroke="var(--danger)" strokeWidth={3} fillOpacity={1} fill="url(#gThreat)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-muted">
+                  <BarChart3 className="w-10 h-10 mb-3 opacity-30" />
+                  <span className="text-sm font-medium">No scan activity yet</span>
+                </div>
+              )}
+            </div>
           </div>
           
-          <div className="space-y-4">
-            <div>
-              <div className="text-sm font-semibold text-ink-light mb-1">Strengths</div>
-              <div className="flex flex-wrap gap-2">
-                {strengths.length > 0 ? strengths.map(s => (
-                  <span key={s} className="px-2 py-1 bg-success-50 text-success text-xs rounded-md font-semibold">{s}</span>
-                )) : <span className="text-sm text-ink-faint">No strengths identified yet.</span>}
-              </div>
-            </div>
-            <div>
-              <div className="text-sm font-semibold text-ink-light mb-1">Weaknesses</div>
-              <div className="flex flex-wrap gap-2">
-                {weaknesses.length > 0 ? weaknesses.map(w => (
-                  <span key={w} className="px-2 py-1 bg-danger-50 text-danger text-xs rounded-md font-semibold">{w}</span>
-                )) : <span className="text-sm text-ink-faint">No weaknesses identified.</span>}
-              </div>
-            </div>
-            <div className="pt-4 border-t border-slate-50">
-              <div className="text-sm font-semibold text-ink-light mb-1">Recommended Focus</div>
-              <div className="text-base font-bold text-primary">{recommendedFocus}</div>
-              <p className="text-xs text-ink-faint mt-1">
-                Based on your recent assessment performance.
-              </p>
-            </div>
+          {/* Quick Actions */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            {[
+              { label: "Email", icon: Mail, to: "/detection/email" },
+              { label: "URL", icon: LinkIcon, to: "/detection/url" },
+              { label: "Message", icon: MessageSquare, to: "/detection/message" },
+              { label: "QR Code", icon: QrCode, to: "/detection/qr" },
+            ].map((a) => (
+              <Link
+                key={a.to}
+                to={a.to}
+                className="bg-card rounded-2xl p-4 flex flex-col items-center justify-center gap-3 border border-border hover:bg-secondary/50 transition-colors group text-center shadow-sm"
+              >
+                <div className="w-10 h-10 rounded-xl bg-accent-blue/5 flex items-center justify-center group-hover:bg-accent-blue group-hover:text-white transition-colors text-accent-blue">
+                  <a.icon className="w-5 h-5" />
+                </div>
+                <span className="text-sm font-bold text-primary">{a.label}</span>
+              </Link>
+            ))}
           </div>
-        </section>
+        </div>
+      </div>
 
-        {/* Recent Activity */}
-        <section className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+      {/* BOTTOM ROW: History & Learning */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {/* Recent Scans */}
+        <div className="bg-card rounded-3xl p-6 sm:p-8 shadow-sm border border-border flex flex-col">
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <Activity className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-bold text-ink">Recent Scans</h2>
-            </div>
-            <Link to="/detection/history" className="text-sm text-primary font-semibold hover:underline">
-              View All
+            <h2 className="text-lg font-heading font-extrabold text-primary">Recent Scans</h2>
+            <Link to="/detection/history" className="text-xs font-bold text-accent-blue hover:underline flex items-center gap-1">
+              View All <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
           
-          {scanHistory.length === 0 ? (
-            <div className="text-sm text-ink-faint italic py-4">No scans yet. Submit an email or URL to get started.</div>
-          ) : (
-            <div className="space-y-3">
-              {scanHistory.slice(0, 5).map(scan => (
-                <Link to={`/detection/result/${scan._id}`} key={scan._id} className="block p-3 rounded-xl border border-slate-100 hover:bg-slate-50 transition">
-                  <div className="flex items-center justify-between">
-                    <div className="font-semibold text-sm text-ink truncate max-w-[200px]">
-                      {scan.target}
+          <div className="flex-1 flex flex-col">
+            {scanHistory.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
+                <Shield className="w-10 h-10 text-muted mx-auto mb-3 opacity-30" />
+                <p className="text-sm font-medium text-secondary">No scans performed yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {scanHistory.slice(0, 5).map(scan => (
+                  <Link
+                    to={`/detection/result/${scan._id}`}
+                    key={scan._id}
+                    className="flex items-center justify-between p-4 rounded-2xl bg-background hover:bg-secondary border border-transparent hover:border-border transition-all group"
+                  >
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                        scan.riskLevel === 'high' || scan.riskLevel === 'critical' ? 'bg-danger/10 text-danger' :
+                        scan.riskLevel === 'medium' ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'
+                      }`}>
+                        <Shield className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-primary truncate max-w-[200px] sm:max-w-[280px]">{scan.target}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md ${
+                             scan.riskLevel === 'high' || scan.riskLevel === 'critical' ? 'bg-danger/10 text-danger' :
+                             scan.riskLevel === 'medium' ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'
+                          }`}>
+                            {scan.riskLevel}
+                          </span>
+                          <span className="text-xs font-medium text-muted capitalize">{scan.scanType}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className={`text-xs font-bold px-2 py-1 rounded-md capitalize ${
-                      scan.riskLevel === 'high' || scan.riskLevel === 'critical' ? 'bg-danger-50 text-danger' :
-                      scan.riskLevel === 'medium' ? 'bg-warning-light text-warning-dark' :
-                      'bg-success-50 text-success'
-                    }`}>
-                      {scan.riskLevel}
-                    </div>
-                  </div>
-                  <div className="text-xs text-ink-faint mt-1">
-                    {new Date(scan.createdAt).toLocaleDateString()} · {scan.scanType}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </section>
+                    <ChevronRight className="w-5 h-5 text-muted opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1" />
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
 
+        {/* Vulnerability Learning */}
+        <div className="bg-card rounded-3xl p-6 sm:p-8 shadow-sm border border-border relative overflow-hidden flex flex-col">
+          <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-accent-violet/5 rounded-full blur-[80px] pointer-events-none" />
+          
+          <div className="flex items-center justify-between mb-6 relative z-10">
+            <h2 className="text-lg font-heading font-extrabold text-primary">Continuous Learning</h2>
+            <Link to="/learning/progress" className="text-xs font-bold text-accent-violet hover:underline flex items-center gap-1">
+              View Profile <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+
+          <div className="flex-1 flex flex-col relative z-10">
+            <div className="bg-background rounded-2xl p-5 mb-6 border border-border">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 rounded-lg bg-accent-violet/10 text-accent-violet flex items-center justify-center">
+                  <Target className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-secondary uppercase tracking-wider">Current Focus</p>
+                  <p className="text-sm font-bold text-primary">{recommendedFocus}</p>
+                </div>
+              </div>
+              <p className="text-xs font-medium text-muted leading-relaxed">
+                Your AI-generated curriculum is currently focusing on {recommendedFocus.toLowerCase()} based on your recent scan history.
+              </p>
+            </div>
+
+            <div className="mb-8">
+              <div className="flex items-center justify-between text-sm mb-2">
+                <span className="font-bold text-secondary">Course Progress</span>
+                <span className="font-extrabold text-primary">{completedLearning} <span className="text-muted font-medium">/ 12 modules</span></span>
+              </div>
+              <div className="w-full h-2.5 bg-background rounded-full overflow-hidden border border-border">
+                <div
+                  className="h-full bg-gradient-to-r from-accent-blue to-accent-violet rounded-full transition-all duration-1000"
+                  style={{ width: `${(completedLearning / 12) * 100}%` }}
+                />
+              </div>
+            </div>
+
+            <Link
+              to="/vulnerabilities"
+              className="mt-auto flex items-center justify-center gap-2 w-full py-3.5 bg-accent-violet/10 hover:bg-accent-violet/20 text-accent-violet rounded-xl text-sm font-bold transition-colors border border-accent-violet/20"
+            >
+              <BookOpen className="w-4 h-4" /> Continue Next Module
+            </Link>
+          </div>
+        </div>
+
+      </div>
+    </motion.div>
+  );
+}
+
+function StatCard({ icon: Icon, label, value, sub, iconColor, iconBg }) {
+  return (
+    <div className="bg-card rounded-3xl p-5 sm:p-6 shadow-sm border border-border flex flex-col gap-4">
+      <div className={`w-12 h-12 rounded-2xl ${iconBg} ${iconColor} flex items-center justify-center`}>
+        <Icon className="w-6 h-6" />
+      </div>
+      <div>
+        <p className="text-3xl font-heading font-black text-primary tracking-tight mb-1">{value}</p>
+        <p className="text-sm font-bold text-secondary">{label}</p>
+        <p className="text-xs font-medium text-muted mt-0.5">{sub}</p>
       </div>
     </div>
   );
 }
 
-function StatCard({ title, value, color = "text-ink" }) {
+function StatusRow({ icon: Icon, color, bg, title, desc }) {
   return (
-    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-center">
-      <div className="text-sm font-semibold text-ink-light mb-1">{title}</div>
-      <div className={`text-3xl font-extrabold ${color}`}>{value}</div>
+    <div className="flex items-center gap-4 p-4 bg-background rounded-2xl border border-border">
+      <div className={`w-10 h-10 rounded-xl ${bg} ${color} flex items-center justify-center flex-shrink-0`}>
+        <Icon className="w-5 h-5" />
+      </div>
+      <div>
+        <p className="text-sm font-bold text-primary mb-0.5">{title}</p>
+        <p className="text-xs font-medium text-secondary">{desc}</p>
+      </div>
     </div>
   );
 }
+
+function LinkIcon(props) {
+  return <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>;
+}
+function MessageSquare(props) {
+  return <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>;
+}
+function QrCode(props) {
+  return <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/><rect x="3" y="16" width="5" height="5" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>;
+}function ImageIcon(props) {
+  return <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>;
+}
+

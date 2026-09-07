@@ -19,7 +19,7 @@
 const axios = require('axios');
 const env = require('../config/env');
 
-const DEFAULT_URL     = 'http://localhost:8001';
+const DEFAULT_URL     = 'http://127.0.0.1:8001';
 const DEFAULT_TIMEOUT = 3000;
 
 /**

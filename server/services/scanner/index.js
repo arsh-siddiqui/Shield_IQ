@@ -25,7 +25,7 @@ const { calculateRisk } = require('./riskScorer');
 const { buildResult } = require('./resultBuilder');
 const { fuseEvidence } = require('./evidenceFusion');
 
-const VALID_TYPES = ['url', 'email', 'sms', 'whatsapp', 'qr'];
+const VALID_TYPES = ['url', 'email', 'sms', 'whatsapp', 'qr', 'message'];
 
 // Lazy imports for external services — avoids startup failures if env is misconfigured
 let mlService, threatIntelService, groqService;
@@ -88,8 +88,9 @@ async function analyzeContent(content, scanType = 'url', userId = null) {
   const heuristicResult = analyzeContentSync(content, type);
 
   // 2. ML + Threat Intelligence + RAG Retrieval
-  const TEXT_TYPES = new Set(['email', 'sms', 'whatsapp']);
+  const TEXT_TYPES = new Set(['email', 'sms', 'whatsapp', 'message']);
   const URL_TYPES  = new Set(['url', 'qr']);
+  const RAG_TYPES = new Set(['email']);
 
   const mlTask = TEXT_TYPES.has(type)
     ? getMlService().classifyText(content).catch(() => ({ status: 'unavailable', reason: 'exception' }))
@@ -102,7 +103,7 @@ async function analyzeContent(content, scanType = 'url', userId = null) {
 
   // RAG Retrieval Task
   let ragTask = Promise.resolve(null);
-  if (userId && TEXT_TYPES.has(type)) {
+  if (userId && RAG_TYPES.has(type)) {
     const ragClient = require('../ragClient');
     const EmailHistory = require('../../models/EmailHistory');
     

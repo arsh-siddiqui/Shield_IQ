@@ -50,11 +50,9 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 h-screen sticky top-0 bg-white border-r border-slate-100 py-6 px-4">
-      <div className="flex items-center gap-2 font-extrabold text-lg text-ink px-2 mb-8">
-        <span className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-          <ShieldCheck className="w-5 h-5 text-white" />
-        </span>
+    <aside className="hidden lg:flex flex-col w-[240px] flex-shrink-0 h-screen sticky top-0 bg-background border-r border-border py-6 px-4">
+      <div className="flex items-center gap-2 font-heading font-extrabold text-2xl text-primary px-2 mb-8">
+        <ShieldCheck className="w-7 h-7 text-accent-blue" />
         DetectIQ
       </div>
 
@@ -62,7 +60,7 @@ export default function Sidebar() {
         {navSections.map((section, idx) => (
           <div key={idx}>
             {section.title && (
-              <div className="text-xs font-bold text-ink-faint uppercase tracking-wider mb-2 px-4">
+              <div className="text-[11px] font-bold text-muted uppercase tracking-wider mb-2 px-3 mt-4">
                 {section.title}
               </div>
             )}
@@ -72,22 +70,17 @@ export default function Sidebar() {
                   key={item.to}
                   to={item.to}
                   className={({ isActive }) =>
-                    `relative flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                      isActive ? "text-primary bg-primary-50" : "text-ink-light hover:bg-slate-50 hover:text-ink"
+                    `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                      isActive 
+                        ? "text-accent-blue bg-accent-blue/10" 
+                        : "text-muted hover:text-primary hover:bg-secondary"
                     }`
                   }
                 >
                   {({ isActive }) => (
                     <>
-                      {isActive && (
-                        <motion.span
-                          layoutId="sidebar-active"
-                          className="absolute inset-0 rounded-xl bg-primary-50"
-                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                        />
-                      )}
-                      <item.icon className="w-4.5 h-4.5 relative z-10" />
-                      <span className="relative z-10">{item.label}</span>
+                      <item.icon className={`w-[18px] h-[18px] transition-colors ${isActive ? "text-accent-blue" : "text-muted"}`} />
+                      <span>{item.label}</span>
                     </>
                   )}
                 </NavLink>
@@ -102,7 +95,7 @@ export default function Sidebar() {
           to="/admin"
           className={({ isActive }) =>
             `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold mb-2 transition-colors ${
-              isActive ? "text-primary bg-primary-50" : "text-ink-light hover:bg-slate-50 hover:text-ink"
+              isActive ? "text-primary bg-primary/10" : "text-ink-light hover:bg-secondary hover:text-primary"
             }`
           }
         >
@@ -111,18 +104,18 @@ export default function Sidebar() {
         </NavLink>
       )}
 
-      <div className="flex items-center justify-between gap-3 px-3 py-3 rounded-xl bg-slate-50 mt-auto">
+      <div className="flex items-center justify-between gap-3 px-3 py-3 rounded-xl bg-card border border-border shadow-soft mt-auto hover:border-primary/30 transition-colors group">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent-blue to-accent-violet text-white flex items-center justify-center text-xs font-bold flex-shrink-0 shadow-soft">
             {user.avatar}
           </div>
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-ink truncate">{user.name}</div>
-            <div className="text-xs text-ink-faint truncate">Level {level} · {user.role}</div>
+            <div className="text-[13px] font-semibold text-primary truncate">{user.name}</div>
+            <div className="text-[11px] font-medium text-muted truncate">Level {level} · {user.role}</div>
           </div>
         </div>
-        <button onClick={handleLogout} className="p-2 text-ink-faint hover:text-danger hover:bg-danger-50 rounded-lg transition-colors flex-shrink-0" title="Log Out">
-          <LogOut className="w-4 h-4" />
+        <button onClick={handleLogout} className="p-1.5 text-muted hover:text-danger hover:bg-danger/10 rounded-md transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100" title="Log Out">
+          <LogOut className="w-[14px] h-[14px]" />
         </button>
       </div>
     </aside>
