@@ -36,6 +36,30 @@ const threatIntelCacheSchema = new mongoose.Schema(
         type: mongoose.Schema.Types.Mixed,
         default: null,
       },
+      virustotal: {
+        type: mongoose.Schema.Types.Mixed,
+        default: null,
+      },
+      geolocation: {
+        type: mongoose.Schema.Types.Mixed,
+        default: null,
+      },
+      threatintel: {
+        type: mongoose.Schema.Types.Mixed,
+        default: null,
+      },
+    },
+
+    // Phase 2: Indicator type and normalized value for compound cache keys
+    indicatorType: {
+      type: String,
+      enum: ['ip', 'domain', 'url', 'hash', 'email', null],
+      default: null,
+    },
+    normalizedIndicator: {
+      type: String,
+      default: null,
+      select: false,
     },
 
     checkedAt: {

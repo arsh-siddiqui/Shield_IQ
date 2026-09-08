@@ -18,6 +18,10 @@ import ScanResult from "./pages/detection/ScanResult";
 // Security
 import MyEmailPatterns from "./pages/detection/MyEmailPatterns";
 import SecurityProfile from "./pages/security/SecurityProfile";
+import InvestigationList from "./pages/security/InvestigationList";
+import InvestigationDetail from "./pages/security/InvestigationDetail";
+import IndicatorList from "./pages/security/IndicatorList";
+import IndicatorDetail from "./pages/security/IndicatorDetail";
 
 // Learning
 import VulnerabilityList from "./pages/learning/VulnerabilityList";
@@ -86,6 +90,10 @@ function AppRoutes() {
       
       {/* Security */}
       <Route path="/security/profile" element={<RequireAuth><AppLayoutWrapper><SecurityProfile /></AppLayoutWrapper></RequireAuth>} />
+      <Route path="/security/investigations" element={<RequireAuth><AppLayoutWrapper><InvestigationList /></AppLayoutWrapper></RequireAuth>} />
+      <Route path="/security/investigations/:id/*" element={<RequireAuth><AppLayoutWrapper><InvestigationDetail /></AppLayoutWrapper></RequireAuth>} />
+      <Route path="/security/indicators" element={<RequireAuth><AppLayoutWrapper><IndicatorList /></AppLayoutWrapper></RequireAuth>} />
+      <Route path="/security/indicators/:id" element={<RequireAuth><AppLayoutWrapper><IndicatorDetail /></AppLayoutWrapper></RequireAuth>} />
 
       {/* Learning */}
       <Route path="/vulnerabilities" element={<RequireAuth><AppLayoutWrapper><VulnerabilityList /></AppLayoutWrapper></RequireAuth>} />

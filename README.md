@@ -19,9 +19,9 @@ DetectIQ evaluates URLs, emails, SMS texts, WhatsApp messages, and QR codes usin
 6. **Evidence Fusion Layer**: Synthesizes all detection signals deterministically into a unified risk level.
 
 ### 📚 Paper 4: Vulnerability-Focused Learning and Assessment Architecture Implemented
-- **Vulnerability Curriculum**: 9 structured vulnerabilities with abstract theory and secure fix demonstrations.
-- **Controlled Practice Preview**: Live isolated labs are future work, but interactive theory and previews are implemented.
-- **Adaptive Assessments**: Server-side evaluations track learner weaknesses safely and isolate progress.
+- **Vulnerability Curriculum**: Structured knowledge base focusing on theory, identification, impact, and prevention strategies.
+- **Adaptive Assessments**: Server-side evaluations to validate understanding, track learner weaknesses safely, and isolate progress.
+- **Security Profile Tracking**: Real-time mastery mapping that ties learning outcomes directly to the user's overarching security posture.
 
 ### 🔐 User Isolation & Security
 - **Clean Slate for New Users**: Authenticated user accounts start securely with isolated data.

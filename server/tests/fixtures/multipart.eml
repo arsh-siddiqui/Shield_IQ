@@ -1,0 +1,17 @@
+From: sender@example.com
+To: receiver@example.com
+Subject: Test Multipart
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="boundary-string"
+
+--boundary-string
+Content-Type: text/plain; charset="utf-8"
+
+This is plain text. https://test.com
+
+--boundary-string
+Content-Type: text/html; charset="utf-8"
+
+<html><body><p>This is HTML. <script>alert(1)</script></p></body></html>
+
+--boundary-string--

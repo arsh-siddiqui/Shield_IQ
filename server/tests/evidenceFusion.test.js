@@ -15,24 +15,11 @@ const { fuseEvidence } = require('../services/scanner/evidenceFusion');
 // Helpers
 // ---------------------------------------------------------------------------
 
-let passed = 0;
-let failed = 0;
 
-function test(name, fn) {
-  try {
-    fn();
-    console.log(`  ✓ ${name}`);
-    passed++;
-  } catch (e) {
-    console.error(`  ✗ ${name}`);
-    console.error(`    → ${e.message}`);
-    failed++;
-  }
-}
 
 // Minimal heuristic result factory
 function heuristic(riskLevel, riskScore = null, signals = []) {
-  const defaultScores = { Safe: 0, Low: 20, Medium: 50, High: 80 };
+  const defaultScores = { safe: 0, low: 20, medium: 50, high: 80, critical: 95 };
   return {
     riskLevel,
     riskScore: riskScore ?? defaultScores[riskLevel] ?? 0,
@@ -53,9 +40,9 @@ function mlResult(label, probability) {
 
 function tiResult(phishdestroyFound = false, riskScore = 85, severity = 'critical') {
   return {
-    phishdestroy: phishdestroyFound
-      ? { source: 'phishdestroy', status: 'found', malicious: true, riskScore, severity }
-      : { source: 'phishdestroy', status: 'not_found', malicious: false },
+    threatintel: phishdestroyFound
+      ? { provider: 'phishdestroy', status: 'found', malicious: true, riskScore, severity }
+      : { provider: 'phishdestroy', status: 'not_found', malicious: false },
   };
 }
 
@@ -67,48 +54,48 @@ console.log('\n=== EVIDENCE FUSION TESTS ===\n');
 
 console.log('--- Part O Scenarios ---');
 
-test('CASE 1 — Low heuristic + ML benign + TI not_found → Safe or Low', () => {
+it('CASE 1 — Low heuristic + ML benign + TI not_found → Safe or Low', () => {
   const result = fuseEvidence(
-    heuristic('Low', 20),
+    heuristic('low', 20),
     mlResult('safe', 0.05),
     tiResult(false),
     null
   );
   assert.ok(
-    result.riskLevel === 'Safe' || result.riskLevel === 'Low',
-    `Expected Safe or Low, got ${result.riskLevel}`
+    result.riskLevel === 'safe' || result.riskLevel === 'low',
+    `Expected safe or low, got ${result.riskLevel}`
   );
 });
 
-test('CASE 2 — Low heuristic + ML phishing 0.90 + TI not_found → Medium or High', () => {
+it('CASE 2 — Low heuristic + ML phishing 0.90 + TI not_found → Medium or High', () => {
   const result = fuseEvidence(
-    heuristic('Low', 20),
+    heuristic('low', 20),
     mlResult('phishing', 0.90),
     tiResult(false),
     null
   );
   assert.ok(
-    result.riskLevel === 'Medium' || result.riskLevel === 'High',
-    `Expected Medium or High, got ${result.riskLevel}`
+    result.riskLevel === 'medium' || result.riskLevel === 'high' || result.riskLevel === 'critical',
+    `Expected medium, high or critical, got ${result.riskLevel}`
   );
 });
 
-test('CASE 3 — Medium heuristic + PhishDestroy threat → High', () => {
+it('CASE 3 — Medium heuristic + PhishDestroy threat → High', () => {
   const result = fuseEvidence(
-    heuristic('Medium', 50),
+    heuristic('medium', 50),
     null,
     tiResult(true, 85, 'critical'),
     null
   );
-  assert.strictEqual(result.riskLevel, 'High', `Expected High, got ${result.riskLevel}`);
+  assert.ok(result.riskLevel === 'high' || result.riskLevel === 'critical', `Expected high or critical, got ${result.riskLevel}`);
   // Risk score should be elevated significantly
   assert.ok(result.riskScore >= 85, `Expected riskScore >= 85, got ${result.riskScore}`);
 });
 
-test('CASE 4 — PhishDestroy error → Scanner continues using available evidence', () => {
-  const h = heuristic('Medium', 50);
+it('CASE 4 — PhishDestroy error → Scanner continues using available evidence', () => {
+  const h = heuristic('medium', 50);
   const threatIntel = {
-    phishdestroy: { source: 'phishdestroy', status: 'error', malicious: false }
+    threatintel: { provider: 'phishdestroy', status: 'error', malicious: false }
   };
   const result = fuseEvidence(
     h,
@@ -116,12 +103,12 @@ test('CASE 4 — PhishDestroy error → Scanner continues using available eviden
     threatIntel,
     null
   );
-  assert.strictEqual(result.riskLevel, 'High', `Expected High (due to ML), got ${result.riskLevel}`);
+  assert.ok(result.riskLevel === 'high' || result.riskLevel === 'critical', `Expected high or critical (due to ML), got ${result.riskLevel}`);
   assert.ok(!result.analysisSources.includes('phishdestroy'), 'phishdestroy should not be in analysisSources when error');
 });
 
-test('CASE 5 — All external services unavailable → heuristic result preserved', () => {
-  const h = heuristic('Medium', 55);
+it('CASE 5 — All external services unavailable → heuristic result preserved', () => {
+  const h = heuristic('medium', 55);
   const result = fuseEvidence(
     h,
     { status: 'unavailable', reason: 'service_offline' },
@@ -141,8 +128,8 @@ test('CASE 5 — All external services unavailable → heuristic result preserve
 
 console.log('\n--- Additional Edge Cases ---');
 
-test('EF1 — Result always has required frontend fields', () => {
-  const result = fuseEvidence(heuristic('Safe'), null, null, null);
+it('EF1 — Result always has required frontend fields', () => {
+  const result = fuseEvidence(heuristic('safe'), null, null, null);
   assert.ok(typeof result.riskScore === 'number', 'Missing riskScore');
   assert.ok(typeof result.confidence === 'number', 'Missing confidence');
   assert.ok(typeof result.riskLevel === 'string', 'Missing riskLevel');
@@ -153,11 +140,11 @@ test('EF1 — Result always has required frontend fields', () => {
   assert.ok(Array.isArray(result.analysisSources), 'Missing analysisSources');
 });
 
-test('EF2 — riskScore is always 0–100', () => {
+it('EF2 — riskScore is always 0–100', () => {
   const cases = [
-    [heuristic('Safe', 0), null, null, null],
-    [heuristic('High', 100), mlResult('phishing', 0.99), tiResult(true), null],
-    [heuristic('Low', 15), mlResult('safe', 0.05), tiResult(false), null],
+    [heuristic('safe', 0), null, null, null],
+    [heuristic('high', 100), mlResult('phishing', 0.99), tiResult(true), null],
+    [heuristic('low', 15), mlResult('safe', 0.05), tiResult(false), null],
   ];
   for (const args of cases) {
     const result = fuseEvidence(...args);
@@ -168,45 +155,45 @@ test('EF2 — riskScore is always 0–100', () => {
   }
 });
 
-test('EF3 — riskLevel is always one of valid levels', () => {
-  const VALID = new Set(['Safe', 'Low', 'Medium', 'High']);
-  const levels = ['Safe', 'Low', 'Medium', 'High'];
+it('EF3 — riskLevel is always one of valid levels', () => {
+  const VALID = new Set(['safe', 'low', 'medium', 'high', 'critical']);
+  const levels = ['safe', 'low', 'medium', 'high', 'critical'];
   for (const level of levels) {
     const result = fuseEvidence(heuristic(level), null, null, null);
     assert.ok(VALID.has(result.riskLevel), `Invalid riskLevel: ${result.riskLevel}`);
   }
 });
 
-test('EF4 — PhishDestroy threat → category mentions PhishDestroy', () => {
+it('EF4 — PhishDestroy threat → category mentions PhishDestroy', () => {
   const result = fuseEvidence(
-    heuristic('Low'),
+    heuristic('low'),
     null,
     tiResult(true),
     null
   );
   assert.ok(result.category.toLowerCase().includes('phishdestroy'),
     `Category should mention PhishDestroy, got: ${result.category}`);
-  assert.ok(result.analysisSources.includes('phishdestroy'),
-    'phishdestroy must be in analysisSources');
+  assert.ok(result.analysisSources.includes('threatintel'),
+    'threatintel must be in analysisSources');
 });
 
-test('EF5 — ML safe + low heuristic → stays Safe when TI is clean', () => {
+it('EF5 — ML safe + low heuristic → stays Safe when TI is clean', () => {
   const result = fuseEvidence(
-    heuristic('Low', 12),
+    heuristic('low', 12),
     mlResult('safe', 0.05),
     tiResult(false),
     null
   );
   // With very low heuristic score and ML strongly safe, should be Safe
   assert.ok(
-    result.riskLevel === 'Safe' || result.riskLevel === 'Low',
-    `Expected Safe or Low, got ${result.riskLevel}`
+    result.riskLevel === 'safe' || result.riskLevel === 'low',
+    `Expected safe or low, got ${result.riskLevel}`
   );
 });
 
-test('EF6 — Groq result refines summary when TI is clean', () => {
+it('EF6 — Groq result refines summary when TI is clean', () => {
   const groq = {
-    riskLevel: 'Medium',
+    riskLevel: 'medium',
     category: 'Groq Category',
     summary: 'Groq summary text',
     confidence: 70,
@@ -215,9 +202,10 @@ test('EF6 — Groq result refines summary when TI is clean', () => {
     model: 'llama-3.1-8b-instant',
   };
   const result = fuseEvidence(
-    heuristic('Medium', 50),
+    heuristic('medium', 50),
     null,
     tiResult(false),
+    null,
     groq
   );
   assert.ok(result.analysisSources.includes('groq'), 'groq must be in analysisSources');
@@ -226,9 +214,9 @@ test('EF6 — Groq result refines summary when TI is clean', () => {
   assert.strictEqual(result.category, 'Groq Category');
 });
 
-test('EF7 — PhishDestroy threat overrides Groq category', () => {
+it('EF7 — PhishDestroy threat overrides Groq category', () => {
   const groq = {
-    riskLevel: 'Low',
+    riskLevel: 'low',
     category: 'Normal Email',
     summary: 'This seems safe.',
     confidence: 40,
@@ -236,23 +224,21 @@ test('EF7 — PhishDestroy threat overrides Groq category', () => {
     recommendations: [],
   };
   const result = fuseEvidence(
-    heuristic('Low'),
+    heuristic('low'),
     null,
     tiResult(true),
+    null,
     groq
   );
   // PhishDestroy confirmed threat should override Groq's "Normal Email" category
   assert.ok(result.category.toLowerCase().includes('phishdestroy'),
     `TI should override Groq category; got: ${result.category}`);
-  assert.strictEqual(result.riskLevel, 'High');
+  assert.ok(result.riskLevel === 'high' || result.riskLevel === 'critical');
 });
 
 // ---------------------------------------------------------------------------
 // Results
 // ---------------------------------------------------------------------------
-const total = passed + failed;
-console.log(`\n─────────────────────────────────────────`);
-console.log(`Results: ${passed}/${total} passed, ${failed} failed.`);
-console.log(`─────────────────────────────────────────\n`);
 
-if (failed > 0) process.exit(1);
+
+

@@ -1,0 +1,17 @@
+From: attacker@evil.com
+To: victim@example.com
+Subject: URGENT: Verify your account
+Date: Wed, 1 Jan 2026 12:00:00 +0000
+Message-ID: <12345@evil.com>
+Received: from mail.evil.com (mail.evil.com [198.51.100.2])
+  by mx.example.com with ESMTP id ABCDE
+  for <victim@example.com>; Wed,  1 Jan 2026 12:00:00 +0000
+Authentication-Results: mx.example.com; spf=fail smtp.mailfrom=evil.com; dkim=none; dmarc=fail
+
+Dear User,
+Please verify your account immediately by clicking the link below:
+http://evil.com/login
+
+Or reply to this email with your password.
+
+Thank you.

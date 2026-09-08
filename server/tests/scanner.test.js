@@ -21,20 +21,7 @@ const { analyzeContentSync: analyzeContent, VALID_TYPES } = require('../services
 // Helpers
 // ---------------------------------------------------------------------------
 
-let passed = 0;
-let failed = 0;
 
-function test(name, fn) {
-  try {
-    fn();
-    console.log(`  ✓ ${name}`);
-    passed++;
-  } catch (e) {
-    console.error(`  ✗ ${name}`);
-    console.error(`    → ${e.message}`);
-    failed++;
-  }
-}
 
 /**
  * Simulates the controller's validation gate that runs BEFORE analyzeContent().
@@ -61,68 +48,68 @@ function simulateValidation(body) {
 
 console.log('\n=== SECTION A: Validation Gate ===');
 
-test('A1 — Empty string → HTTP 400 (Scan input is required)', () => {
+it('A1 — Empty string → HTTP 400 (Scan input is required)', () => {
   const v = simulateValidation({ scanType: 'url', content: '' });
   assert.ok(v !== null, 'Expected a validation error');
   assert.strictEqual(v.status, 400);
   assert.ok(v.error.toLowerCase().includes('required'), `Unexpected message: ${v.error}`);
 });
 
-test('A2 — Whitespace-only string → HTTP 400', () => {
+it('A2 — Whitespace-only string → HTTP 400', () => {
   const v = simulateValidation({ scanType: 'sms', content: '   \t\n  ' });
   assert.ok(v !== null, 'Expected a validation error');
   assert.strictEqual(v.status, 400);
 });
 
-test('A3 — Missing content field → HTTP 400', () => {
+it('A3 — Missing content field → HTTP 400', () => {
   const v = simulateValidation({ scanType: 'email' });
   assert.ok(v !== null, 'Expected a validation error');
   assert.strictEqual(v.status, 400);
 });
 
-test('A4 — null content → HTTP 400', () => {
+it('A4 — null content → HTTP 400', () => {
   const v = simulateValidation({ scanType: 'whatsapp', content: null });
   assert.ok(v !== null, 'Expected a validation error');
   assert.strictEqual(v.status, 400);
 });
 
-test('A5 — Unsupported scan type "phone" → HTTP 400', () => {
+it('A5 — Unsupported scan type "phone" → HTTP 400', () => {
   const v = simulateValidation({ scanType: 'phone', content: 'some text' });
   assert.ok(v !== null, 'Expected a validation error');
   assert.strictEqual(v.status, 400);
   assert.ok(v.error.toLowerCase().includes('scan type'), `Unexpected message: ${v.error}`);
 });
 
-test('A6 — Unsupported scan type "text" → HTTP 400', () => {
+it('A6 — Unsupported scan type "text" → HTTP 400', () => {
   const v = simulateValidation({ scanType: 'text', content: 'some text' });
   assert.ok(v !== null);
   assert.strictEqual(v.status, 400);
 });
 
-test('A7 — Unsupported scan type "image" → HTTP 400', () => {
+it('A7 — Unsupported scan type "image" → HTTP 400', () => {
   const v = simulateValidation({ scanType: 'image', content: 'some text' });
   assert.ok(v !== null);
   assert.strictEqual(v.status, 400);
 });
 
-test('A8 — Missing scanType field → HTTP 400', () => {
+it('A8 — Missing scanType field → HTTP 400', () => {
   const v = simulateValidation({ content: 'some text' });
   assert.ok(v !== null);
   assert.strictEqual(v.status, 400);
 });
 
-test('A9 — Oversized input (>5000 chars) → HTTP 413', () => {
+it('A9 — Oversized input (>5000 chars) → HTTP 413', () => {
   const v = simulateValidation({ scanType: 'email', content: 'A'.repeat(5001) });
   assert.ok(v !== null);
   assert.strictEqual(v.status, 413);
 });
 
-test('A10 — Valid input passes (no error returned)', () => {
+it('A10 — Valid input passes (no error returned)', () => {
   const v = simulateValidation({ scanType: 'url', content: 'https://example.com' });
   assert.strictEqual(v, null, 'Valid input should pass with null (no error)');
 });
 
-test('A11 — All supported types pass validation', () => {
+it('A11 — All supported types pass validation', () => {
   for (const type of VALID_TYPES) {
     const v = simulateValidation({ scanType: type, content: 'test content' });
     assert.strictEqual(v, null, `Type "${type}" should pass validation`);
@@ -135,20 +122,20 @@ test('A11 — All supported types pass validation', () => {
 
 console.log('\n=== SECTION B: Heuristic Engine ===');
 
-test('B1 — Normal benign message → Safe or Low (NOT Medium or High)', () => {
+it('B1 — Normal benign message → Safe or Low (NOT Medium or High)', () => {
   const r = analyzeContent('Hey, are we still meeting at 5 PM?', 'sms');
   assert.ok(
-    r.riskLevel === 'Safe' || r.riskLevel === 'Low',
-    `Expected Safe or Low, got ${r.riskLevel} (score: ${r.riskScore})`
+    r.riskLevel === 'safe' || r.riskLevel === 'low',
+    `Expected safe or low, got ${r.riskLevel} (score: ${r.riskScore})`
   );
 });
 
-test('B2 — Fake bank phishing SMS → High, detects urgency + threat + credential signals', () => {
+it('B2 — Fake bank phishing SMS → High, detects urgency + threat + credential signals', () => {
   const r = analyzeContent(
     'URGENT! Your bank account will be blocked today. Verify your KYC immediately: https://some-fake-link.com/verify',
     'sms'
   );
-  assert.strictEqual(r.riskLevel, 'High', `Expected High, got ${r.riskLevel} (score: ${r.riskScore})`);
+  assert.ok(r.riskLevel === 'high' || r.riskLevel === 'critical', `Expected high or critical, got ${r.riskLevel} (score: ${r.riskScore})`);
   assert.ok(r.detectedSignals.includes('urgency'), 'Missing urgency signal');
   assert.ok(r.detectedSignals.includes('threat'), 'Missing threat signal');
   assert.ok(
@@ -157,70 +144,70 @@ test('B2 — Fake bank phishing SMS → High, detects urgency + threat + credent
   );
 });
 
-test('B3 — OTP scam message → High, detects otp_request', () => {
+it('B3 — OTP scam message → High, detects otp_request', () => {
   const r = analyzeContent(
     'Your transaction failed. Tell me the OTP you just received to cancel it.',
     'whatsapp'
   );
-  assert.strictEqual(r.riskLevel, 'High', `Expected High, got ${r.riskLevel} (score: ${r.riskScore})`);
+  assert.ok(r.riskLevel === 'high' || r.riskLevel === 'critical', `Expected high or critical, got ${r.riskLevel} (score: ${r.riskScore})`);
   assert.ok(r.detectedSignals.includes('otp_request'), 'Missing otp_request signal');
 });
 
-test('B4 — Fake job scam → High or Medium, detects job_scam + payment_request', () => {
+it('B4 — Fake job scam → High or Medium, detects job_scam + payment_request', () => {
   const r = analyzeContent(
     'Congratulations! You are selected for a work-from-home job. Pay ₹999 registration fee to confirm your position.',
     'whatsapp'
   );
   assert.ok(
-    r.riskLevel === 'High' || r.riskLevel === 'Medium',
-    `Expected High or Medium, got ${r.riskLevel} (score: ${r.riskScore})`
+    r.riskLevel === 'high' || r.riskLevel === 'critical' || r.riskLevel === 'medium',
+    `Expected high, critical or medium, got ${r.riskLevel} (score: ${r.riskScore})`
   );
   assert.ok(r.detectedSignals.includes('job_scam'), 'Missing job_scam signal');
   assert.ok(r.detectedSignals.includes('payment_request'), 'Missing payment_request signal');
 });
 
-test('B5 — Investment scam → High, detects investment_scam', () => {
+it('B5 — Investment scam → High, detects investment_scam', () => {
   const r = analyzeContent(
     'Guaranteed 30% return every week. Double your money with zero risk.',
     'sms'
   );
-  assert.strictEqual(r.riskLevel, 'High', `Expected High, got ${r.riskLevel} (score: ${r.riskScore})`);
+  assert.ok(r.riskLevel === 'high' || r.riskLevel === 'critical', `Expected high or critical, got ${r.riskLevel} (score: ${r.riskScore})`);
   assert.ok(r.detectedSignals.includes('investment_scam'), 'Missing investment_scam signal');
 });
 
-test('B6 — Suspicious URL with typosquatting + credential path → High', () => {
+it('B6 — Suspicious URL with typosquatting + credential path → High', () => {
   const r = analyzeContent('https://amaz0n-login.example/verify-account', 'url');
-  assert.strictEqual(r.riskLevel, 'High', `Expected High, got ${r.riskLevel} (score: ${r.riskScore})`);
+  assert.ok(r.riskLevel === 'high' || r.riskLevel === 'critical', `Expected high or critical, got ${r.riskLevel} (score: ${r.riskScore})`);
   assert.ok(
     r.detectedSignals.includes('brand_impersonation') || r.detectedSignals.includes('typosquatting'),
     'Missing brand/typosquatting signal'
   );
 });
 
-test('B7 — Legitimate URL (well-known domain, no suspicious paths) → Safe or Low', () => {
+it('B7 — Legitimate URL (well-known domain, no suspicious paths) → Safe or Low', () => {
   const r = analyzeContent('https://www.example.com', 'url');
   assert.ok(
-    r.riskLevel === 'Safe' || r.riskLevel === 'Low',
-    `Expected Safe or Low, got ${r.riskLevel} (score: ${r.riskScore})`
+    r.riskLevel === 'safe' || r.riskLevel === 'low',
+    `Expected safe or low, got ${r.riskLevel} (score: ${r.riskScore})`
   );
 });
 
-test('B8 — URL with a URL shortener → Low (not High on its own)', () => {
+it('B8 — URL with a URL shortener → Low (not High on its own)', () => {
   const r = analyzeContent('https://bit.ly/3someCode', 'url');
   // A single medium signal (url_shortener) should be Low or Medium, not High
   assert.ok(
-    r.riskLevel !== 'High',
-    `URL shortener alone should not reach High, got ${r.riskLevel} (score: ${r.riskScore})`
+    r.riskLevel !== 'high' && r.riskLevel !== 'critical',
+    `URL shortener alone should not reach High/Critical, got ${r.riskLevel} (score: ${r.riskScore})`
   );
   assert.ok(r.detectedSignals.includes('url_shortener'), 'Missing url_shortener signal');
 });
 
-test('B9 — Message + embedded suspicious URL combined → signals from both sources', () => {
+it('B9 — Message + embedded suspicious URL combined → signals from both sources', () => {
   const r = analyzeContent(
     'Your account will be blocked today. Verify here: https://amaz0n-login.example/verify',
     'email'
   );
-  assert.ok(r.riskLevel === 'High', `Expected High due to combined signals, got ${r.riskLevel}`);
+  assert.ok(r.riskLevel === 'high' || r.riskLevel === 'critical', `Expected high or critical due to combined signals, got ${r.riskLevel}`);
   // Should have message signals
   assert.ok(r.detectedSignals.includes('threat') || r.detectedSignals.includes('urgency'), 'Missing message signal');
   // Should have URL signals
@@ -233,7 +220,7 @@ test('B9 — Message + embedded suspicious URL combined → signals from both so
   assert.strictEqual(signalSet.size, r.detectedSignals.length, 'Duplicate signals detected — deduplication failed');
 });
 
-test('B10 — Risk score is always 0–100', () => {
+it('B10 — Risk score is always 0–100', () => {
   const inputs = [
     ['https://www.google.com', 'url'],
     ['URGENT! Verify your KYC. Share OTP. Guaranteed returns. Work from home. Arrest warrant.', 'sms'],
@@ -247,18 +234,18 @@ test('B10 — Risk score is always 0–100', () => {
   }
 });
 
-test('B11 — IP address hostname → High (standalone)', () => {
+it('B11 — IP address hostname → High (standalone)', () => {
   const r = analyzeContent('http://192.168.1.100/login', 'url');
   assert.ok(r.detectedSignals.includes('ip_hostname'), 'Missing ip_hostname signal');
 });
 
-test('B12 — Brand impersonation: official subdomain NOT flagged', () => {
+it('B12 — Brand impersonation: official subdomain NOT flagged', () => {
   // pay.google.com is a real Google domain — should NOT be flagged as brand impersonation
   const r = analyzeContent('https://pay.google.com/checkout', 'url');
   assert.ok(!r.detectedSignals.includes('brand_impersonation'), 'pay.google.com should NOT be flagged');
 });
 
-test('B13 — Brand impersonation: fake brand domain IS flagged', () => {
+it('B13 — Brand impersonation: fake brand domain IS flagged', () => {
   const r = analyzeContent('https://google-support-verify.net/security', 'url');
   assert.ok(
     r.detectedSignals.includes('brand_impersonation') || r.detectedSignals.includes('typosquatting'),
@@ -266,8 +253,8 @@ test('B13 — Brand impersonation: fake brand domain IS flagged', () => {
   );
 });
 
-test('B14 — Risk level always maps to one of four valid bands', () => {
-  const VALID_LEVELS = new Set(['Safe', 'Low', 'Medium', 'High']);
+it('B14 — Risk level always maps to one of four valid bands', () => {
+  const VALID_LEVELS = new Set(['safe', 'low', 'medium', 'high', 'critical']);
   const inputs = [
     ['hi', 'sms'],
     ['guaranteed returns double money', 'sms'],
@@ -280,7 +267,7 @@ test('B14 — Risk level always maps to one of four valid bands', () => {
   }
 });
 
-test('B15 — Result shape contains all required frontend fields', () => {
+it('B15 — Result shape contains all required frontend fields', () => {
   const r = analyzeContent('URGENT! Your account will be blocked. Share OTP.', 'sms');
   assert.ok(typeof r.riskScore === 'number', 'Missing riskScore');
   assert.ok(typeof r.confidence === 'number', 'Missing confidence');
@@ -298,11 +285,3 @@ test('B15 — Result shape contains all required frontend fields', () => {
 // Results
 // ---------------------------------------------------------------------------
 
-const total = passed + failed;
-console.log(`\n─────────────────────────────────────────`);
-console.log(`Results: ${passed}/${total} passed, ${failed} failed.`);
-console.log(`─────────────────────────────────────────\n`);
-
-if (failed > 0) {
-  process.exit(1);
-}

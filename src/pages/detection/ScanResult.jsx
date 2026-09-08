@@ -4,6 +4,7 @@ import { ShieldAlert, ShieldCheck, AlertTriangle, Loader2, Info, Search, Cpu, Bo
 import { getScanResult, personalizeScan } from "../../services/detectionService";
 import Button from "../../components/ui/Button";
 
+
 export default function ScanResult() {
   const { id } = useParams();
   const [scan, setScan] = useState(null);
@@ -77,11 +78,18 @@ export default function ScanResult() {
   const threatIntel = evidenceList.filter(e => e.source === 'PhishDestroy' || e.source === 'Threat_Intelligence' || e.source === 'VirusTotal');
   const personalization = evidenceList.filter(e => e.source === 'Personalization_RAG');
   
-  const isUrlScan = scan.inputType === 'url' || scan.scanType === 'url';
-
-  // Display fields — use stored target/scanType, fall back to heuristicResult
   const displayTarget = scan.target || scan.heuristicResult?.category || 'Scanned Content';
-  const displayType = scan.scanType || scan.inputType || 'unknown';
+  const analysisType = scan.scanType || 'unknown';
+  const inputType = scan.inputType || analysisType;
+
+  // Derive booleans based on analysisType (what pipeline processed it)
+  const isUrlAnalysis = analysisType === 'url';
+  const isEmailAnalysis = analysisType === 'email';
+  const isMessageAnalysis = analysisType === 'message';
+
+  // Specific booleans for display
+  const isQrInput = inputType === 'qr';
+  const isScreenshotInput = inputType === 'screenshot';
 
   let llmAnalysisStr = "No analysis available for this scan.";
   try {
@@ -151,7 +159,7 @@ export default function ScanResult() {
                 isMedium ? 'bg-warning/10 text-warning border-warning/20' : 
                 'bg-success/10 text-success border-success/20'
               }`}>
-                {displayType} Analysis
+                {inputType} {inputType !== analysisType ? `→ ${analysisType}` : ''} Analysis
               </span>
               <span className="text-xs font-semibold text-muted">{new Date(scan.createdAt || Date.now()).toLocaleString()}</span>
             </div>
@@ -179,15 +187,18 @@ export default function ScanResult() {
       </div>
 
       {/* QR / Screenshot Decoder Details */}
-      {(scan.inputType === 'qr' || scan.inputType === 'screenshot') && (
+      {(isQrInput || isScreenshotInput) && (
         <div className="bg-secondary/30 p-8 rounded-3xl border border-border shadow-sm flex flex-col gap-4">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-accent-blue/10 text-accent-blue flex items-center justify-center">
               <Info className="w-5 h-5" />
             </div>
             <h2 className="text-xl font-heading font-bold text-primary">
-              {scan.inputType === 'qr' ? 'QR Code Extracted Payload' : 'Screenshot Extracted Text'}
+              {isQrInput ? 'QR Code Extracted Payload' : 'Screenshot Extracted Text'}
             </h2>
+            <span className="ml-auto text-xs font-bold bg-background border border-border px-3 py-1.5 rounded-lg text-secondary">
+              Resolved as: <span className="uppercase text-primary">{analysisType}</span>
+            </span>
           </div>
           <p className="p-5 bg-card border border-border rounded-2xl text-primary font-mono text-sm break-all max-h-40 overflow-y-auto shadow-inner">
             {displayTarget}
@@ -262,9 +273,9 @@ export default function ScanResult() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
           <div className="bg-background p-6 rounded-2xl border border-border flex items-start gap-4 shadow-sm">
             <CheckCircle className="w-6 h-6 text-success mt-0.5 shrink-0" />
-            <span className="text-sm font-bold text-primary">{isUrlScan ? 'URL Structure & Domain' : 'Content & Linguistics'}</span>
+            <span className="text-sm font-bold text-primary">{isUrlAnalysis ? 'URL Structure & Domain' : 'Content & Linguistics'}</span>
           </div>
-          {!isUrlScan && (
+          {isEmailAnalysis && (
             <div className="bg-background p-6 rounded-2xl border border-border flex items-start gap-4 shadow-sm">
               <CheckCircle className="w-6 h-6 text-success mt-0.5 shrink-0" />
               <span className="text-sm font-bold text-primary">Sender Context</span>
@@ -274,7 +285,7 @@ export default function ScanResult() {
             <CheckCircle className="w-6 h-6 text-success mt-0.5 shrink-0" />
             <span className="text-sm font-bold text-primary">Threat Intelligence</span>
           </div>
-          {!isUrlScan && (
+          {isEmailAnalysis && (
             <div className="bg-background p-6 rounded-2xl border border-border flex items-start gap-4 shadow-sm">
               <CheckCircle className="w-6 h-6 text-success mt-0.5 shrink-0" />
               <span className="text-sm font-bold text-primary">Personalized Baselines</span>
@@ -283,8 +294,32 @@ export default function ScanResult() {
         </div>
       </div>
       
+      {/* Forensic Evidence Section */}
+      {scan.forensicInvestigationId && (
+        <div className="bg-accent-violet/10 p-6 md:p-10 rounded-3xl border border-accent-violet/20 shadow-soft flex flex-col md:flex-row items-center justify-between gap-8 mt-8">
+          <div>
+            <h2 className="text-2xl font-heading font-extrabold text-primary mb-3 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-accent-violet/20 flex items-center justify-center text-accent-violet">
+                <Search className="w-5 h-5" />
+              </div>
+              Forensic Investigation
+            </h2>
+            <p className="text-base text-secondary font-medium max-w-xl">
+              A detailed forensic investigation has been automatically created. Review routing, indicators, and threat intelligence in the Investigation Center.
+            </p>
+          </div>
+          <div className="flex-shrink-0 w-full md:w-auto">
+            <Link to={`/security/investigations/${scan.forensicInvestigationId._id || scan.forensicInvestigationId}`}>
+              <button className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-accent-violet to-accent-blue text-white rounded-xl font-bold shadow-soft hover:opacity-95 transition-all flex items-center justify-center min-w-[200px]">
+                Open Investigation
+              </button>
+            </Link>
+          </div>
+        </div>
+      )}
+      
       {/* Add to My Email Patterns */}
-      {scan.scanType === 'email' && isSafe && (
+      {isEmailAnalysis && isSafe && (
         <div className="bg-accent-blue/10 p-6 md:p-10 rounded-3xl border border-accent-blue/20 shadow-soft flex flex-col md:flex-row items-center justify-between gap-8">
           <div>
             <h2 className="text-2xl font-heading font-extrabold text-primary mb-3 flex items-center gap-3">
@@ -338,13 +373,13 @@ export default function ScanResult() {
         {showTechnicalDetails && (
           <div className="space-y-6 animate-in slide-in-from-top-4 duration-300 -mt-8 pt-12 pb-10 px-6 md:px-10 border border-t-0 border-border bg-card rounded-b-3xl">
             <EvidenceCard
-              title={isUrlScan ? "URL Safety Checks" : "Message Safety Checks"}
+              title={isUrlAnalysis ? "URL Safety Checks" : "Message Safety Checks"}
               icon={Search}
               evidence={heuristics}
               emptyMsg="No heuristic signals detected — content appears normal."
             />
 
-            {!isUrlScan && (
+            {!isUrlAnalysis && (
               <EvidenceCard
                 title="Machine Learning Classifier"
                 icon={Cpu}
@@ -377,7 +412,7 @@ export default function ScanResult() {
               )}
             </div>
 
-            {!isUrlScan && (
+            {isEmailAnalysis && (
               <EvidenceCard
                 title="Email Pattern Comparison"
                 icon={BookOpen}

@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ShieldAlert, BookOpen, Target, Activity, Shield, CheckCircle, BarChart3, Mail, Lightbulb, GraduationCap, ArrowRight, ScanLine, Loader2, Brain, ChevronRight } from "lucide-react";
+import { ShieldAlert, BookOpen, Target, Activity, Shield, CheckCircle, BarChart3, Mail, Lightbulb, GraduationCap, ArrowRight, ScanLine, Loader2, Brain, ChevronRight, Globe, Image as ImageLucide } from "lucide-react";
 import { useAppData } from "../context/AppDataContext";
 import { getScanHistory } from "../services/detectionService";
 import { getAllProgress } from "../services/progressService";
+import { getVulnerabilities } from "../services/vulnerabilityService";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { motion } from "framer-motion";
 
@@ -12,16 +13,19 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [scanHistory, setScanHistory] = useState([]);
   const [learningProgress, setLearningProgress] = useState([]);
+  const [totalModules, setTotalModules] = useState(0);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [scans, progress] = await Promise.all([
+        const [scans, progress, vulns] = await Promise.all([
           getScanHistory().catch(() => []),
-          getAllProgress().catch(() => [])
+          getAllProgress().catch(() => []),
+          getVulnerabilities().catch(() => [])
         ]);
         setScanHistory(scans || []);
         setLearningProgress(progress || []);
+        setTotalModules(vulns?.length || 0);
       } finally {
         setLoading(false);
       }
@@ -93,6 +97,59 @@ export default function Dashboard() {
           className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-accent-blue to-accent-violet hover:opacity-95 text-white rounded-xl text-sm font-bold transition-all shadow-soft"
         >
           <ScanLine className="w-4 h-4" /> New Scan
+        </Link>
+      </div>
+
+      {/* TOP ROW: Quick Actions */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <Link 
+          to="/detection/scanner?mode=email"
+          className="group bg-card hover:bg-secondary/50 border border-border rounded-2xl p-6 transition-all shadow-sm flex flex-col items-center justify-center text-center gap-4 hover:-translate-y-1 hover:shadow-card"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-accent-blue/10 text-accent-blue flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
+            <Mail className="w-6 h-6" />
+          </div>
+          <span className="font-bold text-primary text-sm group-hover:text-accent-blue transition-colors">Email</span>
+        </Link>
+
+        <Link 
+          to="/detection/scanner?mode=url"
+          className="group bg-card hover:bg-secondary/50 border border-border rounded-2xl p-6 transition-all shadow-sm flex flex-col items-center justify-center text-center gap-4 hover:-translate-y-1 hover:shadow-card"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-accent-violet/10 text-accent-violet flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
+            <Globe className="w-6 h-6" />
+          </div>
+          <span className="font-bold text-primary text-sm group-hover:text-accent-violet transition-colors">URL</span>
+        </Link>
+
+        <Link 
+          to="/detection/scanner?mode=message"
+          className="group bg-card hover:bg-secondary/50 border border-border rounded-2xl p-6 transition-all shadow-sm flex flex-col items-center justify-center text-center gap-4 hover:-translate-y-1 hover:shadow-card"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-accent-cyan/10 text-accent-cyan flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
+            <MessageSquare className="w-6 h-6" />
+          </div>
+          <span className="font-bold text-primary text-sm group-hover:text-accent-cyan transition-colors">Message</span>
+        </Link>
+        
+        <Link 
+          to="/detection/scanner?mode=qr"
+          className="group bg-card hover:bg-secondary/50 border border-border rounded-2xl p-6 transition-all shadow-sm flex flex-col items-center justify-center text-center gap-4 hover:-translate-y-1 hover:shadow-card"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-warning/10 text-warning flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
+            <QrCode className="w-6 h-6" />
+          </div>
+          <span className="font-bold text-primary text-sm group-hover:text-warning transition-colors">QR Code</span>
+        </Link>
+        
+        <Link 
+          to="/detection/scanner?mode=screenshot"
+          className="group bg-card hover:bg-secondary/50 border border-border rounded-2xl p-6 transition-all shadow-sm flex flex-col items-center justify-center text-center gap-4 hover:-translate-y-1 hover:shadow-card"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-success/10 text-success flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
+            <ImageLucide className="w-6 h-6" />
+          </div>
+          <span className="font-bold text-primary text-sm group-hover:text-success transition-colors">Screenshot</span>
         </Link>
       </div>
 
@@ -327,12 +384,12 @@ export default function Dashboard() {
             <div className="mb-8">
               <div className="flex items-center justify-between text-sm mb-2">
                 <span className="font-bold text-secondary">Course Progress</span>
-                <span className="font-extrabold text-primary">{completedLearning} <span className="text-muted font-medium">/ 12 modules</span></span>
+                <span className="font-extrabold text-primary">{completedLearning} <span className="text-muted font-medium">/ {totalModules > 0 ? totalModules : '-'} modules</span></span>
               </div>
               <div className="w-full h-2.5 bg-background rounded-full overflow-hidden border border-border">
                 <div
                   className="h-full bg-gradient-to-r from-accent-blue to-accent-violet rounded-full transition-all duration-1000"
-                  style={{ width: `${(completedLearning / 12) * 100}%` }}
+                  style={{ width: `${totalModules > 0 ? (completedLearning / totalModules) * 100 : 0}%` }}
                 />
               </div>
             </div>

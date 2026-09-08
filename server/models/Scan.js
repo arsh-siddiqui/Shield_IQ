@@ -71,6 +71,11 @@ const scanSchema = new mongoose.Schema(
     evidence: {
       type: [mongoose.Schema.Types.Mixed],
     },
+    forensicInvestigationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'EmailInvestigation',
+      description: 'Reference to the detailed forensic investigation for email/eml scans',
+    },
     retrievedEmails: [
       {
         type: mongoose.Schema.Types.ObjectId,

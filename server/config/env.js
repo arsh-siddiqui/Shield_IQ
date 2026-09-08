@@ -64,6 +64,16 @@ const env = {
 
   /** Timeout for Groq API calls (ms) */
   GROQ_TIMEOUT_MS: process.env.GROQ_TIMEOUT_MS || '7000',
+
+  // ---------------------------------------------------------------------------
+  // Phase 2: Threat Enrichment / Geolocation
+  // ---------------------------------------------------------------------------
+
+  /** Timeout for IP geolocation provider calls (ms) */
+  GEOLOCATION_TIMEOUT_MS: process.env.GEOLOCATION_TIMEOUT_MS || '4000',
+
+  /** Maximum number of indicators to enrich per scan (prevents abuse) */
+  MAX_INTELLIGENCE_INDICATORS_PER_SCAN: process.env.MAX_INTELLIGENCE_INDICATORS_PER_SCAN || '20',
 };
 
 const isProd = env.NODE_ENV === 'production';

@@ -31,14 +31,14 @@ export default function Assessment() {
     load();
   }, [slug, navigate]);
 
-  const assessment = vuln?.content?.assessment || [];
+  const assessment = vuln?.assessment || [];
   const currentQuestion = assessment[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === assessment.length - 1;
   const isComplete = Object.keys(answers).length === assessment.length;
 
   const handleSelect = (optionId) => {
     if (result) return;
-    setAnswers(prev => ({ ...prev, [currentQuestion.id]: optionId }));
+    setAnswers(prev => ({ ...prev, [currentQuestion._id]: optionId }));
   };
 
   const handleNext = () => {
@@ -175,15 +175,15 @@ export default function Assessment() {
             /* Question State */
             <div className="bg-card rounded-[2rem] border border-border p-8 md:p-12 shadow-elevated relative">
               <h3 className="text-2xl md:text-3xl font-extrabold text-primary mb-10 leading-tight">
-                {currentQuestion.questionText}
+                {currentQuestion.question}
               </h3>
               
               <div className="space-y-4 mb-12">
                 {currentQuestion.options.map(opt => {
-                  const isSelected = answers[currentQuestion.id] === opt.id;
+                  const isSelected = answers[currentQuestion._id] === opt._id;
                   return (
                     <label 
-                      key={opt.id} 
+                      key={opt._id} 
                       className={`flex items-center p-5 rounded-2xl border-2 cursor-pointer transition-all ${
                         isSelected 
                           ? 'border-accent-blue bg-accent-blue/5 shadow-[0_0_15px_rgba(59,130,246,0.15)]' 
@@ -197,10 +197,10 @@ export default function Assessment() {
                       </div>
                       <input 
                         type="radio" 
-                        name={currentQuestion.id} 
+                        name={currentQuestion._id} 
                         className="hidden"
                         checked={isSelected}
-                        onChange={() => handleSelect(opt.id)}
+                        onChange={() => handleSelect(opt._id)}
                       />
                       <span className={`text-base font-medium ${isSelected ? 'text-primary font-bold' : 'text-secondary'}`}>
                         {opt.text}
@@ -221,7 +221,7 @@ export default function Assessment() {
                 
                 <button 
                   onClick={handleNext} 
-                  disabled={!answers[currentQuestion.id] || submitting}
+                  disabled={!answers[currentQuestion._id] || submitting}
                   className="bg-accent-blue text-white px-8 py-3.5 rounded-xl font-bold shadow-soft hover:bg-accent-blue/90 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0 flex items-center gap-2"
                 >
                   {submitting ? (

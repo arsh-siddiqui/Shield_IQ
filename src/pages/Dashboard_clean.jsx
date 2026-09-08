@@ -1,9 +1,10 @@
-﻿import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ShieldAlert, BookOpen, Target, Activity, ShieldCheck, Shield, AlertTriangle, CheckCircle, TrendingUp, ChevronRight, BarChart3, Mail, Lightbulb, GraduationCap, ArrowRight, ScanLine, Link as LinkIcon, MessageSquare, QrCode, ImageIcon, Loader2, Zap, Brain } from "lucide-react";
 import { useAppData } from "../context/AppDataContext";
 import { getScanHistory } from "../services/detectionService";
 import { getAllProgress } from "../services/progressService";
+import { getVulnerabilities } from "../services/vulnerabilityService";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { motion } from "framer-motion";
 
@@ -12,16 +13,19 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [scanHistory, setScanHistory] = useState([]);
   const [learningProgress, setLearningProgress] = useState([]);
+  const [totalModules, setTotalModules] = useState(0);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [scans, progress] = await Promise.all([
+        const [scans, progress, vulns] = await Promise.all([
           getScanHistory().catch(() => []),
-          getAllProgress().catch(() => [])
+          getAllProgress().catch(() => []),
+          getVulnerabilities().catch(() => [])
         ]);
         setScanHistory(scans || []);
         setLearningProgress(progress || []);
+        setTotalModules(vulns?.length || 0);
       } finally {
         setLoading(false);
       }
@@ -328,14 +332,14 @@ export default function Dashboard() {
             </div>
 
             <div className="space-y-3 mb-5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-secondary">Completion</span>
-                <span className="font-bold text-primary">{completedLearning} / 12 modules</span>
+              <div className="flex items-center justify-between text-sm mb-2">
+                <span className="font-semibold text-secondary">Course Progress</span>
+                <span className="font-bold text-primary">{completedLearning} <span className="text-muted font-medium">/ {totalModules > 0 ? totalModules : '-'} modules</span></span>
               </div>
-              <div className="w-full h-1.5 bg-background rounded-full overflow-hidden border border-border">
+              <div className="w-full h-2 bg-background rounded-full overflow-hidden border border-border">
                 <div
-                  className="h-full bg-accent-blue rounded-full transition-all duration-700"
-                  style={{ width: `${(completedLearning / 12) * 100}%` }}
+                  className="h-full bg-accent-violet rounded-full transition-all duration-1000"
+                  style={{ width: `${totalModules > 0 ? (completedLearning / totalModules) * 100 : 0}%` }}
                 />
               </div>
             </div>
@@ -382,17 +386,3 @@ function StatusRow({ icon: Icon, color, bg, title, desc }) {
   );
 }
 
-function LinkIcon(props) {
-  return <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>;
-}
-function MessageSquare(props) {
-  return <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>;
-}
-function QrCode(props) {
-  return <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/><rect x="3" y="16" width="5" height="5" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>;
-}
-function ImageIcon(props) {
-  return <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>;
-}
-
-}

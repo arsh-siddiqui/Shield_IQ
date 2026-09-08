@@ -25,7 +25,7 @@ const { calculateRisk } = require('./riskScorer');
 const { buildResult } = require('./resultBuilder');
 const { fuseEvidence } = require('./evidenceFusion');
 
-const VALID_TYPES = ['url', 'email', 'sms', 'whatsapp', 'qr', 'message'];
+const VALID_TYPES = ['url', 'email', 'sms', 'whatsapp', 'qr', 'message', 'screenshot'];
 
 // Lazy imports for external services — avoids startup failures if env is misconfigured
 let mlService, threatIntelService, groqService;

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { TrendingUp, Target, Loader2, AlertCircle } from "lucide-react";
 import { useAppData } from "../../context/AppDataContext";
 import { getAllProgress } from "../../services/progressService";
+import { getVulnerabilities } from "../../services/vulnerabilityService";
 import { Link } from "react-router-dom";
 import { getEmailHistory } from "../../services/emailHistoryService";
 
@@ -11,16 +12,19 @@ export default function SecurityProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [emailCount, setEmailCount] = useState(0);
+  const [totalModules, setTotalModules] = useState(0);
 
   useEffect(() => {
     async function load() {
       try {
-        const [data, emails] = await Promise.all([
+        const [data, emails, vulns] = await Promise.all([
           getAllProgress(),
-          getEmailHistory().catch(() => [])
+          getEmailHistory().catch(() => []),
+          getVulnerabilities().catch(() => [])
         ]);
         setProgressData(data || []);
         setEmailCount(emails?.length || 0);
+        setTotalModules(vulns?.length || 0);
       } catch (err) {
         setError("Failed to load progress data.");
       } finally {
@@ -42,7 +46,7 @@ export default function SecurityProfile() {
     );
   }
 
-  const totalVulnerabilities = 12; // Assuming 12 available courses for mock scaling
+  const totalVulnerabilities = totalModules; 
   const vulnerabilitiesExplored = progressData.length;
   const passedAssessments = progressData.filter(p => p.status === 'completed' && p.assessmentScore >= 70).length;
   const failedAssessments = progressData.filter(p => p.status === 'completed' && p.assessmentScore < 70).length;
@@ -50,7 +54,9 @@ export default function SecurityProfile() {
   const overallMastery = totalVulnerabilities === 0 ? 0 : Math.round((passedAssessments / totalVulnerabilities) * 100);
 
   return (
-    <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500">
+    <div className="flex-1 flex flex-col h-full overflow-hidden">
+      <div className="flex-1 overflow-auto p-6">
+        <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500">
       <header className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-accent-blue/10 text-accent-blue mb-4 shadow-soft border border-accent-blue/20">
@@ -213,6 +219,8 @@ export default function SecurityProfile() {
         </div>
 
       </div>
+      </div>
+    </div>
     </div>
   );
 }

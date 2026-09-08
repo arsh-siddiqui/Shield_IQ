@@ -17,6 +17,8 @@ const scanRoutes = require("./routes/scanRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const assistantRoutes = require("./routes/assistantRoutes");
 const emailHistoryRoutes = require("./routes/emailHistoryRoutes");
+const forensicRoutes = require("./routes/forensicRoutes");
+const securityRoutes = require("./routes/securityRoutes");
 
 const vulnerabilityRoutes = require("./routes/vulnerabilityRoutes");
 const progressRoutes = require("./routes/progressRoutes");
@@ -67,6 +69,8 @@ app.use("/api/assistant", assistantRoutes);
 app.use("/api/email-history", emailHistoryRoutes);
 app.use("/api/vulnerabilities", vulnerabilityRoutes);
 app.use("/api/progress", progressRoutes);
+app.use("/api/email-forensics", forensicRoutes);
+app.use("/api/security", securityRoutes);
 
 // ---------------------------------------------------------------------------
 // 404 + error handling — must be registered last
@@ -80,12 +84,42 @@ app.use(errorHandler);
 async function start() {
   await connectDB(); // does not throw — logs and continues if Mongo is unreachable
 
-  app.listen(env.PORT, "0.0.0.0", () => {
+  const server = app.listen(env.PORT, "0.0.0.0", () => {
     // eslint-disable-next-line no-console
     console.log(`[detectiq] API listening on http://0.0.0.0:${env.PORT} (${env.NODE_ENV})`);
   });
+
+  // --- Graceful Shutdown ---
+  const shutdown = async (signal) => {
+    // eslint-disable-next-line no-console
+    console.log(`\n[detectiq] Received ${signal}. Shutting down gracefully...`);
+    
+    server.close(() => {
+      // eslint-disable-next-line no-console
+      console.log('[detectiq] HTTP server closed.');
+    });
+    
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.connection.close();
+      // eslint-disable-next-line no-console
+      console.log('[detectiq] MongoDB connection closed.');
+    }
+    
+    if (signal === 'SIGUSR2') {
+      process.kill(process.pid, 'SIGUSR2');
+    } else {
+      process.exit(0);
+    }
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.once('SIGUSR2', () => shutdown('SIGUSR2'));
 }
 
-start();
+if (require.main === module) {
+  start();
+}
 
 module.exports = app;

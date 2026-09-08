@@ -27,7 +27,7 @@ function analyzeUrl(urlString) {
 
   try {
     parsedUrl = new URL(urlToParse);
-  } catch (err) {
+  } catch {
     signals.push({
       type: 'malformed_url',
       severity: 'medium',

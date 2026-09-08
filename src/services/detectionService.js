@@ -1,10 +1,27 @@
 import apiClient from "./apiClient";
 
 export async function submitScan(content, scanType, inputType = null) {
-  // Returns { result, savedToHistory, scanId, scan }
-  const payload = { content, scanType };
-  if (inputType) payload.inputType = inputType;
+  // Support for pasted_email object payload
+  let payload;
+  if (typeof content === 'object') {
+    payload = { ...content, scanType };
+    if (inputType) payload.inputType = inputType;
+  } else {
+    payload = { content, scanType };
+    if (inputType) payload.inputType = inputType;
+  }
+  
   const { data } = await apiClient.post("/scan", payload);
+  return data.data;
+}
+
+export async function submitEml(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const { data } = await apiClient.post("/email-forensics/analyze", formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
   return data.data;
 }
 

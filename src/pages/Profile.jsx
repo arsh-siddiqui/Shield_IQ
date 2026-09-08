@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User, LogOut, Loader2, Save, Shield, Key, Smartphone, Bell, Activity, CheckCircle2 } from "lucide-react";
 import { useAppData } from "../context/AppDataContext";
+import { updateProfileRemote } from "../services/userService";
+import { getScanHistory } from "../services/detectionService";
 import Button from "../components/ui/Button";
 
 export default function Profile() {
@@ -12,6 +14,13 @@ export default function Profile() {
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [securitySummaries, setSecuritySummaries] = useState(false);
+  const [recentScans, setRecentScans] = useState([]);
+
+  useEffect(() => {
+    getScanHistory().then(scans => {
+      setRecentScans((scans || []).slice(0, 3));
+    }).catch(() => setRecentScans([]));
+  }, []);
   
   const level = Math.max(1, Math.floor((xp || 0) / 300) + 1);
   const xpInCurrentLevel = (xp || 0) % 300;
@@ -24,11 +33,16 @@ export default function Profile() {
 
   const handleSave = async () => {
     setIsSaving(true);
-    setTimeout(() => {
-      updateUser(formData);
+    try {
+      const updatedUser = await updateProfileRemote(formData);
+      updateUser(updatedUser);
       setIsEditing(false);
+    } catch (error) {
+      console.error("Failed to update profile", error);
+      // In a real app we'd show a toast here
+    } finally {
       setIsSaving(false);
-    }, 800);
+    }
   };
 
   if (!user) return null;
@@ -78,7 +92,7 @@ export default function Profile() {
               </div>
               <div className="mt-8 text-xs font-medium text-secondary flex justify-between items-center bg-background border border-border p-5 rounded-2xl shadow-sm">
                 <span>Member since</span>
-                <span className="text-primary font-bold">{user.memberSince || "Aug 2026"}</span>
+                <span className="text-primary font-bold">{user.memberSince || new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span>
               </div>
             </div>
           </div>
@@ -88,26 +102,25 @@ export default function Profile() {
               <Activity className="w-6 h-6 text-accent-blue" /> Recent Activity
             </h3>
             <div className="space-y-6">
-              <div className="flex gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-success/10 text-success flex items-center justify-center flex-shrink-0 shadow-sm">
-                  <CheckCircle2 className="w-6 h-6" />
+              {recentScans.length > 0 ? recentScans.map(scan => (
+                <div key={scan._id} className="flex gap-4">
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm ${
+                    scan.riskLevel === 'high' || scan.riskLevel === 'critical' ? 'bg-danger/10 text-danger' :
+                    scan.riskLevel === 'medium' ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'
+                  }`}>
+                    <Shield className="w-6 h-6" />
+                  </div>
+                  <div className="pt-0.5">
+                    <div className="text-sm font-bold text-primary mb-1 truncate max-w-[200px]">{scan.target}</div>
+                    <div className="text-xs text-secondary font-medium capitalize">{scan.scanType} Scan • {scan.riskLevel} Risk</div>
+                    <div className="text-[10px] uppercase tracking-wider font-bold text-muted mt-2">
+                      {new Date(scan.createdAt).toLocaleDateString()} at {new Date(scan.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    </div>
+                  </div>
                 </div>
-                <div className="pt-0.5">
-                  <div className="text-sm font-bold text-primary mb-1">Successful login</div>
-                  <div className="text-xs text-secondary font-medium">Mumbai, India · Chrome on Windows</div>
-                  <div className="text-[10px] uppercase tracking-wider font-bold text-muted mt-2">Today at 10:42 AM</div>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-accent-blue/10 text-accent-blue flex items-center justify-center flex-shrink-0 shadow-sm">
-                  <Shield className="w-6 h-6" />
-                </div>
-                <div className="pt-0.5">
-                  <div className="text-sm font-bold text-primary mb-1">Completed Security Quiz</div>
-                  <div className="text-xs text-secondary font-medium">Phishing Fundamentals</div>
-                  <div className="text-[10px] uppercase tracking-wider font-bold text-muted mt-2">Yesterday at 4:15 PM</div>
-                </div>
-              </div>
+              )) : (
+                <div className="text-sm text-secondary font-medium">No recent activity found.</div>
+              )}
             </div>
           </div>
         </div>

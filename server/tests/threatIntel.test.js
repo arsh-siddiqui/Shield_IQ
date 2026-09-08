@@ -38,20 +38,7 @@ const mockPhishDestroy = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-let passed = 0;
-let failed = 0;
 
-function test(name, fn) {
-  try {
-    fn();
-    console.log(`  ✓ ${name}`);
-    passed++;
-  } catch (e) {
-    console.error(`  ✗ ${name}`);
-    console.error(`    → ${e.message}`);
-    failed++;
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Test cases
@@ -59,7 +46,7 @@ function test(name, fn) {
 
 console.log('\n=== THREAT INTELLIGENCE TESTS ===\n');
 
-test('TI1 — Known threat: PhishDestroy returns found', () => {
+it('TI1 — Known threat: PhishDestroy returns found', () => {
   const result = mockPhishDestroy.found();
   assert.strictEqual(result.source, 'phishdestroy');
   assert.strictEqual(result.status, 'found');
@@ -69,14 +56,14 @@ test('TI1 — Known threat: PhishDestroy returns found', () => {
   assert.ok(result.checkedAt, 'Should have a checkedAt timestamp');
 });
 
-test('TI2 — No threat: PhishDestroy returns not_found', () => {
+it('TI2 — No threat: PhishDestroy returns not_found', () => {
   const result = mockPhishDestroy.not_found();
   assert.strictEqual(result.source, 'phishdestroy');
   assert.strictEqual(result.status, 'not_found');
   assert.strictEqual(result.malicious, false);
 });
 
-test('TI3 — Domain normalisation handles edge cases', () => {
+it('TI3 — Domain normalisation handles edge cases', () => {
   const { normalizeDomain } = require('../services/threatIntel/threatIntelService');
   assert.strictEqual(
     normalizeDomain('https://www.example.com/login?x=1#fragment'),
@@ -92,13 +79,13 @@ test('TI3 — Domain normalisation handles edge cases', () => {
   assert.strictEqual(subdomain, 'test.sub.example.co.uk');
 });
 
-test('TI4 — Provider failure: PhishDestroy error does not crash, returns error status', () => {
+it('TI4 — Provider failure: PhishDestroy error does not crash, returns error status', () => {
   const result = mockPhishDestroy.error();
   assert.strictEqual(result.status, 'error');
   assert.strictEqual(result.malicious, undefined);
 });
 
-test('TI5 — URL hash generation is deterministic (SHA-256)', () => {
+it('TI5 — URL hash generation is deterministic (SHA-256)', () => {
   const { urlCacheKey, normalizeDomain } = require('../services/threatIntel/threatIntelService');
   const url = 'https://www.example.com/login?x=1';
   const hash1 = urlCacheKey(normalizeDomain(url));
@@ -107,7 +94,7 @@ test('TI5 — URL hash generation is deterministic (SHA-256)', () => {
   assert.strictEqual(hash1.length, 64, 'SHA-256 hex should be 64 chars');
 });
 
-test('TI6 — URL extraction from message text', () => {
+it('TI6 — URL extraction from message text', () => {
   const { extractUrls } = require('../services/threatIntel/threatIntelService');
   const text = 'Click here: https://fake-bank.com/verify and also https://another.org';
   const urls = extractUrls(text);
@@ -115,7 +102,7 @@ test('TI6 — URL extraction from message text', () => {
   assert.ok(urls[0].startsWith('https://'), 'First URL should start with https://');
 });
 
-test('TI7 — No URLs in plain text returns empty array', () => {
+it('TI7 — No URLs in plain text returns empty array', () => {
   const { extractUrls } = require('../services/threatIntel/threatIntelService');
   const text = 'Hey, meet me at the park tomorrow at 5pm';
   const urls = extractUrls(text);
@@ -125,10 +112,7 @@ test('TI7 — No URLs in plain text returns empty array', () => {
 // ---------------------------------------------------------------------------
 // Results
 // ---------------------------------------------------------------------------
-const total = passed + failed;
-console.log(`\n─────────────────────────────────────────`);
-console.log(`Results: ${passed}/${total} passed, ${failed} failed.`);
-console.log(`─────────────────────────────────────────\n`);
 
-if (failed > 0) process.exit(1);
+
+
 

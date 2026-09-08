@@ -1,27 +1,27 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, PlayCircle, ShieldCheck, Mail, Link as LinkIcon, MessageSquare, QrCode, Image as ImageIcon, Brain, FileSearch, GraduationCap, ChevronRight, Activity, Search, ShieldAlert, CheckCircle2 } from "lucide-react";
+import { ArrowRight, PlayCircle, ShieldCheck, Mail, Link as LinkIcon, MessageSquare, QrCode, Image as ImageIcon, Brain, FileSearch, GraduationCap, ChevronRight, Activity, Search, ShieldAlert, CheckCircle2, Map as MapIcon, Database, AlertTriangle } from "lucide-react";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import Button from "../components/ui/Button";
 
 const capabilities = [
-  { icon: ShieldCheck, text: "Multi-Channel Detection" },
-  { icon: Brain, text: "Personalized Email Detection" },
-  { icon: Activity, text: "Threat Intelligence" },
-  { icon: GraduationCap, text: "Vulnerability Learning" }
+  { icon: ShieldAlert, text: "Automated Threat Enrichment" },
+  { icon: Brain, text: "AI Security Copilot" },
+  { icon: FileSearch, text: "Deep Forensic Reports" },
+  { icon: MapIcon, text: "Global Intelligence Mapping" }
 ];
 
 const features = [
+  { title: "AI Security Copilot", icon: Brain, description: "Analyze headers, indicators, and routing with our intelligent interactive assistant." },
+  { title: "Threat Intelligence Map", icon: MapIcon, description: "Visualize the geographic origin and severity of malicious IPs globally." },
+  { title: "Forensic Reporting", icon: FileSearch, description: "Generate detailed, actionable reports outlining risk scores, AI findings, and evidence." },
+  { title: "Interactive Threat Graph", icon: Activity, description: "Trace the connections between domains, emails, and threats visually in 2D space." },
+  { title: "Multi-Source Enrichment", icon: Search, description: "Automatically cross-reference indicators with global databases like VirusTotal." },
   { title: "Email Detection", icon: Mail, description: "Analyze senders, links, and intent using AI and personalized baselines." },
-  { title: "URL Intelligence", icon: LinkIcon, description: "Check domains against global threat databases instantly." },
-  { title: "Message Detection", icon: MessageSquare, description: "Spot phishing in SMS, WhatsApp, and social media texts." },
-  { title: "QR Analysis", icon: QrCode, description: "Decode and scan QR payloads before opening them." },
-  { title: "Screenshot Analysis", icon: ImageIcon, description: "Extract and scan embedded URLs and texts from images." },
-  { title: "Personalized Patterns", icon: FileSearch, description: "ML learns your safe contacts to reduce false positives." },
-  { title: "AI Explanations", icon: Brain, description: "Plain-English breakdowns of exactly why a threat is dangerous." },
-  { title: "Vulnerability Learning", icon: GraduationCap, description: "Master security concepts with interactive, bite-sized lessons." },
+  { title: "Personalized Patterns", icon: ShieldCheck, description: "ML learns your safe contacts to reduce false positives over time." },
+  { title: "Vulnerability Learning", icon: GraduationCap, description: "Master security concepts with interactive, bite-sized lessons based on your profile." },
 ];
 
 const workflowSteps = [
@@ -39,97 +39,92 @@ export default function Landing() {
       <Navbar />
 
       {/* HERO SECTION */}
-      <section className="relative pt-10 pb-16 lg:pt-16 lg:pb-24 overflow-hidden border-b border-border/40">
-        {/* Subtle Background Atmospheric Glows */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[600px] bg-accent-blue/5 rounded-full blur-[140px] pointer-events-none" />
-        <div className="absolute top-10 right-10 w-[500px] h-[500px] bg-accent-violet/10 rounded-full blur-[120px] pointer-events-none" />
+      <section className="relative pt-6 pb-16 lg:pt-10 lg:pb-24 overflow-hidden bg-background text-primary transition-colors duration-300">
         
-        <div className="max-w-7xl mx-auto px-6 relative z-10 grid lg:grid-cols-12 gap-12 items-center min-h-[calc(88vh-72px)]">
+        {/* Deep background lighting */}
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-accent-blue/10 dark:bg-accent-blue/20 rounded-full blur-[150px] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-accent-violet/10 dark:bg-accent-violet/20 rounded-full blur-[150px] pointer-events-none" />
+
+        <div className="max-w-[1400px] mx-auto px-6 lg:pr-10 relative z-10 grid lg:grid-cols-2 gap-12 lg:gap-8 min-h-[calc(80vh-72px)]">
           
-          {/* Left: Content (7 cols) */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="lg:col-span-7 max-w-2xl"
-          >
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-accent-blue/10 border border-accent-blue/20 text-accent-blue text-xs font-bold tracking-wide uppercase mb-6">
+          {/* Left Column: Content */}
+          <div className="flex flex-col items-start text-left pt-6 lg:pt-12">
+            
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-accent-blue/10 border border-accent-blue/20 text-accent-blue text-[10px] sm:text-xs font-bold tracking-wide uppercase mb-8 shadow-sm">
               <span className="w-2 h-2 rounded-full bg-accent-blue animate-pulse" />
-              AI-Powered Cybersecurity Engine
+              Live Threat Scan Active &bull; Zero-Trust Validation
             </div>
             
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-heading font-black leading-[1.05] tracking-tight mb-6">
-              <span className="block text-primary">Detect.</span>
-              <span className="block text-primary">Defend.</span>
-              <span className="block bg-gradient-to-r from-accent-blue via-accent-cyan to-accent-violet bg-clip-text text-transparent">Stay Ahead.</span>
+              <span className="block text-primary">Detect. Defend.</span>
+              <span className="block bg-gradient-to-r from-accent-blue via-accent-cyan to-accent-violet bg-clip-text text-transparent pb-1">Stay Ahead.</span>
             </h1>
             
-            <p className="text-lg text-secondary font-medium leading-relaxed mb-8 max-w-lg">
-              DetectIQ uses real-time ML classifiers and threat intelligence to analyze emails, links, QR codes, and text messages—neutralizing scams before they reach you.
+            <p className="text-base sm:text-lg text-secondary font-medium leading-relaxed mb-6 max-w-xl">
+              Detect threats across emails, URLs, messages, QR codes, and screenshots with AI-powered analysis, threat intelligence, and forensic investigation.
             </p>
             
-            <div className="flex flex-wrap items-center gap-4">
+            {/* 5 Input Channels Pills */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              {["Email", "URL", "Message", "QR Code", "Screenshot"].map((channel) => (
+                <div key={channel} className="px-3 py-1.5 rounded-full bg-card border border-border text-primary text-xs font-medium flex items-center gap-2 shadow-sm">
+                  <div className="w-1.5 h-1.5 rounded-full bg-accent-blue" /> {channel}
+                </div>
+              ))}
+            </div>
+
+            {/* Workflow Process */}
+            <div className="flex flex-wrap items-center gap-2 mb-10 text-xs font-bold uppercase tracking-wider text-muted">
+              <div className="flex items-center gap-1.5 text-accent-blue"><Search size={14}/> Detect</div>
+              <ChevronRight size={12} className="text-muted" />
+              <div className="flex items-center gap-1.5 text-accent-cyan"><Database size={14}/> Enrich</div>
+              <ChevronRight size={12} className="text-muted" />
+              <div className="flex items-center gap-1.5 text-accent-violet"><Activity size={14}/> Investigate</div>
+              <ChevronRight size={12} className="text-muted" />
+              <div className="flex items-center gap-1.5 text-primary"><Brain size={14}/> Explain</div>
+            </div>
+
+            {/* CTAs */}
+            <div className="flex flex-wrap items-center gap-4 mb-8">
               <button 
                 onClick={() => navigate("/register")}
-                className="px-8 py-4 bg-gradient-to-r from-accent-blue to-accent-violet hover:opacity-95 text-white rounded-xl font-bold shadow-soft transition-all text-base"
+                className="px-8 py-3.5 bg-gradient-to-r from-accent-blue to-accent-violet hover:opacity-95 text-white rounded-xl font-bold shadow-soft transition-all text-sm sm:text-base inline-flex items-center gap-2"
               >
-                Get Started
+                Get Started <ArrowRight className="w-4 h-4" />
               </button>
               <button 
                 onClick={() => navigate("/detection/email")}
-                className="px-8 py-4 bg-card/60 hover:bg-secondary border border-border/60 hover:border-primary text-primary rounded-xl font-bold transition-all inline-flex items-center gap-2 text-base"
+                className="px-8 py-3.5 bg-card hover:bg-secondary border border-border text-primary rounded-xl font-bold transition-all text-sm sm:text-base shadow-sm"
               >
                 Explore Detection
-                <ArrowRight className="w-4 h-4 text-accent-blue" />
               </button>
             </div>
+          </div>
 
-            {/* Quick Metrics Strip */}
-            <div className="grid grid-cols-3 gap-6 pt-10 mt-10 border-t border-border/40 max-w-lg">
-              <div>
-                <div className="text-2xl font-black font-heading text-primary">99.8%</div>
-                <div className="text-xs text-muted font-medium mt-0.5">Detection Accuracy</div>
-              </div>
-              <div>
-                <div className="text-2xl font-black font-heading text-primary">&lt;500ms</div>
-                <div className="text-xs text-muted font-medium mt-0.5">Analysis Latency</div>
-              </div>
-              <div>
-                <div className="text-2xl font-black font-heading text-primary">Multi-Layer</div>
-                <div className="text-xs text-muted font-medium mt-0.5">ML + RAG + Threat Engine</div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Right: Integrated Shield Environment (5 cols) */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="lg:col-span-5 relative flex justify-center items-center"
-          >
-            {/* Atmospheric Lighting Behind Shield */}
-            <div className="absolute w-[420px] h-[420px] bg-gradient-to-tr from-accent-blue/30 via-accent-cyan/20 to-accent-violet/30 rounded-full blur-[80px] pointer-events-none animate-pulse" />
-
-            {/* Floating Signal Nodes */}
-            <div className="absolute top-4 left-2 px-3 py-1.5 rounded-full bg-card/80 backdrop-blur-md text-xs font-semibold text-accent-blue shadow-soft flex items-center gap-2 border border-accent-blue/20 z-20 animate-float">
-              <span className="w-2 h-2 rounded-full bg-accent-blue" /> Live Threat Scan Active
-            </div>
-            
-            <div className="absolute bottom-6 right-0 px-3.5 py-2 rounded-2xl bg-card/80 backdrop-blur-md text-xs font-semibold text-primary shadow-soft flex items-center gap-2.5 border border-border/40 z-20">
-              <ShieldCheck className="w-4 h-4 text-accent-blue" /> Zero-Trust Validation
-            </div>
-
-            {/* Shield Asset Seamlessly Blended */}
-            <div className="relative z-10 p-2">
-              <img 
-                src="/assets/detectiq-hero-shield.png" 
-                alt="DetectIQ Real-Time Cybersecurity Shield" 
-                className="w-full max-w-[460px] h-auto object-contain drop-shadow-[0_20px_50px_rgba(37,99,235,0.25)] rounded-3xl"
-                loading="eager"
+          {/* Right Column: Graphic */}
+          <div className="relative flex justify-center items-start lg:pt-16 mt-6 lg:mt-0 lg:ml-auto">
+            <div className="relative w-full max-w-[620px] xl:max-w-[760px] perspective-1000">
+              <div className="absolute inset-0 bg-accent-blue/10 dark:bg-transparent rounded-[2rem] blur-3xl transform scale-105 -z-10" />
+              <motion.img 
+                src="/assets/hero-diagram.png" 
+                alt="DetectIQ Analysis Dashboard" 
+                className="w-full h-auto rounded-2xl border border-border/50 relative z-10"
+                animate={{ 
+                  y: [0, -12, 0],
+                  filter: [
+                    "drop-shadow(0px 10px 20px rgba(59,130,246,0.1))",
+                    "drop-shadow(0px 20px 40px rgba(59,130,246,0.4))",
+                    "drop-shadow(0px 10px 20px rgba(59,130,246,0.1))"
+                  ]
+                }}
+                transition={{ 
+                  duration: 6, 
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
               />
             </div>
-          </motion.div>
+          </div>
 
         </div>
       </section>

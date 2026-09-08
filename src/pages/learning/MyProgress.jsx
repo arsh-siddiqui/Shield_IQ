@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Target, Loader2, BookOpen, AlertCircle } from "lucide-react";
 import { getAllProgress } from "../../services/progressService";
+import { useAppData } from "../../context/AppDataContext";
 import Button from "../../components/ui/Button";
 
 export default function MyProgress() {
+  const { user } = useAppData();
   const [progress, setProgress] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -45,7 +47,7 @@ export default function MyProgress() {
   const avgScore = progressList.length > 0 
     ? Math.round(progressList.reduce((acc, p) => acc + (p.assessmentScore || 0), 0) / progressList.length)
     : 0;
-  const totalXP = modulesCompleted * 100; // Mock calculation
+  const totalXP = user?.xp || 0;
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">

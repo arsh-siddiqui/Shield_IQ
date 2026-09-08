@@ -19,8 +19,10 @@ const navSections = [
     ]
   },
   {
-    title: "Security",
+    title: "Security Intelligence",
     items: [
+      { label: "Investigations", to: "/security/investigations", icon: ShieldAlert },
+      { label: "Indicators", to: "/security/indicators", icon: Shield },
       { label: "Security Profile", to: "/security/profile", icon: TrendingUp },
     ]
   },
